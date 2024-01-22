@@ -1,0 +1,17 @@
+**/opt/**
+**/reference_files/**
+matrix_generation/data/**
+matrix_generation/output/**
+
+analysis/count_matrix_collection/**
+analysis/output/**
+
+**/*.pyc
+
+**/.DS_Store
+
+**/.Rhistory
+
+**/.ipynb_checkpoints
+
+**/.virtual_documents

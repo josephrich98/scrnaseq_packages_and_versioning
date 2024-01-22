@@ -1,0 +1,30 @@
+### Required by all modules
+data_name: 5k_pbmc_v3  # the python code to find this: fastq_link.split("/")[-2] OR filtered_feature_bc_matrix_link.split("/")[-2]
+seed_list: [100]
+frac_list: [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64]
+count_matrix_generation_method: "cellranger"  # "kb" or "cellranger" or "both"; only used by main.py
+kb_version: 0.24.4  # "" for agnostic
+cellranger_version: 3.1.0  # "" for agnostic
+### Required by all modules
+
+
+### Required by kb/cellranger count
+kb_sequencing_technology: "10xv3"  # find on 10x website
+kb_count_format: "mtx" # mtx for matrix only, h5ad for matrix + h5ad
+kb_workflow: "standard"  # "nac for unspliced + spliced (in addition to spliced only) (kb 28+ only), standard for spliced only"
+reference_selector: "2310"  # specific date (yymm) or "most_recent"
+
+
+### Optional (as needed)
+fastq_link: "https://cf.10xgenomics.com/samples/cell-exp/3.0.2/5k_pbmc_v3/5k_pbmc_v3_fastqs.tar"  # find on 10x website
+
+filtered_feature_bc_matrix_link: "https://cf.10xgenomics.com/samples/cell-exp/3.0.2/5k_pbmc_v3/5k_pbmc_v3_filtered_feature_bc_matrix.tar.gz"  # find on 10x website
+
+cellranger_package_link: "https://cf.10xgenomics.com/releases/cell-exp/cellranger-3.1.0.tar.gz?Expires=1702565208&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA&Signature=a0GxxrfpGExVUPqdzcNKbAgsJzpARBEv-dhx4a2GYfUAZ7Py3GkWIZLrwr4dS0blIeWSNGO2~vTWqtXuQFoClb0DnedhBIaS5dmBeFls1gpxLKJXsGl6z7~eEcgWcVbmx7c5bHE2z8wuX4vzxAPDeqSH08YmEE1P1QzQfm81J748zPrsRsEhbxy2-BrcEZPbyQJkPk-duOvAG35vRNuo-JuRHfz8OVMQtYjf5XyIIfRA5UEg8qTsUYckM2Zo~VEGehaYRIxhLwYiFIHhhZkAjN086n5tdTlEyjWzy-DAquRGeVwb~MGhU6RbbVgT4bgVVDyvxYFknGAPJoBbhffhjw__"   # find here: https://www.10xgenomics.com/support/software/cell-ranger/downloads/previous-versions
+
+cellranger_transcriptome_link: "https://cf.10xgenomics.com/supp/cell-exp/refdata-gex-GRCh38-2020-A.tar.gz"
+
+ensembl_release: 110  # for kb ref; not required if reference_selector == "most_recent"
+
+
+
