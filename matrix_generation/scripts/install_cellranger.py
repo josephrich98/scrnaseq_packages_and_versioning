@@ -20,6 +20,15 @@ def install_cellranger_function(instance):
         export PATH={instance.package_path}/cellranger-{instance.cellranger_version}:$PATH
     """, shell=True, executable="/bin/bash")
     os.environ["PATH"] = f":{instance.package_path}/cellranger-{instance.cellranger_version}" + os.environ["PATH"]
+    
+    bashrc_content = f"""
+    if [[ ":$PATH:" != *":{instance_package_path}/cellranger-{instance.cellranger_version}:"* ]]; then
+        export PATH="{instance_package_path}/cellranger-{instance.cellranger_version}:$PATH"
+    fi
+    """
+    with open(f"{os.path.expanduser('~')}/.bashrc", "a") as f:
+        f.write("\n" + bashrc_content)
+    
     with open(f"{os.path.expanduser('~')}/.bashrc", "a") as f:
         f.write(f"\nexport PATH={instance.package_path}/cellranger-{instance.cellranger_version}:$PATH")
 

@@ -14,6 +14,7 @@ import argparse
 from scripts.organize_outputs import organize_output
 now = datetime.now()
 
+
 def check_kb_version(target_version):
     version = pkg_resources.get_distribution("kb-python").version
     if version == target_version:

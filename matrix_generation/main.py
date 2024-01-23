@@ -71,7 +71,7 @@ def main(args):
         subprocess.run(f"wget {fastq_processor.fastq_link}", shell=True, executable="/bin/bash")
         subprocess.run(f"tar -xvf {fastq_processor.data_name}_fastqs.tar", shell=True, executable="/bin/bash")
     
-    if fastq_processor.seed_list:
+    if fastq_processor.frac_list:
         fastq_processor.downsample_fastqs()
     # fastq_processor.read_counts(fastq_processor.data_name, fastq_processor.data_directory, fastq_processor.output_directory, fastq_processor.seed_list, fastq_processor.frac_list)
 

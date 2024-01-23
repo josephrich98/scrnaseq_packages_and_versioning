@@ -22,6 +22,7 @@ def project_setup_function(instance):
 
     ### PACKAGE DOWNLOADS ###
     # Seqtk
+    breakpoint()
     if shutil.which("seqtk") is None:
         subprocess.run(f"""
             cd {instance.package_path} &&
@@ -32,8 +33,13 @@ def project_setup_function(instance):
             export PATH=$PATH:{instance.package_path}/seqtk
         """, shell=True, executable="/bin/bash")
         os.environ["PATH"] = f":{instance.package_path}/seqtk" + os.environ["PATH"]
+        bashrc_content = f"""
+        if [[ ":$PATH:" != *":{instance_package_path}/seqtk:"* ]]; then
+            export PATH="{instance_package_path}/seqtk:$PATH"
+        fi
+        """
         with open(f"{os.path.expanduser('~')}/.bashrc", "a") as f:
-            f.write(f"\nexport PATH={instance.package_path}/seqtk:$PATH")
+            f.write("\n" + bashrc_content)
 
     # cellranger
     if shutil.which("cellranger") is None and instance.count_matrix_generation_method != "kb":
