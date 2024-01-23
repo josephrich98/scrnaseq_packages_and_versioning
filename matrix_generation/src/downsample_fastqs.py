@@ -6,10 +6,8 @@ import argparse
 import sys
 import yaml
 
-parent_path = os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__))
-)  # gets the parent directory of the file that this script is in
-sys.path.append(parent_path)  # adds the parent directory to the path
+parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_path) if parent_path not in sys.path else None
 
 def downsample_single_seed(instance, seed, frac, downsampled_fastq_directory_specific):
     # for file in glob.glob(f"{instance.unzipped_fastq_directory}/*"):

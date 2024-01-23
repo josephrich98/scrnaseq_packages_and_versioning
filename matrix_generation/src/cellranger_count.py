@@ -2,17 +2,15 @@ import os
 import sys
 import yaml
 
-parent_path = os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__))
-)  # gets the parent directory of the file that this script is in
-sys.path.append(parent_path)  # adds the parent directory to the path
-
 import subprocess
 import argparse
 from datetime import datetime
 import re
 now = datetime.now()
 date_directory_name = now.strftime('%y%m')
+
+parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_path) if parent_path not in sys.path else None
 
 from scripts.organize_outputs import organize_output
 from scripts.install_cellranger import install_cellranger_function
@@ -155,7 +153,7 @@ def cellranger_count_function(instance, baseline):
     print(f"cellranger count done!")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
     from fastq_processor import FastqProcessor
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--baseline', action='store_true', help='True if using baseline data (will override any seeds and counts accordingly), False if using downsampled fastq data')
