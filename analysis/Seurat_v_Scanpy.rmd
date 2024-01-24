@@ -1,22 +1,23 @@
 ---
 title: "Seurat_v_Scanpy"
 output: html_document
-date: "2023-11-15"
+date: "2024-01-01"
 ---
 
 HYPERPARAMETERS
 ```{r}
+# Random seeds
 read_downsample_seed <- "0"  # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
 R_random_seed <- 100   # including for cell downsampling
-include_seeds_in_file_paths <- FALSE
 
+# Downsample fractions
 seu_read_fraction_after_downsampling <- "1.0"  # fraction of reads after downsampling - any number from (0,1.0] 
 scan_read_fraction_after_downsampling <- "1.0"  # fraction of reads after downsampling - any number from (0,1.0]
 
 seu_cell_fraction_after_downsampling <- "1.0"  # fraction of cells after downsampling - any number from (0,1.0]
 scan_cell_fraction_after_downsampling <- "1.0"  # fraction of cells after downsampling - any number from (0,1.0]
 
-
+# Matrix generation methods
 seu_matrix_generation_method <- "kb"  # str["kb", "cellranger"]
 seu_matrix_generation_method_version <- "0.28.0"
 seu_matrix_include_unspliced <- FALSE  # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
@@ -29,26 +30,30 @@ scan_matrix_include_unspliced <- FALSE  # kb only; if TRUE --> .total.mtx (kb SU
 scan_matrix_source <- "generated"  # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 scan_matrix_qc <- "raw"  # "raw" or "filtered"
 
+# Function argument and input settings
 analysis_methods <- "default"  # str["default", "seurat_like", "scanpy_like"]
 data_input <- "default"  # str["default", "seurat", "scanpy"]
 
+# Package versions
 seurat_version <- "4.3.0"
 scanpy_version <- "1.9.5"
 
+# Custom parameters
+inflection_UMI_manual <- NULL  # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
 min_cells <- 3
 min_features <- 200
 max_pct_mct <- 20  # default 5
 max_n_genes_by_counts_scanpy <- 12000  # default 2500
 
-inflection_UMI_manual <- NULL  # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
 seu_num_pcs <- 50  # number 1-50; or NULL to select after elbow plot visualization
 scan_num_pcs <- 50
 umap_knn_k <- 50
 umap_leiden_clustering_resolution <- 0.8
 
-# plotting path specifications
+# Output path specifications
 project_base_path <- "/workspace/analysis"
 data_name <- "5k_pbmc_v3"
+include_seeds_in_file_paths <- FALSE
 save_data <- FALSE
 dpi <- 350
 ```
@@ -83,7 +88,6 @@ seu_data_path <- glue::glue('{project_base_path}/count_matrix_collection/{data_n
 scan_data_path <- glue::glue('{project_base_path}/count_matrix_collection/{data_name}/{scan_matrix_generation_method_full}/frac{scan_read_fraction_after_downsampling}_seed{read_downsample_seed}')
 ```
 
-
 File path definitions
 ```{r}
 if (seu_matrix_generation_method == scan_matrix_generation_method &&
@@ -116,7 +120,6 @@ output_data_file_paths <- list(
     seu_object = glue::glue("{output_base_path}/data_files/seu.rds"),
     scan_adata = glue::glue("{output_base_path}/data_files/adata.h5ad")
 )
-
 
 # FALSE to have no save
 file_paths <- list(
@@ -209,7 +212,6 @@ for (path in output_data_file_paths) {
     dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
 }
     
-    
 if (save_data) {
     for (path in file_paths) {
         if (is.character(path)) {
@@ -248,13 +250,13 @@ library(tidyverse)
 library(patchwork)
 library(eulerr)
 library(scattermore)
-# library(Voyager)
-# library(BUSpaRse)
 library(DropletUtils)
 library(glue)
 library(bluster)
 library(ggforce)
 library(ggplotify)
+library(grid)
+library(gtable)
 library(ggalluvial)
 theme_set(theme_bw())
 
@@ -262,6 +264,7 @@ source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 ```
 
+Set arguments for functions
 ```{r}
 if (analysis_methods == "default" || analysis_methods == "scanpy_like") {
     scanpy_hvg_flavor <- "seurat"
@@ -286,7 +289,7 @@ if (analysis_methods == "default" || analysis_methods == "scanpy_like") {
     scanpy_umap_min_dist <- 0.3
     scanpy_correction_method <- "bonferroni"
 } else {
-    paste(analysis_methods, "is not a valid input for analysis_methods. Please choose from 'default' or 'seurat_like'.")
+    paste(analysis_methods, "is not a valid input for analysis_methods. Please choose from 'default', 'seurat_like', or 'scanpy_like'.")
 }
 
 if (analysis_methods == "default" || analysis_methods == "seurat_like") {
@@ -298,8 +301,8 @@ if (analysis_methods == "default" || analysis_methods == "seurat_like") {
     seu_n_neighbors <- 20
     seurat_clustering_algorithm <- "louvain"
     seu_resolution <- 0.8
-    seu_umap_min_dist <- 0.3
     seu_umap_method <- "uwot"
+    seu_umap_min_dist <- 0.3
     seu_umap_metric <- "cosine"
     # correction method = bonferroni
 } else if (analysis_methods == "scanpy_like") {
@@ -316,10 +319,9 @@ if (analysis_methods == "default" || analysis_methods == "seurat_like") {
     seu_umap_metric <- "correlation"
     # correction method = benjamini-hochberg 
 } else {
-    paste(analysis_methods, "is not a valid input for analysis_methods. Please choose from 'default' or 'scanpy_like'.")
+    paste(analysis_methods, "is not a valid input for analysis_methods. Please choose from 'default', 'seurat_like', or 'scanpy_like'.")
 }
 ```
-
 
 View reticulate python environment
 ```{r}
@@ -331,7 +333,6 @@ Python imports and setting up variables
 import os 
 import shutil
 import scanpy as sc
-# import squidpy as sq
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -369,7 +370,6 @@ def save_scanpy_image(filepath):
     return save_file
 ```
 
-
 Read the data into Seurat and create knee plot:
 ```{r}
 if (seu_matrix_qc == "raw") {
@@ -393,8 +393,6 @@ if (seu_matrix_qc == "raw") {
     bc_rank <- barcodeRanks(res_mat)
 } 
 ```
-
-
 
 Knee plot
 ```{r}
@@ -467,9 +465,8 @@ sc.pp.filter_cells(adata, min_genes=r.min_features)
 sc.pp.filter_genes(adata, min_cells=r.min_cells)
 ```
 
+UMI scatterplot between the two groups
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-
 res_mat_py <- t(py$adata_unfiltered$X)
 rownames(res_mat_py) <- py$adata_unfiltered$var_names$to_list()
 colnames(res_mat_py) <- py$adata_unfiltered$obs_names$to_list()
@@ -479,38 +476,22 @@ umi_scatterplot
 ```
 
 Find list of mitochondrial Ensembl gene names
-```{python}
-# conda_install(envname = conda_env_name, channel = "bioconda", c("pybiomart"))  # DOES NOT WORK
-# sc_mito_genes = sc.queries.mitochondrial_genes("hsapiens", attrname="ensembl_gene_id")  # DOES NOT WORK - requires pybiomart
-
-# sc_mito_genes = ['ENSG00000210049', 'ENSG00000211459', 'ENSG00000210077', 'ENSG00000210082', 'ENSG00000209082', 'ENSG00000198888', 'ENSG00000210100', 'ENSG00000210107', 'ENSG00000210112', 'ENSG00000198763', 'ENSG00000210117', 'ENSG00000210127', 'ENSG00000210135', 'ENSG00000210140', 'ENSG00000210144', 'ENSG00000198804', 'ENSG00000210151', 'ENSG00000210154', 'ENSG00000198712', 'ENSG00000210156', 'ENSG00000228253', 'ENSG00000198899', 'ENSG00000198938', 'ENSG00000210164', 'ENSG00000198840', 'ENSG00000210174', 'ENSG00000212907', 'ENSG00000198886', 'ENSG00000210176', 'ENSG00000210184', 'ENSG00000210191', 'ENSG00000198786', 'ENSG00000198695', 'ENSG00000210194', 'ENSG00000198727', 'ENSG00000210195', 'ENSG00000210196']
-```
-
 ```{r}
-#* 
-# ensembl <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-# mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)
+# # ensembl <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")  # Service may be down on this mirror
+# ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")  #*
+# mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)  #*
 
-mt_genes <- data.frame(
-    ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196")
-)
+mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
 ```
 
 QC and filter high mito cells out of Seurat, Violin plots
 ```{r}
-# sc_mito_genes <- py$sc_mito_genes
-
 assay_gene_names <- rownames(seu[["RNA"]])
 assay_gene_names_trimmed <- gsub("\\..*", "", assay_gene_names)
 common_genes <- intersect(mt_genes$ensembl_gene_id, assay_gene_names_trimmed)
 common_genes_with_version <- assay_gene_names[match(common_genes, assay_gene_names_trimmed)]
 seu[["pct_mt"]] <- PercentageFeatureSet(seu, features = common_genes_with_version)
 
-```
-
-```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 violin_plot <- make_violin_plot(seu, show_points = FALSE, color = group1_color, save = file_paths$seu_violin_file_path)
 violin_plot
 
@@ -535,8 +516,6 @@ adata.obs['pct_mt'] = np.sum(
     adata[:, [adata.var_names[i] for i, name in enumerate(adata_gene_names_trimmed) if name in common_genes]].X, 
     axis=1
 ) / np.sum(adata.X, axis=1) * 100
-
-
 
 save_genes = save_scanpy_image(r.file_paths[f"scan_violin_file_path_genes"])
 save_counts = save_scanpy_image(r.file_paths[f"scan_violin_file_path_counts"])
@@ -577,8 +556,6 @@ cells_adata_set = set(cells_adata)
 
 Euler plots of cell, gene overlap after QC
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-
 euler_cell_afterqc <- make_euler_seurat_vs_scanpy(seu, py$adata, comparison = "Cell", save_plot = file_paths$euler_after_qc_cell_file_path, save_stats = file_paths$euler_stats_after_QC_file)
 euler_gene_afterqc <- make_euler_seurat_vs_scanpy(seu, py$adata, comparison = "Gene", save_plot = file_paths$euler_after_qc_gene_file_path, save_stats = file_paths$euler_stats_after_QC_file)
 
@@ -586,13 +563,13 @@ euler_cell_afterqc
 euler_gene_afterqc
 ```
 
+Upset plots of cell, gene overlap after QC
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 upset_cell <- make_upset_seurat_vs_scanpy(seu, py$adata, comparison = "Cell", save = file_paths$upset_cells)
 upset_gene <- make_upset_seurat_vs_scanpy(seu, py$adata, comparison = "Gene", save = file_paths$upset_genes)
 ```
 
-
+Create cell and gene lists
 ```{r}
 seu_inds <- colnames(seu)
 seu_genes <- rownames(seu)
@@ -606,9 +583,6 @@ overlapping_genes <- intersect(seu_genes, scan_genes)
 
 If data_input == "seurat": Apply Cells and Genes from Seurat to Scanpy
 ```{python}
-# overlapping_inds = list(set(adata.obs_names) & set(r.seu_inds))
-# overlapping_genes = list(set(adata.var_names) & set(r.seu_genes))
-
 if data_input == "seurat":
     adata = adata_unfiltered.copy()
     adata = adata[r.seu_inds,r.seu_genes].copy()
@@ -650,6 +624,7 @@ if (data_input == "scanpy") {
 }
 ```
 
+If data_input is not default, then recompute cell and gene lists
 ```{r}
 if (data_input != "default") {
     seu_inds <- colnames(seu)
@@ -665,7 +640,6 @@ if (data_input != "default") {
     print(paste0("Gene vectors equal: ", all.equal(seu_genes, scan_genes)))
 } 
 ```
-
 
 Normalization
 ```{r}
@@ -689,9 +663,18 @@ Check equivalency of normalization methods (assuming identical input)
 mat_py <- py$adata$X
 mat_py <- as(t(mat_py), "CsparseMatrix")
 mat_r <- GetAssayData(seu, "RNA", layer = "data")
-all.equal(mat_py@x, mat_r@x)
-```
+equal_after_normalization <- all.equal(mat_py@x, mat_r@x)
 
+if(file_paths$euler_stats_after_QC_file != FALSE) {
+    sink(file_paths$euler_stats_after_QC_file, split = TRUE, append = TRUE)
+}
+
+print(glue("Equal after normalization: {equal_after_normalization}"))
+
+if(file_paths$euler_stats_after_QC_file != FALSE) {
+    sink()
+}
+```
 
 Find HVGs
 ```{r}
@@ -701,18 +684,15 @@ top10 <- head(VariableFeatures(seu), 10)
 LabelPoints(VariableFeaturePlot(seu), points = top10, repel = TRUE)
 ```
 
-Sometimes this cell must be run manually when scanpy_hvg_flavor == "seurat_v3"
 ```{python}
-sc.pp.highly_variable_genes(adata, n_top_genes = n_top_genes, flavor = r.scanpy_hvg_flavor)
+sc.pp.highly_variable_genes(adata, n_top_genes = n_top_genes, flavor = r.scanpy_hvg_flavor)  # Sometimes this cell must be run manually when scanpy_hvg_flavor == "seurat_v3"
 
 scanpy_highly_variable_genes = adata.var.index[adata.var['highly_variable']]
 scanpy_highly_variable_genes_list = adata.var[adata.var['highly_variable']].index.tolist()
 ```
 
-Euler plot of HVG overlap after QC
+Euler plot of HVG overlap
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-
 euler_hvg_afterqc <- make_euler_seurat_vs_scanpy(seu, py$adata, comparison = "HVG", save_plot = file_paths$euler_after_qc_hvg_file_path, save_stats = file_paths$euler_stats_after_QC_file)
 euler_hvg_afterqc
 
@@ -748,6 +728,12 @@ if data_input == "seurat":
     scanpy_highly_variable_genes_list = adata.var[adata.var['highly_variable']].index.tolist()
 ```
 
+Make a combined list of HVGs
+```{r}
+hvgs <- list(Seurat = VariableFeatures(seu), Scanpy = py$scanpy_highly_variable_genes_list)
+```
+
+Scanpy-only: Keep only HVGs, regress out features
 ```{python}
 adata = adata[:, adata.var.highly_variable]
 
@@ -755,23 +741,7 @@ if r.analysis_methods == "default" or r.analysis_methods == "scanpy_like":
     sc.pp.regress_out(adata, ['total_counts', 'pct_mt'])
 ```
 
-```{r}
-hvgs <- list(Seurat = VariableFeatures(seu), Scanpy = py$scanpy_highly_variable_genes_list)
-```
-
-```{r}
-is_hvg_py <- py$adata$var$highly_variable
-
-mat_py <- py$adata$raw$X
-mat_py <- as(t(mat_py), "CsparseMatrix")
-mat_r <- GetAssayData(seu, "RNA")
-
-inds <- rowSums(mat_r) > 0
-# seu <- seu[inds,]
-```
-
-
-Scaling
+Scaling +/- regression
 ```{r}
 seu <- ScaleData(seu, verbose = FALSE, scale.max = seurat_scale_max, vars.to.regress = seu_vars_to_regress)
 ```
@@ -802,6 +772,7 @@ if r.analysis_methods == "seurat_like":
     scan_num_pcs = r.seu_num_pcs
 ```
 
+Scree plot
 ```{r}
 if (analysis_methods == "scanpy_like") {
     seu_num_pcs <- py$scan_num_pcs
@@ -817,14 +788,11 @@ eigs_df <- tibble(Seurat = var_explained,
 ```
 
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-
 combined_pc_variance <- plot_var_explained(eigs_df, npcs = 50, save = file_paths$pca_elbow_filepath_combined)
-
 combined_pc_variance
 ```
 
-
+PCA scatterplot
 ```{r}
 PCAPlot(seu, cols = group1_color) + theme(legend.position = "none")
 ```
@@ -833,10 +801,8 @@ PCAPlot(seu, cols = group1_color) + theme(legend.position = "none")
 sc.pl.pca(adata)
 ```
 
+Create a collection of PCA embeddings
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
-
 pca_embeddings <- Embeddings(seu, reduction = "pca")
 
 pca_embeddings_py <- py$adata$obsm["X_pca"]
@@ -849,23 +815,19 @@ colnames(pca_embeddings_py) <- colnames(pca_embeddings)
 all.equal(cell_names_py, rownames(pca_embeddings))
 ```
 
+Overlay PCA scatterplots
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
-
 pca12_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, save = file_paths$pca_12_overlay_filepath)
-
 pca34_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, pcs = 3:4, save = file_paths$pca_34_overlay_filepath)
 
 pca12_plot
 pca34_plot
 ```
 
+Plot PCA eigenvectors (loadings), eigenvalues
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
-
-
+is_hvg_py <- py$adata$var$highly_variable
+    
 pca_loadings_seu <- Loadings(seu, reduction = "pca")
 pca_loadings_py <- py$adata$varm["PCs"]
 pca_loadings_py <- pca_loadings_py[is_hvg_py,]
@@ -901,29 +863,20 @@ df_eigs <- df_eigs |>
 
 eigs_diff <- plot_eigs_diffs(df_eigs, save = file_paths$pca_eigs_diff)
 
-
 loading_diffs
 eigs_diff
 ```
 
-
+Combine scree plot and eigenvector plot
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-
 combined_plot <- make_combined_pc_variance_loadings_plot(combined_pc_variance, loading_diffs, save = file_paths$combined_pc_variance_loadings_plot)
-
 combined_plot
 ```
-
 
 If data_input == "scanpy": Apply PCs from Scanpy to Seurat
 ```{r}
 if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
     seu[["pca"]] <- CreateDimReducObject(embeddings = as.matrix(pca_embeddings_py), key = "PC_", assay = DefaultAssay(seu))
-    # seu[["pca"]]@feature.loadings <- pca_loadings_py
-    # var_explained <- py$adata$uns[["pca"]][["variance_ratio"]]
-    # seu@reductions$pca@misc$total.variance <- sum(py$adata$uns[["pca"]][["variance"]])
-    
 }
 ```
 
@@ -931,34 +884,24 @@ If data_input == "seurat": Apply PCs from Seurat to Scanpy
 ```{r}
 if (data_input == "seurat" && identical(seu_inds, scan_inds)) {
     py$adata$obsm["X_pca"] = pca_embeddings
-    # pca_loadings_seu <- Loadings(seu, reduction = "pca")
-    # ordered_loadings_seu <- pca_loadings_seu[match(hvgs$Scanpy, rownames(pca_loadings_seu)), ]
-    # py$adata$varm["PCs"] <- ordered_loadings_seu
-    # py$adata$uns[["pca"]][["variance_ratio"]] <- Stdev(seu, reduction = "pca")^2/tot_variance
-    # var_explained_py = py$adata$uns[["pca"]][["variance_ratio"]]
 }
 ```
-
-
 
 Neighbors
 ```{r}
 seu <- FindNeighbors(seu, reduction = "pca", dims = 1:seu_num_pcs, k.param=seu_n_neighbors)
-
 snn_graph_seu <- seu@graphs$RNA_snn
+knn_graph_seu <- seu@graphs$RNA_nn
 ```
 
 ```{python}
 sc.pp.neighbors(adata, n_neighbors=int(r.scan_n_neighbors), n_pcs=int(scan_num_pcs))
-
 snn_graph_scan = adata.obsp['connectivities']
+knn_graph_scan = adata.obsp['distances']
 ```
 
+Plot SNN graph jaccard indices (ie similarity of neighborhoods) and degrees (ie size of neighborhoods)
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
-
-
 seu_snn_b <- snn_graph_seu > 0
 sc_nn_b <- py$snn_graph_scan > 0
 
@@ -1004,23 +947,22 @@ print(glue("Median log degree ratio of KNN: {median_logged_degree_ratio}"))
 if(file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
-
-
-# cat("Are any degree ratios larger than Jaccard?", any(jaccards[(jaccards$degree_ratio - abs(jaccards$jaccard_logged)) > 1e-6, ]))
 ```
 
+Combine jaccard indices and degree ratios into a single plot
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 jaccard_degree_scatterplot <- make_knn_jaccard_degree_scatterplot(jaccards, save = file_paths$jaccard_degree_scatterplot)
 jaccard_degree_scatterplot
 ```
-
 
 If data_input == "seurat": Apply SNN graph from Seurat to Scanpy
 ```{python}
 if data_input == "seurat" and (r.seu_inds == r.scan_inds):
     adata.obsp['connectivities'] = r.snn_graph_seu
     snn_graph_scan = adata.obsp['connectivities']
+    
+    adata.obsp['distances'] = r.knn_graph_seu
+    knn_graph_scan = adata.obsp['distances']
 ```
 
 If data_input == "scanpy": Apply SNN graph from Scanpy to Seurat
@@ -1030,6 +972,13 @@ if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
     rownames(snn_graph_scan_matrix) <- rownames(py$adata$obs)
     colnames(snn_graph_scan_matrix) <- rownames(py$adata$obs)
     seu@graphs$RNA_snn <- as.Graph(snn_graph_scan_matrix)
+    snn_graph_seu <- seu@graphs$RNA_snn
+    
+    knn_graph_scan_matrix <- as.matrix(py$adata$obsp['distances'], rownames.force = NA)
+    rownames(knn_graph_scan_matrix) <- rownames(py$adata$obs)
+    colnames(knn_graph_scan_matrix) <- rownames(py$adata$obs)
+    seu@graphs$RNA_nn <- as.Graph(knn_graph_scan_matrix)
+    knn_graph_seu <- seu@graphs$RNA_nn
 }
 ```
 
@@ -1120,17 +1069,11 @@ scan_clusters <- factor(scan_clusters, levels = sort(as.numeric(levels(scan_clus
 
 jacc_seu_sc3 <- linkClustersMatrix(seu_clusters, scan_clusters)
 
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
-
 cluster_heatmap <- plot_heatmap(jacc_seu_sc3, ari_value, show_axis_titles = TRUE, show_trees = FALSE, save = file_paths$pheatmap)
 cluster_heatmap
 ```
 
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
-
 df <- tibble(Seurat = seu_clusters,
              Scanpy = scan_clusters)
 
@@ -1209,8 +1152,6 @@ sc.tl.umap(adata, min_dist = r.scanpy_umap_min_dist)
 ```
 
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-
 umap_plots <- plot_umap(group1_umap_info = seu_umap_info$umap@cell.embeddings, group1_clusters = seu$seurat_clusters, group2_umap_info = py$adata$obsm['X_umap'], group2_clusters = scanpy_clusters_renumbered, save = c(file_paths$umap_seu, file_paths$umap_scan))
 seu_umap <- umap_plots[[1]]
 scan_umap <- umap_plots[[2]]
@@ -1289,7 +1230,6 @@ scan_umap_knn <- dbscan::kNN(scan_umap_data, k = umap_knn_k)
 ```
 
 ```{r}
-source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 jaccards_all_cells <- calculate_knn_jaccards(seu_umap_knn$id, scan_umap_knn$id)
 
 median_jaccard_umap_knn <- median(jaccards_all_cells)
@@ -1306,8 +1246,6 @@ if(file_paths$pca_knn_clustering_umap_file != FALSE) {
 ```
 
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-
 jaccards_df <- data.frame(Cells = overlapping_inds, JaccardIndex = jaccards_all_cells, seu_clusters = seu_cluster_data_filtered, scan_clusters = scan_cluster_data_filtered)
 
 umap_jaccard_plot <- make_umap_jaccard_plot(jaccards_df, save = file_paths$umap_jaccard_knn_density)
@@ -1445,8 +1383,6 @@ if (analysis_methods == "seurat_like" && data_input == "seurat") {
 
 Identify best markers
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 seu_filtered_markers <- markers %>% 
   filter(p_val_adj < 0.05)
 
@@ -1532,8 +1468,6 @@ markers2 <- calculate_de_stats(markers2, save = file_paths$de_stats_file)
 
 Plot histograms
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-
 seurat_vs_scanpy_logFC_histogram_magnitude <- plot_differences_histogram_seurat_vs_scanpy(markers2, "logFC_difference_magnitude", title = glue("Histogram of ΔlogFC (|Seu-Scan|)"), x_label = "ΔlogFC (|Seu-Scan|)", median_or_variance = "median", save = file_paths$logFC_histogram_magnitude_file_path)
 seurat_vs_scanpy_logFC_histogram_signed <- plot_differences_histogram_seurat_vs_scanpy(markers2, "logFC_difference_signed", title = glue("Histogram of ΔlogFC (Seu-Scan)"), x_label = "ΔlogFC (Seu-Scan)", median_or_variance = "variance", save = file_paths$logFC_histogram_signed_file_path)
 
@@ -1565,7 +1499,6 @@ DoHeatmap(seu, features = top10$gene, size = 4) + NoLegend() + theme(text = elem
 
 Plot scatterplots
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 markers2$p_val_adj_r[markers2$p_val_adj_r == 0] <- .Machine$double.xmin
 markers2$p_val_adj_py[markers2$p_val_adj_py == 0] <- .Machine$double.xmin
 
@@ -1597,8 +1530,6 @@ seurat_vs_scanpy_pvaladj_scatterplot
 
 FC histogram (unlogged)
 ```{r}
-# source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-
 # seurat_vs_scanpy_FC_histogram_magnitude <- plot_differences_histogram_seurat_vs_scanpy(markers2, "FC_difference_magnitude", title = glue("Histogram of ΔFC (|Seu-Scan|)"), x_label = "ΔFC (|Seu-Scan|)", save = file_paths$FC_histogram_magnitude_file_path)
 # seurat_vs_scanpy_FC_histogram_signed <- plot_differences_histogram_seurat_vs_scanpy(markers2_outliers_removed, "FC_difference_signed", title = glue("Histogram of ΔFC (Seu-Scan)"), x_label = "ΔFC (Seu-Scan)", save = file_paths$FC_histogram_signed_file_path)
 

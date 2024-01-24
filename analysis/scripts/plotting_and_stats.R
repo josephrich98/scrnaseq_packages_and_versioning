@@ -1,11 +1,3 @@
-library(tidyverse)
-library(grid)
-library(gtable)
-library(ggalluvial)
-
-# library(Voyager)
-
-
 dpi <- 350
 axis_element_size <- 1.45
 

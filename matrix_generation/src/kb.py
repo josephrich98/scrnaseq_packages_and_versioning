@@ -42,27 +42,38 @@ def custom_sort(filename):
 
 
 def find_kb_reference(instance, count = False):
+    kb_reference_path_parent = os.path.join(instance.reference_path, "kb")
     if instance.reference_selector == "most_recent":
         if count:
-            directories = [d for d in os.listdir(instance.reference_path) if os.path.isdir(os.path.join(instance.reference_path, d))]
+            directories = [item for item in os.listdir(kb_reference_path_parent) if os.path.isdir(os.path.join(kb_reference_path_parent, item))]
             kb_reference_path = max(int(dir_name.split('_')[0]) for dir_name in directories if '_' in dir_name)
 
         else:
-            kb_reference_path = os.path.join(instance.reference_path, "kb", now.strftime('%y%m'))
+            kb_reference_path = os.path.join(kb_reference_path_parent, now.strftime('%y%m'))
     else:
-        kb_reference_path = os.path.join(instance.reference_path, "kb", instance.reference_selector)
+        kb_reference_path = os.path.join(kb_reference_path_parent, instance.reference_selector)
     
     kb_version_parts = instance.kb_version.split('.')
-
-    kb_reference_path_full = kb_reference_path + f"_v{kb_version_parts[1]}"
-
+    
+    kb_reference_path_full = os.path.join(kb_reference_path_parent, str(kb_reference_path) + f"_v{kb_version_parts[1]}")
+    
     if count:
         if not os.path.exists(kb_reference_path_full):
             raise Exception(f"{kb_reference_path_full} does not exist. Please run kb ref with this date and version, or check values in config.yaml")
-    
+
     return kb_reference_path_full
 
 def kb_ref_function(instance):
+    ensembl_path = os.path.join(instance.reference_path, "ensembl", str(instance.ensembl_release))
+    
+    if not os.path.exists(ensembl_path):
+        os.makedirs(ensembl_path)
+    os.chdir(ensembl_path)
+    if not os.listdir(ensembl_path):
+        gget_command = f"gget ref -o {ensembl_path}/info.json -r {instance.ensembl_release} -d -w dna,gtf homo_sapiens"
+        print(gget_command)
+        subprocess.run(gget_command, shell=True, executable="/bin/bash")
+    
     kb_reference_path = find_kb_reference(instance)
     if not os.path.exists(kb_reference_path):
         os.makedirs(kb_reference_path)
@@ -70,33 +81,13 @@ def kb_ref_function(instance):
     if instance.kb_version != "":
         check_kb_version(instance.kb_version)
     
-    kb_major_version = instance.kb_version.split('.')[1]
-    
-    if int(kb_major_version) < 27:
-        if instance.reference_selector == "most_recent":
-            subprocess.run(f"wget $(gget ref --ftp -w dna homo_sapiens)", shell=True, executable="/bin/bash") 
-            subprocess.run(f"wget $(gget ref --ftp -w gtf homo_sapiens)", shell=True, executable="/bin/bash") 
-        else:
-            subprocess.run(f"wget $(gget ref -r {instance.ensembl_release} --ftp -w dna homo_sapiens)", shell=True, executable="/bin/bash")
-            subprocess.run(f"wget $(gget ref -r {instance.ensembl_release} --ftp -w gtf homo_sapiens)", shell=True, executable="/bin/bash") 
-        kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/transcriptome.fa {kb_reference_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz {kb_reference_path}/Homo_sapiens.GRCh38.110.gtf.gz"
-    else:
-        if instance.kb_workflow == "nac":
-            if instance.reference_selector == "most_recent":
-                kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/fasta_spliced.fasta -f2 {kb_reference_path}/fasta_unspliced.fasta -c1 {kb_reference_path}/c_spliced.txt -c2 {kb_reference_path}/c_unspliced.txt --workflow=nac $(gget ref --ftp -w dna,gtf homo_sapiens)"
-            else:
-                # subprocess.run(f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/fasta_spliced.fasta -f2 {kb_reference_path}/fasta_unspliced.fasta -c1 {kb_reference_path}/c_spliced.txt -c2 {kb_reference_path}/c_unspliced.txt --workflow=nac {instance.kb_fasta_link} {instance.kb_gtf_link}", shell=True, executable="/bin/bash")
-                kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/fasta_spliced.fasta -f2 {kb_reference_path}/fasta_unspliced.fasta -c1 {kb_reference_path}/c_spliced.txt -c2 {kb_reference_path}/c_unspliced.txt --workflow=nac $(gget ref --ftp -r {instance.ensembl_release} -w dna,gtf homo_sapiens)"
-        else:
-            if instance.reference_selector == "most_recent":
-                kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/transcriptome.fa $(gget ref --ftp -w dna,gtf homo_sapiens)"
-            else:
-                # subprocess.run(f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/transcriptome.fa {instance.kb_fasta_link} {instance.kb_gtf_link}", shell=True, executable="/bin/bash")
-                kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/transcriptome.fa $(gget ref -r {instance.ensembl_release} --ftp -w dna,gtf homo_sapiens)"
+    if instance.kb_workflow == "nac":
+        kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/fasta_spliced.fasta -f2 {kb_reference_path}/fasta_unspliced.fasta -c1 {kb_reference_path}/c_spliced.txt -c2 {kb_reference_path}/c_unspliced.txt --workflow=nac {ensembl_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz {ensembl_path}/Homo_sapiens.GRCh38.{instance.ensembl_release}.gtf.gz"
+    else:   
+        kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/transcriptome.fa {ensembl_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz {ensembl_path}/Homo_sapiens.GRCh38.{instance.ensembl_release}.gtf.gz"
     
     print(kb_ref_command)
     subprocess.run(kb_ref_command, shell=True, executable="/bin/bash")
-    
     
         
 def kb_count_function(instance, baseline, threads):
@@ -146,7 +137,7 @@ def kb_count_function(instance, baseline, threads):
                 '-g', f'{kb_reference_path}/t2g.txt', 
                 '-x', f'{instance.kb_sequencing_technology}', 
                 '-o', f"{out_dir}",
-                '-t', threads
+                '-t', str(threads)
             ]
 
             if instance.kb_count_format == "h5ad":
@@ -168,7 +159,6 @@ def kb_count_function(instance, baseline, threads):
             for file in sorted_files:
                 kb_count_command.append(file)
             
-                    
             print(' '.join(kb_count_command))
             # Run the command
             result = subprocess.run(kb_count_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

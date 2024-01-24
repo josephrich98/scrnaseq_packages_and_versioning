@@ -2,7 +2,7 @@
 data_name: 5k_pbmc_v3  # the python code to find this: fastq_link.split("/")[-2] OR filtered_feature_bc_matrix_link.split("/")[-2]
 seed_list: []
 frac_list: []
-count_matrix_generation_method: "both"  # "kb" or "cellranger" or "both"; only used by main.py
+count_matrix_generation_method: "cellranger"  # "kb" or "cellranger" or "both"; only used by main.py
 kb_version: 0.28.2  # "" for agnostic
 cellranger_version: 7.2.0  # "" for agnostic
 ### Required by all modules
@@ -11,7 +11,7 @@ cellranger_version: 7.2.0  # "" for agnostic
 ### Required by kb/cellranger count
 kb_sequencing_technology: "10xv3"  # find on 10x website
 kb_count_format: "mtx" # mtx for matrix only, h5ad for matrix + h5ad
-kb_workflow: "standard"  # kb only: nac for unspliced + spliced (in addition to spliced only) (kb 28+ only), standard for spliced only
+kb_workflow: "nac"  # kb only: nac for unspliced + spliced (in addition to spliced only) (kb 28+ only), standard for spliced only
 reference_selector: "most_recent"  # specific date (yymm) or "most_recent"
 
 

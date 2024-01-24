@@ -5,7 +5,7 @@ import yaml
 parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_path) if parent_path not in sys.path else None
 
-from scripts.install_cellranger import install_cellranger_function
+from scripts.install_cellranger import install_cellranger_function, install_seqtk_function
 
 import shutil
 import argparse
@@ -22,24 +22,8 @@ def project_setup_function(instance):
 
     ### PACKAGE DOWNLOADS ###
     # Seqtk
-    breakpoint()
     if shutil.which("seqtk") is None:
-        subprocess.run(f"""
-            cd {instance.package_path} &&
-            git clone https://github.com/lh3/seqtk.git &&
-            cd seqtk &&
-            make &&
-            chmod +x {instance.package_path}/seqtk/seqtk
-            export PATH=$PATH:{instance.package_path}/seqtk
-        """, shell=True, executable="/bin/bash")
-        os.environ["PATH"] = f":{instance.package_path}/seqtk" + os.environ["PATH"]
-        bashrc_content = f"""
-        if [[ ":$PATH:" != *":{instance_package_path}/seqtk:"* ]]; then
-            export PATH="{instance_package_path}/seqtk:$PATH"
-        fi
-        """
-        with open(f"{os.path.expanduser('~')}/.bashrc", "a") as f:
-            f.write("\n" + bashrc_content)
+        install_seqtk_function(instance)
 
     # cellranger
     if shutil.which("cellranger") is None and instance.count_matrix_generation_method != "kb":
@@ -48,8 +32,6 @@ def project_setup_function(instance):
     ### Directory organization ###
     if not os.path.exists(instance.reference_path):
         os.makedirs(instance.reference_path)
-        os.makedirs(f"{instance.reference_path}/kb/{date_directory_name}")
-        os.makedirs(f"{instance.reference_path}/cellranger/{date_directory_name}")
 
     if not os.path.exists(instance.output_directory):
         os.makedirs(instance.output_directory)

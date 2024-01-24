@@ -38,6 +38,7 @@ def downsample_fastqs_function(instance):
     for frac in instance.frac_list:
         for seed in instance.seed_list:
             if int(frac) < 1:
+                print(f"downsampling with frac {frac}")
                 process_seed_frac_pair(instance, seed, frac)
         print(f"Finished downsampling with frac {frac}")
         

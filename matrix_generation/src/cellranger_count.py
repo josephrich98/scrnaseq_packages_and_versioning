@@ -64,7 +64,7 @@ def cellranger_install_transcriptome_function(instance):
     os.chdir(cellranger_reference_path)
     if not os.listdir(cellranger_reference_path):
         subprocess.run(f"wget {instance.cellranger_transcriptome_link}", shell=True, executable="/bin/bash")
-        subprocess.run(f"tar -xzvf {instance.cellranger_transcriptome_link.split('/')[-1]}")
+        subprocess.run(f"tar -xzvf {instance.cellranger_transcriptome_link.split('/')[-1]}", shell=True, executable="/bin/bash")
         
 
 def find_transcriptome(instance, reference_path):
@@ -157,11 +157,15 @@ if __name__ == "__main__":
     from fastq_processor import FastqProcessor
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--baseline', action='store_true', help='True if using baseline data (will override any seeds and counts accordingly), False if using downsampled fastq data')
+    parser.add_argument('-c', '--download_transcriptome', action='store_true', help='Download reference transcriptome before running cellranger count')
     args = parser.parse_args()
    
     with open(f'{parent_path}/config.yaml', 'r') as file:
         config = yaml.safe_load(file)
         
     fastq_processor = FastqProcessor(**config)
+    
+    if args.download_transcriptome:
+        fastq_processor.cellranger_install_transcriptome()
 
     fastq_processor.cellranger_count(baseline=args.baseline)

@@ -24,8 +24,6 @@ def create_symlinks():
         if not os.path.exists(target_path):
             # Create symlink if it doesn't exist
             subprocess.run(["ln", "-s", source_path, target_path], check=True, shell=False)
-        else:
-            print(f"Symlink for {source_path} already exists.")
 
 class FastqProcessor():
     def __init__(self, **kwargs):

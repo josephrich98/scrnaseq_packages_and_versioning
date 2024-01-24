@@ -66,10 +66,16 @@ def main(args):
         os.chdir(os.path.join(fastq_processor.output_directory, "10x_genomics_matrices"))
         subprocess.run(f"wget {fastq_processor.filtered_feature_bc_matrix_link}", shell=True, executable="/bin/bash")
     
-    if args.download_fastqs and fastq_processor.fastq_link is not None and not os.path.exists(fastq_processor.original_fastq_directory):
+    if args.download_fastqs and fastq_processor.fastq_link is not None:
         os.chdir(fastq_processor.data_directory)
-        subprocess.run(f"wget {fastq_processor.fastq_link}", shell=True, executable="/bin/bash")
-        subprocess.run(f"tar -xvf {fastq_processor.data_name}_fastqs.tar", shell=True, executable="/bin/bash")
+        
+        if os.path.exists(fastq_processor.original_fastq_directory):
+            if not os.listdir(fastq_processor.original_fastq_directory):
+                subprocess.run(f"wget {fastq_processor.fastq_link}", shell=True, executable="/bin/bash")
+                subprocess.run(f"tar -xvf {fastq_processor.data_name}_fastqs.tar", shell=True, executable="/bin/bash")
+        else:
+            subprocess.run(f"wget {fastq_processor.fastq_link}", shell=True, executable="/bin/bash")
+            subprocess.run(f"tar -xvf {fastq_processor.data_name}_fastqs.tar", shell=True, executable="/bin/bash")
     
     if fastq_processor.frac_list:
         fastq_processor.downsample_fastqs()
