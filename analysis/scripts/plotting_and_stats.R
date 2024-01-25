@@ -84,6 +84,7 @@ file_paths_default <- list(
     wilcoxon_boxplot_signed_file_path = glue("{output_base_path_default}/plots/wilcoxon_boxplot_signed.tiff")
 )
 
+
 make_save_path <- function(filepath = NULL, default_filepath = NULL) {
     if (filepath == TRUE) {
         filepath <- default_filepath
@@ -129,6 +130,7 @@ make_knee_plot <- function(bc_rank, save = FALSE) {
     return(p)
 }
 
+
 get_density <- function(x, y, ...) {
     dens <- MASS::kde2d(x, y, ...)
     ix <- findInterval(x, dens$x)
@@ -136,6 +138,7 @@ get_density <- function(x, y, ...) {
     ii <- cbind(ix, iy)
     return(dens$z[ii])
 }
+
 
 make_umi_scatterplot <- function(res_mat1, res_mat2, UMI_cutoff1 = NULL, UMI_cutoff2 = NULL, point_density = FALSE, res_mat1_name = "kb", res_mat2_name = "cellranger", color_points = FALSE, save = FALSE) {
     common_cells <- intersect(colnames(res_mat1), colnames(res_mat2))
@@ -246,16 +249,8 @@ make_violin_plot <- function(seu, show_points = FALSE, color = NULL, save = FALS
     return(combined_plot)
 }
 
+
 upset_plot_general <- function(data, group1_name, group2_name, comparison, before_filtering = FALSE, as_ggplot = FALSE, save = FALSE, default_plotpath) {
-    # all_elements <- unique(c(data$Seurat, data$Scanpy))
-    # 
-    # df <- data.frame(
-    #     element = all_elements,
-    #     Seurat = all_elements %in% data$Seurat,
-    #     Scanpy = all_elements %in% data$Scanpy
-    # )
-    
-    
     all_elements <- unique(c(data[[group1_name]], data[[group2_name]]))
     
     df <- setNames(
@@ -398,8 +393,6 @@ make_euler_seurat_vs_scanpy <- function(seu, adata, comparison, before_QC = FALS
 }
 
 
-
-
 plot_differences_histogram_seurat_vs_scanpy <- function(df, column, title, median_or_variance = NULL, x_label = "Differences", save = FALSE) {
     column_sym <- sym(column)
     
@@ -451,15 +444,6 @@ plot_differences_histogram_seurat_vs_scanpy <- function(df, column, title, media
         p <- p +
             annotation_custom(grob = inset_grob, xmin = inset_plot_coordinates$xmin, xmax = inset_plot_coordinates$xmax, ymin = inset_plot_coordinates$ymin, ymax = inset_plot_coordinates$ymax)
     }
-
-    # if (median_or_variance == "median") {
-    #     p <- p + 
-    #         geom_vline(aes(xintercept=median(!!column_sym, na.rm=TRUE)), color="black", linetype="dashed", linewidth=1) +
-    #         annotate("text", x = Inf, y = Inf, label = paste("Median =", round(median(df[[column]], na.rm = TRUE), 2)), hjust=1, vjust=1, col="black")
-    # } else {
-    #     p <- p + 
-    #         annotate("text", x = Inf, y = Inf, label = paste("Variance =", round(var(df[[column]], na.rm = TRUE), 2)), hjust=1, vjust=1, col="black")
-    # }
     
     if (column == "logFC_difference_magnitude") {
         default_plotpath <- file_paths_default$logFC_histogram_magnitude_file_path
@@ -516,6 +500,7 @@ plot_differences_boxplot_seurat_vs_scanpy <- function(df, column, title, x_label
     return(p)
 }
 
+
 scatterplot_naming <- function(group1_name, group2_name) {
     if (group1_name == "Seurat") {
         logFC_group1 <- "logFC_r"
@@ -541,6 +526,7 @@ scatterplot_naming <- function(group1_name, group2_name) {
     
     return(list(logFC_group1 = logFC_group1, logFC_group2 = logFC_group2, p_val_adj_group1 = p_val_adj_group1, p_val_adj_group2 = p_val_adj_group2))
 }
+
 
 plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = FALSE, show_legend = FALSE, group1_name = "Seurat", group2_name = "Scanpy", save = FALSE) {
     scatterplot_names <- scatterplot_naming(group1_name, group2_name)
@@ -603,6 +589,7 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
     
     return (p)
 }
+
 
 plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALSE, show_legend = FALSE, group1_name = "Seurat", group2_name = "Scanpy", save = FALSE) {
     scatterplot_names <- scatterplot_naming(group1_name, group2_name)
@@ -702,8 +689,6 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
 }
 
 
-
-
 make_bar_plot <- function(df, metric, save = FALSE, filename = NULL) {
     p <- ggplot(df, aes(x = !!sym("Categories"), y = !!sym(metric))) +
         geom_bar(stat = "identity", aes(fill = !!sym("Categories"))) +
@@ -769,7 +754,6 @@ plot_var_explained <- function(eigs_df, npcs = 20, group_names = waiver(), save 
 }
 
 
-
 plot_pca_compare <- function(embeddings1, embeddings2,
                              pcs = 1:2, group1_name = "Seurat", group2_name = "Scanpy", group_labels = waiver(), save = FALSE) {
     # See if needs to be flipped
@@ -818,6 +802,7 @@ plot_pca_compare <- function(embeddings1, embeddings2,
     return (p)
 }
 
+
 plot_loading_diffs <- function(df, mean_loadings_diff = NULL, save = FALSE) {
     df$differences[is.na(df$differences)] <- .Machine$double.eps
     df$differences[(df$differences == 0)] <- .Machine$double.eps
@@ -857,6 +842,7 @@ plot_loading_diffs <- function(df, mean_loadings_diff = NULL, save = FALSE) {
     
     return (p)
 }
+
 
 plot_eigs_diffs <- function(df, save = FALSE) {
     p <- ggplot(df, aes(PC, value, color = type)) +
@@ -928,6 +914,7 @@ make_jaccard_plot <- function(jaccards, median_jaccard = NULL, save = FALSE) {
     return(jaccard_plot)
 }
 
+
 make_knn_scatterplot <- function(nei_pairs, save = FALSE) {
     knn_scatterplot <- ggplot(nei_pairs, aes(value1, value2)) +
         geom_point(size = 0.5, alpha = 0.3, color = seurat_v_scanpy_baseline_color) +
@@ -945,6 +932,7 @@ make_knn_scatterplot <- function(nei_pairs, save = FALSE) {
     
     return (knn_scatterplot)
 }
+
 
 make_combined_pc_variance_loadings_plot <- function(combined_pc_variance, loading_diffs, save = FALSE) {
     combined_pc_variance_mod <- combined_pc_variance + 
@@ -977,8 +965,6 @@ make_knn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
         scale_x_continuous(breaks = seq(xmin, xmax, by = 1)) +
         coord_cartesian(xlim = c(xmin, xmax),
                         ylim = c(0,1)) +
-        # labs(x = "log(SNN Degree Ratio)", y = "SNN Jaccard", parse = TRUE) +
-        # labs(x = paste0("y == log[", 2, "](SNN Degree Ratio)"), y = "SNN Jaccard", parse = TRUE) +  
         theme_minimal() +
         stat_function(fun = function(x) 2^x, color = "grey30", linetype = 2, xlim = c(xmin, 0)) +
         stat_function(fun = function(x) 2^(-x), color = "grey30", linetype = 2, xlim = c(0, xmax)) +
@@ -1007,10 +993,9 @@ make_knn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
     return (p)
 }
 
+
 make_umap_jaccard_plot <- function(jaccards_df, facet = NULL, save = FALSE) {
     if(all(jaccards_df$JaccardIndex == 1)) {
-        # All values are 1, proceed with plotting
-        
         # Create a simple data frame for plotting
         plot_data <- data.frame(JaccardIndex = 1, Density = 1)
         
@@ -1046,8 +1031,6 @@ make_umap_jaccard_plot <- function(jaccards_df, facet = NULL, save = FALSE) {
         }
     }
     
-    
-    
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$umap_jaccard_knn_density)
         ggsave(filepath, plot = umap_jaccard_plot, dpi = dpi, bg = "white")
@@ -1066,7 +1049,6 @@ plot_heatmap <- function(jacc_seu_sc3, ari_value = NULL, show_axis_titles = FALS
         treeheight_col <- 0
     }
     
-
     cluster_pheatmap <- as.ggplot(pheatmap::pheatmap(jacc_seu_sc3, color = scales::viridis_pal(end = max(jacc_seu_sc3))(255), treeheight_row = treeheight_row, treeheight_col = treeheight_col))
     if (show_axis_titles || !is.null(ari_value)) {
         cluster_pheatmap <- cluster_pheatmap + coord_cartesian(clip = "off") +
@@ -1147,6 +1129,7 @@ plot_alluvial <- function(clus_df_gather, group1_name = "Seurat", group2_name = 
     
 }
 
+
 make_umap_plot <- function(dataframe, package, title = "UMAP", overall_min_dim1 = 0, overall_max_dim1 = 20, overall_min_dim2 = 0, overall_max_dim2 = 20, show_legend = FALSE) {
     p <- ggplot(dataframe, aes(x = UMAP_1, y = UMAP_2, color = as.factor(cluster))) +
         geom_point(size = 0.1) +
@@ -1174,6 +1157,7 @@ make_umap_plot <- function(dataframe, package, title = "UMAP", overall_min_dim1 
     
     return(p)
 }
+
 
 plot_umap <- function(group1_umap_info, group1_clusters, group2_umap_info, group2_clusters, group1 = "Seurat", group2 = "Scanpy", group1_title = "", group2_title = "", show_legend = FALSE, save = FALSE) {
     umap_df_group1 <- as.data.frame(group1_umap_info)
@@ -1240,7 +1224,6 @@ plot_umap <- function(group1_umap_info, group1_clusters, group2_umap_info, group
 }
 
 
-
 calculate_individual_de_stats <- function(markers2, column_name, column_equation) {
     markers2[[column_name]] <- column_equation
     
@@ -1258,6 +1241,7 @@ calculate_individual_de_stats <- function(markers2, column_name, column_equation
     
     return(markers2)
 }
+
 
 calculate_de_stats <- function(markers2, group1_name = "Seurat", group2_name = "Scanpy", save = FALSE) {
     de_names <- scatterplot_naming(group1_name, group2_name)
@@ -1324,104 +1308,6 @@ calculate_de_stats <- function(markers2, group1_name = "Seurat", group2_name = "
 }
 
 
-
-compute_single_umap_distance <- function(umap_data, clusters) {
-    # Convert to data frame
-    umap_df <- as.data.frame(umap_data)
-    
-    names(umap_df) <- c('UMAP_1', 'UMAP_2')
-    
-    # Add cluster information
-    umap_df$cluster <- clusters
-    
-    # Calculate centroids for each cluster
-    centroids <- umap_df %>%
-        group_by(cluster) %>%
-        summarize(centroid_x = mean(UMAP_1), centroid_y = mean(UMAP_2))
-    
-    # Compute pairwise distances between centroids
-    distance_matrix <- as.matrix(dist(centroids[, c('centroid_x', 'centroid_y')]))
-    
-    # Convert to a readable format
-    pairwise_distances <- as.data.frame(as.table(distance_matrix))
-    names(pairwise_distances) <- c("Cluster1", "Cluster2", "Distance")
-    pairwise_distances <- pairwise_distances[pairwise_distances$Cluster1 != pairwise_distances$Cluster2, ]
-    
-    return (pairwise_distances)
-}
-
-compute_umap_distances <- function(umap_data_seu, clusters_seu, scan_umap_info, scan_clusters, save = FALSE) {
-    pairwise_distances_seu <- compute_single_umap_distance(umap_data_seu, clusters_seu)
-    pairwise_distances_scan <- compute_single_umap_distance(scan_umap_info, scan_clusters)
-    
-    merged_distances <- merge(pairwise_distances_seu, pairwise_distances_scan, 
-                              by = c("Cluster1", "Cluster2"), 
-                              suffixes = c("_1", "_2"))
-    
-    merged_distances$difference <- with(merged_distances, abs(Distance_1 - Distance_2))
-    
-    average_difference_per_cluster <- merged_distances %>%
-        gather(key = "Cluster", value = "ClusterID", Cluster1, Cluster2) %>%
-        group_by(ClusterID) %>%
-        summarize(average_difference = mean(difference))
-    
-    overall_average_difference <- mean(merged_distances$difference)
-    
-    if (save == TRUE || is.character(save)) {
-        filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_knn_clustering_umap_file)
-        sink(filepath, split = TRUE) 
-    }
-    
-    # print(paste("Average difference in UMAP distance per cluster", average_difference_per_cluster))
-    print(paste("Average difference in UMAP distance overall:", overall_average_difference))
-    
-    if (save == TRUE || is.character(save)) {
-        sink() 
-    }
-    
-    return (list(average_difference_per_cluster, overall_average_difference))
-}
-
-plot_umap_centroids <- function(average_difference_per_cluster, umap_overall_average_difference, save = FALSE) {
-    average_difference_per_cluster$ClusterID <- as.numeric(average_difference_per_cluster$ClusterID)
-    average_difference_per_cluster <- arrange(average_difference_per_cluster, ClusterID)
-    
-    umap_overall_average_difference_formatted <- sprintf("%.2f", umap_overall_average_difference)
-    
-    # Create the plot
-    p <- ggplot(average_difference_per_cluster, aes(x = ClusterID, y = average_difference)) +
-        geom_col(fill = seurat_v_scanpy_baseline_color, color = "black") +
-        ylim(0, max(average_difference_per_cluster$average_difference, na.rm = TRUE)) +
-        coord_cartesian(clip = "off") +
-        theme_minimal() +
-        theme(
-            panel.grid.minor.x = element_blank(),
-            axis.text = element_text(size = rel(axis_element_size)),  # Increase axis tick labels size
-            axis.title = element_text(size = rel(axis_element_size)),  # Increase axis titles size
-            plot.margin = margin(30, 5.5, 5.5, 5.5)
-            ) +
-        labs(
-            x = "Cluster ID",
-            y = "Average Difference in Centroids Distances",
-        ) +
-        geom_hline(yintercept = umap_overall_average_difference, linetype = 2, color = "black") +
-        annotate("text", x = 4.2, y = max(average_difference_per_cluster$average_difference)*0.95, label = glue("Overall Average Difference: {umap_overall_average_difference_formatted}"), hjust = 0, vjust = -1.9, color = "black", size = 6.8) +
-        #! geom_hline(yintercept = xxx, linetype = 2, color = "gray30") +
-        #! annotate("text", x = xxx, y = xxx, label = "Variation due to random seeds", hjust = 0, vjust = 0, color = "gray30", size = 5) +
-        scale_x_continuous(breaks = unique(average_difference_per_cluster$ClusterID))
-    
-    if (save == TRUE || is.character(save)) {
-        filepath <- make_save_path(filepath = save, default_filepath = default_file_paths$umap_centroid_distances)
-        ggsave(filepath, plot = p, dpi = dpi, bg = "white")  
-    }
-    
-    return (p)
-}
-
-
-
-
-
 make_upset_scanpy <- function(adata1, adata2, comparison = comparison, group_names = seurat_group_names_default, before_filtering = FALSE, as_ggplot = FALSE, save = FALSE) {
     if (comparison == "Gene") {
         data <- list(
@@ -1457,6 +1343,7 @@ make_upset_scanpy <- function(adata1, adata2, comparison = comparison, group_nam
     
     return(p)
 }
+
 
 make_upset_seurat <- function(group1, group2, comparison = comparison, group_names = seurat_group_names_default, before_filtering = FALSE, as_ggplot = FALSE, save = FALSE) {
     if (comparison == "Gene") {
@@ -1571,8 +1458,6 @@ make_euler_scanpy <- function(adata1, adata2, comparison, before_QC = FALSE, gro
 }
 
 
-
-
 make_euler_seurat <- function(seu1, seu2, comparison, before_QC = FALSE, group_names = seurat_group_names_default, save_plot = FALSE, save_stats = FALSE) {
     if (comparison == "Gene") {
         data <- list(
@@ -1646,6 +1531,7 @@ make_euler_seurat <- function(seu1, seu2, comparison, before_QC = FALSE, group_n
     return(euler_plot_ggplot_compatible)
 }
 
+
 make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group2_name = "Group 2", save = FALSE) {
     vln_seu1 <- VlnPlot(seu1, features = "nFeature_RNA", pt.size = 0, cols = group1_color) + 
         coord_cartesian(ylim = c(0, 8250), clip = "off") +
@@ -1678,5 +1564,4 @@ make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group
     }
     
     return(combined_plot)
-    
 }

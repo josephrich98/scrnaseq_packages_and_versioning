@@ -206,6 +206,7 @@ file_paths <- list(
     umap_jaccard_knn_density_scan1_facet = glue::glue("{output_base_path}/plots/umap_jaccard_knn_density_scan1_facet.tiff"),
     umap_jaccard_knn_density_scan2_facet = glue::glue("{output_base_path}/plots/umap_jaccard_knn_density_scan2_facet.tiff"),
     umap_alluvial = glue::glue("{output_base_path}/plots/umap_alluvial.tiff"),
+    umap_alluvial_legend = glue::glue("{output_base_path}/plots/umap_alluvial_legend.tiff"),
     umap_umap_leiden_scan1 = glue::glue("{output_base_path}/plots/umap_umap_leiden_scan1.tiff"),
     umap_umap_leiden_scan2 = glue::glue("{output_base_path}/plots/umap_umap_leiden_scan2.tiff"),
 
@@ -1046,7 +1047,7 @@ jaccard_degree_scatterplot <- make_knn_jaccard_degree_scatterplot(jaccards, save
 jaccard_degree_scatterplot
 ```
 
-If data_input is not default: 
+If data_input == "scan1" or "scan2": Apply KNN and SNN to be the same
 ```{python}
 if data_input == "scan1" and (scan1_inds == scan2_inds):
     adata2.obsp['connectivities'] = adata1.obsp['connectivities']
@@ -1060,7 +1061,6 @@ if data_input == "scan2" and (scan1_inds == scan2_inds):
     snn_graph_scan1 = adata1.obsp['connectivities']
     knn_graph_scan1 = adata1.obsp['distances']
 ```
-
 
 Clustering
 ```{python}
@@ -1136,7 +1136,7 @@ if(file_paths$pca_knn_clustering_umap_file != FALSE) {
 }
 ```
 
-Jaccard and alluvial plots of clusters
+Heatmap of clusters
 ```{r}
 scan1_clusters <- factor(scan1_clusters, levels = sort(as.numeric(levels(scan1_clusters))))
 scan2_clusters <- factor(scan2_clusters, levels = sort(as.numeric(levels(scan2_clusters))))
@@ -1147,7 +1147,7 @@ cluster_heatmap <- plot_heatmap(jacc_scan1_scan2, ari_value, show_axis_titles = 
 cluster_heatmap
 ```
 
-
+Alluvial plot of clusters
 ```{r}
 df <- tibble(Scanpy1 = scan1_clusters,
              Scanpy2 = scan2_clusters)
@@ -1171,6 +1171,7 @@ alluvial_plot
 alluvial_plot_legend
 ```
 
+Reorder adata2 clusters to match ordering in alluvial
 ```{r}
 unique_mapping <- clus_df_gather %>%
     ungroup() %>%
@@ -1203,7 +1204,6 @@ if data_input == "scan2" and (scan1_inds == scan2_inds):
     adata1.obs[r.scanpy_clustering_algorithm] = r.scan2_clusters
 ```
 
-
 UMAP
 ```{python}
 sc.tl.umap(adata1, min_dist = r.scanpy_umap_min_dist, random_state = int(r.umap_seed1))
@@ -1212,6 +1212,7 @@ sc.tl.umap(adata2, min_dist = r.scanpy_umap_min_dist, random_state = int(r.umap_
 # sc.pl.umap(adata, color=r.scanpy_clustering_algorithm, palette=r.ditto_colors, ax=ax, show=False, title="UMAP (Clustering)")
 ```
 
+Plot UMAP
 ```{r}
 umap_plots <- plot_umap(group1_umap_info = py$adata1$obsm['X_umap'], group1_clusters = py$adata1$obs[scanpy_clustering_algorithm][,1], group2_umap_info = py$adata2$obsm['X_umap'], group2_clusters = scan2_clusters_renumbered, group1 = scan1_name, group2 = scan2_name, save = c(file_paths$umap_scan1, file_paths$umap_scan2))
 scan1_umap <- umap_plots[[1]]
@@ -1230,6 +1231,7 @@ if (identical(scan1_inds, scan2_inds)) {
 }
 ```
 
+Compute KNN graph of UMAP space
 ```{r}
 scan1_umap_data <- py$adata1$obsm['X_umap']
 scan2_umap_data <- py$adata2$obsm['X_umap']
@@ -1263,6 +1265,7 @@ scan1_umap_knn <- dbscan::kNN(scan1_umap_data, k = umap_knn_k)
 scan2_umap_knn <- dbscan::kNN(scan2_umap_data, k = umap_knn_k)
 ```
 
+Find jaccard indices of KNN graphs from UMAP space
 ```{r}
 jaccards_all_cells <- calculate_knn_jaccards(scan1_umap_knn$id, scan2_umap_knn$id)
 
@@ -1279,6 +1282,7 @@ if(file_paths$pca_knn_clustering_umap_file != FALSE) {
 }
 ```
 
+Plot jaccard indices
 ```{r}
 jaccards_df <- data.frame(Cells = overlapping_inds, JaccardIndex = jaccards_all_cells, scan1_clusters = scan1_cluster_data_filtered, scan2_clusters = scan2_cluster_data_filtered)
 
@@ -1291,6 +1295,7 @@ umap_jaccard_plot_scan1_facet
 umap_jaccard_plot_scan2_facet
 ```
 
+Run leiden clustering on KNN graphs from UMAP space
 ```{r}
 set.seed(R_random_seed)
 
@@ -1301,6 +1306,7 @@ scan1_umap_knn_clusters <- reorder_clusters_descending(scan1_umap_knn_clusters)
 scan2_umap_knn_clusters <- reorder_clusters_descending(scan2_umap_knn_clusters)
 ```
 
+Compute ARI and plot alluvial plot of leiden clustering results on KNN graphs from UMAP space
 ```{r}
 ari_value_umap = mclust::adjustedRandIndex(as.vector(scan1_umap_knn_clusters), as.vector(scan2_umap_knn_clusters))
 
@@ -1326,14 +1332,14 @@ clus_df_gather_umap <- clus_df_gather_umap %>% mutate(
     group2_column_original_clusters := as.numeric(as.character(.data[[scan2_name]])))
 
 clus_df_gather_umap <- sort_clusters_by_agreement(clus_df_gather_umap, stable_column = scan1_name, reordered_column = scan2_name)
-# clus_df_gather_umap <- sort_clusters_by_agreement(clus_df_gather_umap, stable_column = scan1_name, reordered_column = scan2_name)
 
-umap_alluvial_plot_legend <- plot_alluvial(clus_df_gather_umap, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 0.5, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$umap_alluvial)
+umap_alluvial_plot <- plot_alluvial(clus_df_gather_umap, color_boxes = TRUE, color_bands = FALSE, alluvial_alpha = 0.5, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$umap_alluvial)
+umap_alluvial_plot_legend <- plot_alluvial(clus_df_gather_umap, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 0.5, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$umap_alluvial_legend)
 
 umap_alluvial_plot_legend
 ```
 
-
+Reorder adata2 UMAP clusters to match ordering in alluvial
 ```{r}
 unique_mapping <- clus_df_gather_umap %>%
     ungroup() %>%
@@ -1352,7 +1358,6 @@ named_vector <- setNames(mapped_data[[scan2_name]], mapped_data$cell_id)
 scan2_clusters_renumbered_umap <- factor(named_vector)
 ```
 
-
 UMAP with UMAP Leiden clusters
 ```{r}
 umap_plots <- plot_umap(group1_umap_info = scan1_umap_data, group1_clusters = scan1_umap_knn_clusters, group2_umap_info = scan2_umap_data, group2_clusters = scan2_clusters_renumbered_umap, group1 = scan1_name, group2 = scan2_name, save = c(file_paths$umap_umap_leiden_scan1, file_paths$umap_umap_leiden_scan2))
@@ -1369,6 +1374,7 @@ sc.tl.rank_genes_groups(adata1, r.scanpy_clustering_algorithm, use_raw=True, met
 sc.tl.rank_genes_groups(adata2, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = True)
 ```
 
+Modify column naming
 ```{r}
 result1 <- get_py_de_results("adata1")
 result2 <- get_py_de_results("adata2")
@@ -1380,13 +1386,11 @@ result2 <- result2 %>%
     dplyr::rename(avg_log2FC = log_fc, p_val_adj = p_value_adj, p_val = p_value)
 ```
 
-
-Identify best markers
+Compare marker genes
 ```{r}
 scan1_filtered_markers <- result1 %>% filter(p_val_adj < 0.05)
 scan2_filtered_markers <- result2 %>% filter(p_val_adj < 0.05)
 
-# vectorized_seu_unfiltered_markers <- unique(markers$gene)
 vectorized_scan1_filtered_markers <- unique(scan1_filtered_markers$gene)
 vectorized_scan2_filtered_markers <- unique(scan2_filtered_markers$gene)
 
@@ -1410,6 +1414,7 @@ if (data_input == "default" || !identical(scan1_inds, scan2_inds)) {
 }
 ```
 
+Compare markers
 ```{r}
 # Select gene and cluster columns
 result1_markers_df <- result1 %>% select(gene = gene, cluster = cluster)
@@ -1424,8 +1429,7 @@ markers_euler
 upset_markers_all <- make_upset_scanpy(vectorized_scan1_markers, vectorized_scan2_markers, comparison = "Marker", group_names = scanpy_group_names, save = file_paths$upset_markers)
 ```
 
-
-Now add the results to the scanpy data frame
+Combine all DE data in one dataframe markers2
 ```{r}
 markers2 <- result1 |> 
     inner_join(result2, by = c("cluster", "gene"), suffix = c(glue(".{scan1_name}"), glue(".{scan2_name}")))   #? originally left join
@@ -1442,20 +1446,26 @@ markers2[[glue("FC.{scan1_name}")]] <- 2^markers2[[glue("avg_log2FC.{scan1_name}
 markers2[[glue("FC.{scan2_name}")]] <- 2^markers2[[glue("avg_log2FC.{scan2_name}")]]
 ```
 
-
 Calculate mean magnitude of difference in log fold change between the 2 packages
 ```{r}
-# read_fraction_after_downsampling <- "1_0"
-# read_downsample_seed <- 0
-# matrix_generation_method <- "kb"
-# downsample_frac_seed <- glue("frac{read_fraction_after_downsampling}_seed{read_downsample_seed}")
-# markers2_object_dir <- glue("{project_base_path}/output/{downsample_frac_seed}")
-# markers2 <- readRDS(glue("{markers2_object_dir}/markers2_{matrix_generation_method}.rds"))
-
 markers2 <- calculate_de_stats(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$de_stats_file)
+```
 
-filtered_markers <- markers2 %>%
-    select(cluster, gene, avg_log2FC.full, avg_log2FC.downsampled, p_val_adj.full, p_val_adj.downsampled)
+Plot scatterplots - if this crashes R, try scanpy_de_plots.R
+```{r}
+# markers2[[glue("p_val_adj.{scan1_name}")]][markers2[[glue("p_val_adj.{scan1_name}")]] == 0] <- .Machine$double.xmin
+# markers2[[glue("p_val_adj.{scan2_name}")]][markers2[[glue("p_val_adj.{scan2_name}")]] == 0] <- .Machine$double.xmin
+# 
+# logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
+# pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
+# 
+# logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
+# 
+# 
+# logFC_scatterplot
+# logFC_scatterplot_with_legend
+# 
+# pvaladj_scatterplot
 ```
 
 Save markers df
@@ -1469,24 +1479,6 @@ if (save_data == TRUE) {
     py$adata2$write_h5ad(output_data_file_paths$adata2_object, compression=py$hdf5plugin$FILTERS$zstd)
     saveRDS(subset_markers2, file = output_data_file_paths$markers2)
 }
-```
-
-
-Plot scatterplots
-```{r}
-markers2[[glue("p_val_adj.{scan1_name}")]][markers2[[glue("p_val_adj.{scan1_name}")]] == 0] <- .Machine$double.xmin
-markers2[[glue("p_val_adj.{scan2_name}")]][markers2[[glue("p_val_adj.{scan2_name}")]] == 0] <- .Machine$double.xmin
-
-logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
-pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
-
-logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
-
-
-logFC_scatterplot
-logFC_scatterplot_with_legend
-
-pvaladj_scatterplot
 ```
 
 ```{r}

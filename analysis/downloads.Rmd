@@ -38,10 +38,8 @@ if (matrix_source == "generated") {
 }
 ```
 
-
-# Install packages
+Install packages
 ```{r}
-# Rscript -e "install.packages(c('remotes', 'tidyverse', 'rmarkdown', 'BiocManager'))"
 if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
 
 if (!requireNamespace("tidyverse", quietly = TRUE)) remotes::install_version("tidyverse", version = "2.0.0")
@@ -74,20 +72,17 @@ if (!requireNamespace("concordexR", quietly = TRUE)) BiocManager::install("conco
 if (!requireNamespace("biomaRt", quietly = TRUE)) BiocManager::install("biomaRt", version=bioconductor_version, update = FALSE)
 ```
 
+Set up conda environment
+```{r}
+conda_binary <- "auto"
+conda_env_name <- "analysis_env"
+yaml_path <- NULL
+```
+
 ```{r}
 library(reticulate)
-# Sys.setenv(PATH = paste("/home/miniconda/bin", Sys.getenv("PATH"), sep=":"))
-# conda_binary <- "/home/miniconda/bin/conda"  # replace with "auto" for default
-conda_binary <- "auto"
-
-conda_env_name = "analysis_env"
 
 if (!(conda_env_name %in% conda_list(conda_binary)$name)) {
-    # If it doesn't exist, create the environment
-    
-    # # Do this in place of below if environment.yml exists
-    # conda_create(environment="environment.yml")
-    
     conda_create(envname = conda_env_name, python_version = "3.9", conda = conda_binary)
     
     conda_install(
@@ -116,6 +111,8 @@ if (!(conda_env_name %in% conda_list(conda_binary)$name)) {
                 "louvain==0.8.1"
             )
         )
+} else {
+    conda_create(environment = yaml_path)
 }
 
 Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env_name, "bin/python3.9", sep="/"))
@@ -123,11 +120,5 @@ use_condaenv(conda_env_name)
 ```
 
 ```{python}
-# !pip install git+https://github.com/has2k1/scikit-misc.git@main
 !pip install git+https://github.com/has2k1/scikit-misc.git@269f61e
-```
-
-```{r}
-# # # # conda_install(conda = conda_binary,envname = conda_env_name, channel = "conda-forge", c("umap-learn==0.5.4"))   # BAD
-# conda_install(conda = conda_binary,envname = conda_env_name, pip = TRUE, c("umap-learn==0.5.2, louvain==0.8.1"))
 ```

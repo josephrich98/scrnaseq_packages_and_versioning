@@ -1,7 +1,7 @@
 ---
 title: "aggregate_plots"
 output: html_document
-date: "2023-11-29"
+date: "2024-01-01"
 ---
 
 ```{r}
@@ -17,9 +17,8 @@ seurat_version <- "4.3.0"
 scanpy_version <- "1.9.5"
 data_input <- "default"   # "default" or "same"
 matrix_generation <- "kb0_28_0_raw_generated_sa"
-# read_fraction_downsampled_for_cell_downsample_comparisons = "1_0"
+read_fraction_downsampled_for_cell_downsample_comparisons = "1_0"
 cell_fraction_downsampled_for_read_downsample_comparisons = "1_0"
-
 
 output_base_path <- glue("{project_base_path}/output/{data_name}/seurat{seurat_version}/input_{data_input}/{matrix_generation}")
 ```
@@ -50,7 +49,7 @@ get_stats_filepath <- function(set, frac_str, package, type_downsampled) {
 }
 ```
 
-List
+List of all metrics to extract
 ```{r}
 variable_sets <- list(
   list(
@@ -177,7 +176,6 @@ variable_sets <- list(
 )
 ```
 
-
 Downsample line plots
 ```{r}
 frac_list <- c(0.02, 0.04, 0.08, 0.16, 0.32, 0.64)   #***
@@ -244,10 +242,6 @@ for (set in variable_sets) {
         }
     }
     
-    
-    
-    
-    
     results_df2 <- results_df %>%
         distinct() %>%
         group_by(frac) %>%
@@ -255,18 +249,6 @@ for (set in variable_sets) {
         value_group1 = max(value_group1, na.rm = TRUE), 
         value_group2 = max(value_group2, na.rm = TRUE)
     )
-    
-    
-    
-    
-    
-    
-    # results_df2 <- data.frame(
-    #   frac = c(0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1),
-    #   value_group1 = c(.01,.01,.01,.01,.01,.5,1),
-    #   value_group2 = c(.1,.1,.1,.1,.1,.1,.1)
-    # )
-    # baseline_value_seurat_vs_scanpy <- 1
     
     long_df <- results_df2 %>% 
         pivot_longer(
@@ -344,10 +326,6 @@ for (set in variable_sets) {
     
     ggsave(output_plot_filepath, plot = p, dpi = 350, bg = "white")
     
-    
-    
-    
-    
     group1_df <- filter(long_df, variable == "value_group1")
     group2_df <- filter(long_df, variable == "value_group2")
     
@@ -392,7 +370,6 @@ for (set in variable_sets) {
     print(glue("{set$statistic_name} - Group 2 (Scanpy) fraction intersecting with seu vs scan same input: {x_intersect_same_input_group2}"))
     sink()
 }
-
 ```
 
 Bar charts summarizing all line graphs
@@ -476,14 +453,13 @@ aggregate_bar_chart <- ggplot(long_bar_chart, aes(x = Category, y = value, fill 
 
 print(aggregate_bar_chart)
 
-
-
 aggregate_plot_filepath <- glue("{output_path_base}/{aggregate_bar_chart_name}")
 dir.create(dirname(aggregate_plot_filepath), recursive = TRUE, showWarnings = FALSE)
 
 ggsave(aggregate_plot_filepath, plot = aggregate_bar_chart, dpi = 350, bg = "white")
 ```
 
+Create the legend for all plots with dummy data
 ```{r}
 x <- 1:10
 df <- data.frame(
@@ -509,11 +485,3 @@ custom_legend_filepath <- glue("{output_path_base}/line_plot_legend.tiff")
 
 ggsave(custom_legend_filepath, plot = custom_legend, dpi = 350, bg = "white")
 ```
-
-```{r}
-custom_legend2 <- custom_legend +
-    geom_hline(aes(yintercept = 3), size = 0.3)
-
-custom_legend2
-```
-

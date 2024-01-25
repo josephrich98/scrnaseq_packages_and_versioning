@@ -200,6 +200,7 @@ file_paths <- list(
     umap_jaccard_knn_density_seu1_facet = glue::glue("{output_base_path}/plots/umap_jaccard_knn_density_seu1_facet.tiff"),
     umap_jaccard_knn_density_seu2_facet = glue::glue("{output_base_path}/plots/umap_jaccard_knn_density_seu2_facet.tiff"),
     umap_alluvial = glue::glue("{output_base_path}/plots/umap_alluvial.tiff"),
+    umap_alluvial_legend = glue::glue("{output_base_path}/plots/umap_alluvial_legend.tiff"),
     umap_umap_leiden_seu1 = glue::glue("{output_base_path}/plots/umap_umap_leiden_seu1.tiff"),
     umap_umap_leiden_seu2 = glue::glue("{output_base_path}/plots/umap_umap_leiden_seu2.tiff"),
 
@@ -772,8 +773,7 @@ combined_plot <- make_combined_pc_variance_loadings_plot(combined_pc_variance, l
 combined_plot
 ```
 
-
-If data_input == "seu1" or "seu2: Apply PCs to be the same
+If data_input == "seu1" or "seu2": Apply PCs to be the same
 ```{r}
 if (data_input == "seu1" && identical(seu1_inds, seu2_inds)) {
     seu2[["pca"]] <- CreateDimReducObject(embeddings = as.matrix(pca_embeddings1), key = "PC_", assay = DefaultAssay(seu1))
@@ -852,6 +852,7 @@ jaccard_degree_scatterplot <- make_knn_jaccard_degree_scatterplot(jaccards, save
 jaccard_degree_scatterplot
 ```
 
+If data_input == "seu1" or "seu2": Apply KNN and SNN graph to be the same
 ```{r}
 if (data_input == "seu1" && identical(seu1_inds, seu2_inds)) {
     seu2@graphs$RNA_snn <- seu1@graphs$RNA_snn
@@ -926,7 +927,7 @@ if(file_paths$pca_knn_clustering_umap_file != FALSE) {
 }
 ```
 
-Jaccard and alluvial plots of clusters
+Heatmap of clusters
 ```{r}
 jacc_seu1_seu2 <- linkClustersMatrix(seu1_clusters, seu2_clusters)
 
@@ -934,7 +935,7 @@ cluster_heatmap <- plot_heatmap(jacc_seu1_seu2, ari_value, show_axis_titles = TR
 cluster_heatmap
 ```
 
-
+Alluvial plot of clusters
 ```{r}
 df <- tibble(Seurat1 = seu1_clusters,
              Seurat2 = seu2_clusters)
@@ -958,7 +959,7 @@ alluvial_plot
 alluvial_plot_legend
 ```
 
-
+Reorder seu2 clusters to match ordering in alluvial
 ```{r}
 unique_mapping <- clus_df_gather %>%
     ungroup() %>%
@@ -977,13 +978,12 @@ named_vector <- setNames(mapped_data[[seu2_name]], mapped_data$cell_id)
 seu2_clusters_renumbered <- factor(named_vector)
 ```
 
-
 ```{r}
 seu1_cluster_data_original <- Idents(seu1)
 seu2_cluster_data_original <- Idents(seu2)
 ```
 
-If data_input == "seu1" or "seu2: Apply cluster data to be the same
+If data_input == "seu1" or "seu2": Apply cluster data to be the same
 ```{r}
 if (data_input == "seu1" && identical(seu1_inds, seu2_inds)) {
     Idents(seu2) <- Idents(seu1)
@@ -996,14 +996,15 @@ if (data_input == "seu2" && identical(seu1_inds, seu2_inds)) {
 }
 ```
 
-
 UMAP
 ```{r}
 seu1_umap_info <- RunUMAP(seu1, dims = 1:seu1_num_pcs, min.dist=seu_umap_min_dist, umap.method = seu_umap_method, seed.use = umap_seed1, metric = seu_umap_metric)
+# DimPlot(seu1_umap_info, reduction = "umap") + scale_color_manual(values = ditto_colors)
 seu2_umap_info <- RunUMAP(seu2, dims = 1:seu2_num_pcs, min.dist=seu_umap_min_dist, umap.method = seu_umap_method, seed.use = umap_seed2, metric = seu_umap_metric)
-# DimPlot(seu_umap_info, reduction = "umap") + scale_color_manual(values = ditto_colors)
+# DimPlot(seu2_umap_info, reduction = "umap") + scale_color_manual(values = ditto_colors)
 ```
 
+Plot UMAP
 ```{r}
 umap_plots <- plot_umap(group1_umap_info = seu1_umap_info$umap@cell.embeddings, group1_clusters = seu1$seurat_clusters, group2_umap_info = seu2_umap_info$umap@cell.embeddings, group2_clusters = seu2_clusters_renumbered, group1 = seu1_name, group2 = seu2_name, save = c(file_paths$umap_seu1, file_paths$umap_seu2))
 seu1_umap <- umap_plots[[1]]
@@ -1022,6 +1023,7 @@ if (identical(seu1_inds, seu2_inds)) {
 }
 ```
 
+Compute KNN graph of UMAP space
 ```{r}
 seu1_umap_data <- seu1_umap_info$umap@cell.embeddings
 seu2_umap_data <- seu2_umap_info$umap@cell.embeddings
@@ -1049,6 +1051,7 @@ seu1_umap_knn <- dbscan::kNN(seu1_umap_data, k = umap_knn_k)
 seu2_umap_knn <- dbscan::kNN(seu2_umap_data, k = umap_knn_k)
 ```
 
+Find jaccard indices of KNN graphs from UMAP space
 ```{r}
 jaccards_all_cells <- calculate_knn_jaccards(seu1_umap_knn$id, seu2_umap_knn$id)
 
@@ -1065,6 +1068,7 @@ if(file_paths$pca_knn_clustering_umap_file != FALSE) {
 }
 ```
 
+Plot jaccard indices
 ```{r}
 jaccards_df <- data.frame(Cells = overlapping_inds, JaccardIndex = jaccards_all_cells, seu1_clusters = seu1_cluster_data_filtered, seu2_clusters = seu2_cluster_data_filtered)
 
@@ -1077,6 +1081,7 @@ umap_jaccard_plot_seu1_facet
 umap_jaccard_plot_seu2_facet
 ```
 
+Run leiden clustering on KNN graphs from UMAP space
 ```{r}
 set.seed(R_random_seed)
 
@@ -1087,6 +1092,7 @@ seu1_umap_knn_clusters <- reorder_clusters_descending(seu1_umap_knn_clusters)
 seu2_umap_knn_clusters <- reorder_clusters_descending(seu2_umap_knn_clusters)
 ```
 
+Compute ARI and plot alluvial plot of leiden clustering results on KNN graphs from UMAP space
 ```{r}
 ari_value_umap = mclust::adjustedRandIndex(as.vector(seu1_umap_knn_clusters), as.vector(seu2_umap_knn_clusters))
 
@@ -1112,16 +1118,14 @@ clus_df_gather_umap <- clus_df_gather_umap %>% mutate(
     group2_column_original_clusters := as.numeric(as.character(.data[[seu2_name]])))
 
 clus_df_gather_umap <- sort_clusters_by_agreement(clus_df_gather_umap, stable_column = seu1_name, reordered_column = seu2_name)
-# clus_df_gather_umap <- sort_clusters_by_agreement(clus_df_gather_umap, stable_column = seu1_name, reordered_column = seu2_name)
 
-
-# umap_alluvial_plot <- plot_alluvial(clus_df_gather_umap, color_boxes = TRUE, color_bands = FALSE, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$alluvial)
-umap_alluvial_plot_legend <- plot_alluvial(clus_df_gather_umap, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 0.5, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$umap_alluvial)
+umap_alluvial_plot <- plot_alluvial(clus_df_gather_umap, color_boxes = TRUE, color_bands = FALSE, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$umap_alluvial)
+umap_alluvial_plot_legend <- plot_alluvial(clus_df_gather_umap, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 0.5, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$umap_alluvial_legend)
 
 umap_alluvial_plot_legend
 ```
 
-
+Reorder seu2 UMAP clusters to match ordering in alluvial
 ```{r}
 unique_mapping <- clus_df_gather_umap %>%
     ungroup() %>%
@@ -1168,7 +1172,7 @@ if (!file.exists(output_data_file_paths$markers_seu2)) {
 }
 ```
 
-Identify best markers
+Compare marker genes
 ```{r}
 seu1_filtered_markers <- markers_seu1 %>% filter(p_val_adj < 0.05)
 seu2_filtered_markers <- markers_seu2 %>% filter(p_val_adj < 0.05)
@@ -1198,6 +1202,7 @@ if (data_input == "default" || !identical(seu1_inds, seu2_inds)) {
 }
 ```
 
+Compare markers
 ```{r}
 # Select gene and cluster columns
 seu1_markers_df <- markers_seu1 %>% select(gene = gene, cluster = cluster)
@@ -1212,8 +1217,7 @@ markers_euler
 upset_markers_all <- make_upset_seurat(vectorized_seu1_markers, vectorized_seu2_markers, comparison = "Marker", group_names = seurat_group_names, save = file_paths$upset_markers)
 ```
 
-
-Now add the results to the Seurat data frame
+Combine all DE data in one dataframe markers2
 ```{r}
 markers2 <- markers_seu1 |> 
     inner_join(markers_seu2, by = c("cluster", "gene"), suffix = c(glue(".{seu1_name}"), glue(".{seu2_name}")))   #? originally left join
@@ -1230,20 +1234,10 @@ markers2[[glue("FC.{seu1_name}")]] <- 2^markers2[[glue("avg_log2FC.{seu1_name}")
 markers2[[glue("FC.{seu2_name}")]] <- 2^markers2[[glue("avg_log2FC.{seu2_name}")]]
 ```
 
-
 Calculate mean magnitude of difference in log fold change between the 2 packages
 ```{r}
-# read_fraction_after_downsampling <- "1_0"
-# read_downsample_seed <- 0
-# matrix_generation_method <- "kb"
-# downsample_frac_seed <- glue("frac{read_fraction_after_downsampling}_seed{read_downsample_seed}")
-# markers2_object_dir <- glue("{project_base_path}/output/{downsample_frac_seed}")
-# markers2 <- readRDS(glue("{markers2_object_dir}/markers2_{matrix_generation_method}.rds"))
-
 markers2 <- calculate_de_stats(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$de_stats_file)
 ```
-
-
 
 Plot scatterplots
 ```{r}
@@ -1262,7 +1256,6 @@ logFC_scatterplot_with_legend
 pvaladj_scatterplot
 ```
 
-
 Save markers df
 ```{r}
 subset_markers2 <- markers2[, c("gene", "cluster", glue("avg_log2FC.{seu1_name}"), glue("avg_log2FC.{seu2_name}"), glue("p_val_adj.{seu1_name}"), glue("p_val_adj.{seu1_name}"), "logFC_difference_magnitude", "logFC_difference_signed", "pvaladj_difference_magnitude", "pvaladj_difference_signed")]
@@ -1272,7 +1265,6 @@ if (save_data == TRUE) {
     saveRDS(seu1, file = output_data_file_paths$seu1_object)
     saveRDS(markers_seu2, file = output_data_file_paths$markers_seu2)
     saveRDS(seu2, file = output_data_file_paths$seu2_object)
-    
     saveRDS(subset_markers2, file = output_data_file_paths$markers2)
 }
 ```

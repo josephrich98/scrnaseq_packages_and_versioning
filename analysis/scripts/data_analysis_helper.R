@@ -1,7 +1,3 @@
-library(tidyverse)
-library(grid)
-library(gtable)
-
 read_count_output_modified <- function(dir, name, unspliced = FALSE, tcc = FALSE) {
     dir <- normalizePath(dir, mustWork = TRUE)
     if (unspliced) {
@@ -49,6 +45,7 @@ get_pc_diffs <- function(mat1, mat2, npcs = 20) {
     diffs
 }
 
+
 make_pc_diffs_df <- function(loadings_list, npcs) {
     # Generate all pairwise combinations of the loadings_list names
     names_combinations <- combn(names(loadings_list), 2, simplify = FALSE)
@@ -68,6 +65,7 @@ make_pc_diffs_df <- function(loadings_list, npcs) {
     bind_rows(dfs)
 }
 
+
 make_pairwise_df <- function(data_df) {
     # Get all pairwise combinations of the columns
     column_names <- colnames(data_df)
@@ -84,6 +82,7 @@ make_pairwise_df <- function(data_df) {
     # Combine all data frames into one
     bind_rows(dfs)
 }
+
 
 # Remove the lower left panel in pairwise comparison plots with 2x2 panels
 # Or equal number of rows and columns
@@ -126,6 +125,7 @@ flip_pcs <- function(v1, v2, pcs) {
     v2
 }
 
+
 make_pca_emb_df <- function(embeddings, package, pcs) {
     df <- as_tibble(embeddings[,pcs]) |>
         mutate(package = package,
@@ -146,6 +146,7 @@ mat2list <- function(m, get_wts = FALSE) {
         out
     })
 }
+
 
 find_jaccards <- function(ll) {
     # ll is a list of two sets of neighborhood lists, must be named.
@@ -208,6 +209,7 @@ find_wts_corrs <- function(ll_wts, ll_inds, combs, method = "pearson") {
     out
 }
 
+
 get_alluvial_df <- function(df) {
     # Each column of df is clustering results from one package
     df <- df |>
@@ -216,7 +218,6 @@ get_alluvial_df <- function(df) {
         dplyr::count(name = "value")
     gather_set_data(df, 1:2)
 }
-
 
 
 # Code from https://gitlab.svi.edu.au/biocellgen-public/mage_2020_marker-gene-benchmarking/-/blob/master/code/run-scanpy.R
@@ -283,6 +284,7 @@ reorder_clusters_descending <- function(clusters) {
     
     return(renumbered_clusters_factor)
 }
+
 
 increment_if_zeros <- function(clus_df_gather, column) {
     clus_df_gather <- clus_df_gather %>% mutate(group_numeric = as.numeric(as.character(.data[[column]])))
@@ -373,31 +375,3 @@ sort_clusters_by_agreement <- function(clus_df_gather, stable_column = "Seurat",
     
     return(clus_df_gather)
 }
-
-# library(pbapply)
-# RunMoransI2 <- function(data, pos, verbose = TRUE) {
-#     mysapply <- sapply
-#     if (verbose) {
-#         message("Computing Moran's I")
-#         mysapply <- pbsapply
-#     }
-#     MyMoran <- ape::Moran.I
-#     pos.dist <- dist(x = pos)
-#     pos.dist.mat <- as.matrix(x = pos.dist)
-#     # weights as 1/dist^2
-#     weights <- 1/pos.dist.mat^2
-#     diag(x = weights) <- 0
-#     results <- mysapply(X = 1:nrow(x = data), FUN = function(x) {
-#         tryCatch(
-#             expr = MyMoran(data[x, ], weights),
-#             error = function(x) c(1,1,1,1)
-#         )
-#     })
-#     pcol <- 4
-#     results <- data.frame(
-#         observed = unlist(x = results[1, ]),
-#         p.value = unlist(x = results[pcol, ])
-#     )
-#     rownames(x = results) <- rownames(x = data)
-#     return(results)
-# }
