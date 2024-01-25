@@ -155,20 +155,37 @@ def kb_count_function(instance, baseline, threads):
             
             sorted_files = sorted(fastq_files, key=custom_sort)
 
-            # Append sorted filenames to kb_count_command
-            for file in sorted_files:
-                kb_count_command.append(file)
+            sorted_files = [file for file in sorted_files if "_I1_" not in file and "_I2_" not in file]
+
+            kb_version = pkg_resources.get_distribution("kb-python").version
+
+            kb_version_major = int(kb_version.split('.')[1])
+
+            if kb_version_major >= 28:
+                lane_files = {}
+                for file in sorted_files:
+                    lane_number = file.split('_')[-3]  # Extract lane number (e.g., L002)
+                    lane_files.setdefault(lane_number, []).append(file)
+
+                with open('batch.txt', 'w') as f:
+                    for lane, files in lane_files.items():
+                        line = lane + "\t" + '\t'.join(files) + "\n"
+                        f.write(line)
+
+                kb_count_command.append("--batch-barcodes batch.txt")
+
+            else:
+                # Append sorted filenames to kb_count_command
+                for file in sorted_files:
+                    kb_count_command.append(file)
             
             print(' '.join(kb_count_command))
-            # Run the command
-            result = subprocess.run(kb_count_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-            # Check for errors
-            if result.returncode != 0:
-                print(f"Command failed with error: {result.stderr.decode()}")
-            else:
-                print(result.stdout.decode())
-                
+            kb_count_command = ' '.join(kb_count_command)
+
+            # Run the command
+            subprocess.run(kb_count_command, shell=True, executable="/bin/bash")
+
             # organize_output(instance.output_directory, seed, frac_str, matrix_source = "kb")
             
             print(f"kb count finished for seed {seed} and frac {frac_str}")
