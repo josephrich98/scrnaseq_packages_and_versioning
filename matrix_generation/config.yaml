@@ -1,9 +1,9 @@
 ### Required by all modules
-data_name: 5k_pbmc_v3  # the python code to find this: fastq_link.split("/")[-2] OR filtered_feature_bc_matrix_link.split("/")[-2]
-seed_list: []
-frac_list: []
-count_matrix_generation_method: "cellranger"  # "kb" or "cellranger" or "both"; only used by main.py
-kb_version: 0.28.2  # "" for agnostic
+data_name: SC3_v3_NextGem_SI_PBMC_10K  # the python code to find this: fastq_link.split("/")[-2] OR filtered_feature_bc_matrix_link.split("/")[-2]
+seed_list: [100]
+frac_list: [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64]
+count_matrix_generation_method: "both"  # "kb" or "cellranger" or "both"; only used by main.py
+kb_version: 0.28.0  # "" for agnostic
 cellranger_version: 7.2.0  # "" for agnostic
 ### Required by all modules
 
@@ -16,15 +16,11 @@ reference_selector: "most_recent"  # specific date (yymm) or "most_recent"
 
 
 ### Optional (as needed)
-fastq_link: "https://cg.10xgenomics.com/samples/cell-exp/3.0.2/5k_pbmc_v3/5k_pbmc_v3_fastqs.tar"  # find on 10x website
+fastq_link: "https://s3-us-west-2.amazonaws.com/10x.files/samples/cell-exp/4.0.0/SC3_v3_NextGem_SI_PBMC_10K/SC3_v3_NextGem_SI_PBMC_10K_fastqs.tar"  # find on 10x website
 
 filtered_feature_bc_matrix_link: "https://cf.10xgenomics.com/samples/cell-exp/4.0.0/SC3_v3_NextGem_SI_PBMC_10K/SC3_v3_NextGem_SI_PBMC_10K_filtered_feature_bc_matrix.tar.gz"  # find on 10x website
 
-cellranger_package_link: "https://cf.10xgenomics.com/releases/cell-exp/cellranger-7.2.0.tar.gz?Expires=1705989023&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA&Signature=lMN74QKGVwrRhzyjGjZDh0F9oSYZ0YzRnisPtEkMoIGwMs1k9CPObqGkOh43F3o-mcaQ4k~LfJ79rK5rBY2GFbeOGEK4IIUN3sfN7fX6VL5n140TKf~W9aPjTslhA8VTJCNgpLGdMa~K9GdEAETwCOHtMd-Z5L3P9czdfs~p~zu883Ofvs6gjeFVKnqvEDv960Y278q8gJeUw4HHb42qS~WaVtkDPf3Y6XfDrv0uUy5tEqbRRUFA7YTbi4PfEFXLQ25LePdqRfUoiM7IYl0Y5nnnZA~omFGck4fGxr7blg6-zd8idF3CSF5civJP-zhgqHVNfXlxfz66DYU41flGoA__"   # find here: https://www.10xgenomics.com/support/software/cell-ranger/downloads/previous-versions
-
+cellranger_package_link: "https://cf.10xgenomics.com/releases/cell-exp/cellranger-7.2.0.tar.gz?Expires=1706080650&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA&Signature=X9JCqP4izNN5-vqQRVeuYjf9iswPfTk~ZgcCsCXxQm7dAeIGTqiolAQB6KOtJw5S96BU272QN9BOlI89Ee4~ULOdAHbmY2dvf6ydL1Id34UCsm3zklk-AGYr7ATDjSO3hg1JhGyJXON~MxatbB4t3nmRT8krRC8Gd~YkXzvbg~din5Hg2761Gl4yeo661kBkVCURYUlefDht4g-Pj8ygKNwOnbwjJZP5ZuwRSZw88wOUzxuir2IC~k8ynAoYiHSMuG7uR0Iq4821MEEZQB5oDItq563by5DnJC6k9HNXAIPrIJF008ALWrSk6XLdDFhD5K55~GkNxC3x8Mv3c1G47w__"   # find here: https://www.10xgenomics.com/support/software/cell-ranger/downloads/previous-versions
 cellranger_transcriptome_link: "https://cf.10xgenomics.com/supp/cell-exp/refdata-gex-GRCh38-2020-A.tar.gz"
 
-ensembl_release: 110  # for kb ref; not required if reference_selector == "most_recent"
-
-
-
+ensembl_release: 111  # for kb ref

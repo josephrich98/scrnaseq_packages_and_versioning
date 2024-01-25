@@ -1318,9 +1318,7 @@ if (!file.exists(output_data_file_paths$markers)) {
 
 Find markers Scanpy
 ```{python}
-# adata.obs['leiden'] = adata.obs['leiden'].astype(str)
 sc.tl.rank_genes_groups(adata, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = True)
-# adata.uns['rank_genes_groups']
 ```
 
 ```{r}
