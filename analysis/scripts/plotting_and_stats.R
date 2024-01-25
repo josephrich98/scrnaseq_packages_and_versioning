@@ -2,16 +2,18 @@ dpi <- 350
 axis_element_size <- 1.45
 
 
-ditto_colors <- c("#D55E00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#E69F00", "#CC79A7", "#666666", "#AD7700", "#1C91D4", "#007756", "#D5C711", "#005685",
-                  "#A04700", "#B14380", "#4D4D4D", "#FFBE2D", "#80C7EF", "#00F6B3", "#F4EB71", "#06A5FF", "#FF8320", "#D99BBD", "#8C8C8C", "#FFCB57", "#9AD2F2",
-                  "#2CFFC6", "#F6EF8E", "#38B7FF", "#FF9B4D", "#E0AFCA", "#A3A3A3", "#8A5F00", "#1674A9", "#005F45", "#AA9F0D", "#00446B", "#803800", "#8D3666",
-                  "#3D3D3D")
+ditto_colors <- c(
+    "#D55E00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#E69F00", "#CC79A7", "#666666", "#AD7700", "#1C91D4", "#007756", "#D5C711", "#005685",
+    "#A04700", "#B14380", "#4D4D4D", "#FFBE2D", "#80C7EF", "#00F6B3", "#F4EB71", "#06A5FF", "#FF8320", "#D99BBD", "#8C8C8C", "#FFCB57", "#9AD2F2",
+    "#2CFFC6", "#F6EF8E", "#38B7FF", "#FF9B4D", "#E0AFCA", "#A3A3A3", "#8A5F00", "#1674A9", "#005F45", "#AA9F0D", "#00446B", "#803800", "#8D3666",
+    "#3D3D3D"
+)
 
-if(!exists("group1_color")) {
+if (!exists("group1_color")) {
     group1_color <- "#D55E00"
 }
 
-if(!exists("group2_color")) {
+if (!exists("group2_color")) {
     group2_color <- "#56B4E9"
 }
 seurat_v_scanpy_baseline_color <- "gray60"
@@ -27,26 +29,21 @@ file_paths_default <- list(
     euler_stats_after_QC_file = glue("{output_base_path_default}/stats/euler_stats.txt"),
     pca_knn_clustering_umap_file = glue::glue("{output_base_path_default}/stats/pca_knn_clustering_umap_stats.txt"),
     de_stats_file = glue("{output_base_path_default}/stats/de_stats.txt"),
-    
     knee_plot = glue("{output_base_path_default}/plots/knee_plot.tiff"),
     umi_scatterplot = glue("{output_base_path_default}/plots/umi_scatterplot.tiff"),
     violin_file_path = glue("{output_base_path_default}/plots/violin_plot.tiff"),
-    
     upset_cells = glue::glue("{output_base_path_default}/plots/upset_cells.tiff"),
     upset_genes = glue::glue("{output_base_path_default}/plots/upset_genes.tiff"),
     upset_hvgs = glue::glue("{output_base_path_default}/plots/upset_hvgs.tiff"),
     upset_markers_genes_only = glue::glue("{output_base_path_default}/plots/upset_marker_genes_only.tiff"),
     upset_markers = glue::glue("{output_base_path_default}/plots/upset_markers.tiff"),
-    
     euler_before_qc_cell_file_path = glue("{output_base_path_default}/plots/euler_cells_beforeQC.tiff"),
     euler_before_qc_gene_file_path = glue("{output_base_path_default}/plots/euler_genes_beforeQC.tiff"),
-    
     euler_after_qc_cell_file_path = glue("{output_base_path_default}/plots/euler_cells_afterQC.tiff"),
     euler_after_qc_gene_file_path = glue("{output_base_path_default}/plots/euler_genes_afterQC.tiff"),
     euler_after_qc_hvg_file_path = glue("{output_base_path_default}/plots/euler_hvgs_afterQC.tiff"),
     euler_after_qc_marker_file_path = glue("{output_base_path_default}/plots/euler_markers.tiff"),
     euler_after_qc_marker_manual_bonferroni_file_path = glue("{output_base_path_default}/plots/euler_markers_manual_bonferroni.tiff"),
-    
     pca_elbow_filepath_combined = glue("{output_base_path_default}/plots/pca_elbow_combined.tiff"),
     pca_12_filepath = glue("{output_base_path_default}/plots/pca_scatterplot_12.tiff"),
     pca_34_filepath = glue("{output_base_path_default}/plots/pca_scatterplot_34.tiff"),
@@ -55,20 +52,15 @@ file_paths_default <- list(
     pca_cluster_filepath_seu = glue("{output_base_path_default}/plots/pca_scatterplot_clusters_seu.tiff"),
     pca_cluster_filepath_scan = glue("{output_base_path_default}/plots/pca_scatterplot_clusters_scan.tiff"),
     combined_pc_variance_loadings_plot = glue::glue("{output_base_path_default}/plots/combined_pc_variance_loadings_plot.tiff"),
-    
     jaccards = glue("{output_base_path_default}/plots/jaccards.tiff"),
     knn_scatterplot = glue("{output_base_path_default}/plots/knn_scatterplot.tiff"),
     jaccard_degree_scatterplot = glue::glue("{output_base_path_default}/plots/jaccard_degree_scatterplot.tiff"),
-    
     pheatmap = glue("{output_base_path_default}/plots/cluster_pheatmap.tiff"),
     alluvial = glue("{output_base_path_default}/plots/cluster_alluvial.tiff"),
-    
     umap_seu = glue("{output_base_path_default}/plots/umap_seu.tiff"),
     umap_scan = glue("{output_base_path_default}/plots/umap_scan.tiff"),
     umap_centroid_distances = glue("{output_base_path_default}/plots/umap_centroid)distances.tiff"),
     umap_jaccard_knn_density = glue::glue("{output_base_path}/plots/umap_jaccard_knn_density.tiff"),
-    
-    
     logFC_histogram_magnitude_file_path = glue("{output_base_path_default}/plots/logFC_histogram_magnitude.tiff"),
     logFC_histogram_signed_file_path = glue("{output_base_path_default}/plots/logFC_histogram_signed.tiff"),
     wilcoxon_histogram_magnitude_file_path = glue("{output_base_path_default}/plots/wilcoxon_histogram_magnitude.tiff"),
@@ -77,7 +69,6 @@ file_paths_default <- list(
     wilcoxon_scatterplot_file_path = glue("{output_base_path_default}/plots/wilcoxon_scatterplot.tiff"),
     logFC_scatterplot_outliers_removed_file_path = glue("{output_base_path_default}/plots/logFC_scatterplot_no_outliers.tiff"),
     wilcoxon_scatterplot_outliers_removed_file_path = glue("{output_base_path_default}/plots/wilcoxon_scatterplot_no_outliers.tiff"),
-    
     logFC_boxplot_magnitude_file_path = glue("{output_base_path_default}/plots/logFC_boxplot_magnitude.tiff"),
     logFC_boxplot_signed_file_path = glue("{output_base_path_default}/plots/logFC_boxplot_signed.tiff"),
     wilcoxon_boxplot_magnitude_file_path = glue("{output_base_path_default}/plots/wilcoxon_boxplot_magnitude.tiff"),
@@ -99,20 +90,23 @@ make_save_path <- function(filepath = NULL, default_filepath = NULL) {
         dir.create(dirname(filepath), recursive = TRUE, showWarnings = FALSE)
     }
 
-    return (filepath)
-    
+    return(filepath)
 }
 
 
 make_knee_plot <- function(bc_rank, save = FALSE) {
-    options(repr.plot.width=9, repr.plot.height=6)
-    
-    knee_plt <- tibble(rank = bc_rank[["rank"]],
-                       total = bc_rank[["total"]]) %>% 
-        distinct() %>% 
+    options(repr.plot.width = 9, repr.plot.height = 6)
+
+    knee_plt <- tibble(
+        rank = bc_rank[["rank"]],
+        total = bc_rank[["total"]]
+    ) %>%
+        distinct() %>%
         dplyr::filter(total > 0)
-    annot <- tibble(inflection = metadata(bc_rank)[["inflection"]],
-                    rank_cutoff = max(bc_rank$rank[bc_rank$total > metadata(bc_rank)[["inflection"]]]))
+    annot <- tibble(
+        inflection = metadata(bc_rank)[["inflection"]],
+        rank_cutoff = max(bc_rank$rank[bc_rank$total > metadata(bc_rank)[["inflection"]]])
+    )
     p <- ggplot(knee_plt, aes(rank, total)) +
         geom_line() +
         geom_hline(aes(yintercept = inflection), data = annot, linetype = 2) +
@@ -121,12 +115,12 @@ make_knee_plot <- function(bc_rank, save = FALSE) {
         scale_y_log10() +
         annotation_logticks() +
         labs(x = "Rank", y = "Total UMIs")
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$knee_plot)
-        ggsave(filepath, plot = p, dpi = dpi)  
+        ggsave(filepath, plot = p, dpi = dpi)
     }
-    
+
     return(p)
 }
 
@@ -142,40 +136,42 @@ get_density <- function(x, y, ...) {
 
 make_umi_scatterplot <- function(res_mat1, res_mat2, UMI_cutoff1 = NULL, UMI_cutoff2 = NULL, point_density = FALSE, res_mat1_name = "kb", res_mat2_name = "cellranger", color_points = FALSE, save = FALSE) {
     common_cells <- intersect(colnames(res_mat1), colnames(res_mat2))
-    
+
     umi_counts_res_mat <- colSums(res_mat1[, common_cells])
     umi_counts_res_mat2 <- colSums(res_mat2[, common_cells])
-    
-    data_for_plot <- data.frame(Cell = common_cells,
-                                UMI_Counts_res_mat1 = umi_counts_res_mat,
-                                UMI_Counts_res_mat2 = umi_counts_res_mat2)
-    
-    minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
-    
+
+    data_for_plot <- data.frame(
+        Cell = common_cells,
+        UMI_Counts_res_mat1 = umi_counts_res_mat,
+        UMI_Counts_res_mat2 = umi_counts_res_mat2
+    )
+
+    minor_breaks <- rep(1:9, 21) * (10^rep(-10:10, each = 9))
+
     if (!color_points) {
         p <- ggplot(data_for_plot, aes(x = UMI_Counts_res_mat1, y = UMI_Counts_res_mat2))
     } else {
         res_mat1_filtered <- res_mat1[, tot_counts > UMI_cutoff]
-        res_mat1_filtered <- res_mat1_filtered[Matrix::rowSums(res_mat1_filtered) > 0,]
-        
+        res_mat1_filtered <- res_mat1_filtered[Matrix::rowSums(res_mat1_filtered) > 0, ]
+
         res_mat2_filtered <- res_mat2[, tot_counts > UMI_cutoff]
-        res_mat2_filtered <- res_mat2_filtered[Matrix::rowSums(res_mat2_filtered) > 0,]
-        
+        res_mat2_filtered <- res_mat2_filtered[Matrix::rowSums(res_mat2_filtered) > 0, ]
+
         res_mat1_common <- res_mat1_filtered[, colnames(res_mat1_filtered) %in% common_cells]
         res_mat2_common <- res_mat2_filtered[, colnames(res_mat2_filtered) %in% common_cells]
-        
+
         data_for_plot$in_res_mat1_filtered <- data_for_plot$Cell %in% colnames(res_mat1_common)
         data_for_plot$in_res_mat2_filtered <- data_for_plot$Cell %in% colnames(res_mat2_common)
-        
+
         data_for_plot$color_group <- with(data_for_plot, factor(paste(in_res_mat1_filtered, in_res_mat2_filtered)))
-        
+
         p <- ggplot(data_for_plot, aes(x = UMI_Counts_res_mat1, y = UMI_Counts_res_mat2, color = color_group)) +
             scale_color_manual(values = c("TRUE TRUE" = "orange", "TRUE FALSE" = "green", "FALSE TRUE" = "blue", "FALSE FALSE" = "brown"))
     }
-    
+
     if (point_density) {
         data_for_plot$density <- get_density(data_for_plot$UMI_Counts_res_mat1, data_for_plot$UMI_Counts_res_mat2, n = 100)
-        
+
         p <- p +
             geom_point(aes(color = data_for_plot$density), alpha = 0.2, size = 0.5) +
             # ggpointdensity::geom_pointdensity(size = 0.5, alpha = 1, adjust = 0.2) +
@@ -184,75 +180,81 @@ make_umi_scatterplot <- function(res_mat1, res_mat2, UMI_cutoff1 = NULL, UMI_cut
         p <- p +
             geom_point(alpha = 0.2, size = 0.5)
     }
-    
+
     p <- p +
-        scale_x_log10(minor_breaks = minor_breaks,
-                      labels = function(x) format(x, scientific = TRUE)) +
-        scale_y_log10(minor_breaks = minor_breaks,
-                      labels = function(x) format(x, scientific = TRUE)) +
+        scale_x_log10(
+            minor_breaks = minor_breaks,
+            labels = function(x) format(x, scientific = TRUE)
+        ) +
+        scale_y_log10(
+            minor_breaks = minor_breaks,
+            labels = function(x) format(x, scientific = TRUE)
+        ) +
         annotation_logticks() +
-        geom_abline(slope=1, intercept=0, show.legend = FALSE, linewidth = 0.3, color = "gray30", linetype = 2) +
+        geom_abline(slope = 1, intercept = 0, show.legend = FALSE, linewidth = 0.3, color = "gray30", linetype = 2) +
         theme(
             legend.position = "none",
-            axis.text = element_text(size = rel(axis_element_size)),  # Increase axis tick labels size
-            axis.title = element_text(size = rel(axis_element_size))  # Increase axis titles size
+            axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(axis_element_size)) # Increase axis titles size
         ) +
-        labs(x = glue("UMI Counts in {res_mat1_name}"),
-             y = glue("UMI Counts in {res_mat2_name}"))
-    
+        labs(
+            x = glue("UMI Counts in {res_mat1_name}"),
+            y = glue("UMI Counts in {res_mat2_name}")
+        )
+
     if (!is.null(UMI_cutoff1)) {
-        p <- p + 
+        p <- p +
             geom_vline(aes(xintercept = UMI_cutoff1), color = "gray30", linetype = 2) +
             annotate("text", x = UMI_cutoff1 * 1.1, y = max(data_for_plot$UMI_Counts_res_mat2), label = glue("{res_mat1_name} UMI cutoff"), hjust = 0, vjust = 1, color = "gray30", size = 4)
     }
-    
+
     if (!is.null(UMI_cutoff2)) {
-        p <- p + 
+        p <- p +
             geom_hline(aes(yintercept = UMI_cutoff2), linetype = 2) +
             annotate("text", x = max(data_for_plot$UMI_Counts_res_mat1), y = UMI_cutoff2 * 1.1, label = glue("{res_mat2_name} UMI cutoff"), hjust = 1, vjust = 0, color = "gray30", size = 4)
     }
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$umi_scatterplot)
-        ggsave(filepath, plot = p, dpi = dpi)  
-    } 
-    
-    return (p)
+        ggsave(filepath, plot = p, dpi = dpi)
+    }
+
+    return(p)
 }
 
 
 make_violin_plot <- function(seu, show_points = FALSE, color = NULL, save = FALSE) {
     pt.size <- ifelse(show_points == TRUE, 0.01, 0)
-    p1 <- VlnPlot(seu, features = "nFeature_RNA", pt.size = pt.size, cols = color) + 
-        coord_cartesian(ylim = c(0, 8250)) + 
+    p1 <- VlnPlot(seu, features = "nFeature_RNA", pt.size = pt.size, cols = color) +
+        coord_cartesian(ylim = c(0, 8250)) +
         scale_y_continuous(breaks = seq(0, 8500, by = 2000)) +
         theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
-    
-    p2 <- VlnPlot(seu, features = "nCount_RNA", pt.size = pt.size, cols = color) + 
-        coord_cartesian(ylim = c(0, 64000)) + 
+
+    p2 <- VlnPlot(seu, features = "nCount_RNA", pt.size = pt.size, cols = color) +
+        coord_cartesian(ylim = c(0, 64000)) +
         scale_y_continuous(breaks = seq(0, 60000, by = 20000)) +
         theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
-    
-    p3 <- VlnPlot(seu, features = "pct_mt", pt.size = pt.size, cols = color) + 
+
+    p3 <- VlnPlot(seu, features = "pct_mt", pt.size = pt.size, cols = color) +
         coord_cartesian(ylim = c(0, 80)) +
         scale_y_continuous(breaks = seq(0, 80, by = 10)) +
         theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
-    
+
     # Arrange the plots into one plot with 3 columns
     combined_plot <- (p1 | p2 | p3) + plot_layout(ncol = 3)
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$violin_file_path)
-        ggsave(filepath, plot = combined_plot, dpi = dpi)  
+        ggsave(filepath, plot = combined_plot, dpi = dpi)
     }
-    
+
     return(combined_plot)
 }
 
 
 upset_plot_general <- function(data, group1_name, group2_name, comparison, before_filtering = FALSE, as_ggplot = FALSE, save = FALSE, default_plotpath) {
     all_elements <- unique(c(data[[group1_name]], data[[group2_name]]))
-    
+
     df <- setNames(
         data.frame(
             element = all_elements,
@@ -261,18 +263,18 @@ upset_plot_general <- function(data, group1_name, group2_name, comparison, befor
         ),
         c("element", group1_name, group2_name)
     )
-    
-    
+
+
     df <- df %>% mutate(across(everything(), as.integer))
-    
+
     if (before_filtering) {
         y_label <- glue("{comparison} Intersection (before UMI filtering)")
     } else {
         y_label <- glue("{comparison} Intersection")
     }
-    
+
     p <- UpSetR::upset(df[, -1], mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), empty.intersections = TRUE)
-    
+
     if (as_ggplot) {
         p <- as.ggplot(p)
         if (save == TRUE || is.character(save)) {
@@ -287,8 +289,8 @@ upset_plot_general <- function(data, group1_name, group2_name, comparison, befor
             dev.off()
         }
     }
-    
-    return (p)
+
+    return(p)
 }
 
 
@@ -296,31 +298,36 @@ make_upset_seurat_vs_scanpy <- function(seu, adata, comparison, as_ggplot = FALS
     if (comparison == "Gene") {
         data <- list(
             Seurat = rownames(seu@assays$RNA$counts),
-            Scanpy = unlist(adata$var_names$tolist()))
+            Scanpy = unlist(adata$var_names$tolist())
+        )
         default_plotpath <- file_paths_default$upset_cells
     } else if (comparison == "Cell") {
         data <- list(
             Seurat = colnames(seu@assays$RNA$counts),
-            Scanpy = unlist(adata$obs_names$tolist()))
+            Scanpy = unlist(adata$obs_names$tolist())
+        )
         default_plotpath <- file_paths_default$upset_gene
     } else if (comparison == "HVG") {
         py_run_string("scanpy_highly_variable_genes = adata.var.index[adata.var['highly_variable']]")
         scanpy_highly_variable_genes <- unlist(py$scanpy_highly_variable_genes$tolist())
-        data <- list(Seurat = VariableFeatures(seu),
-                     Scanpy = scanpy_highly_variable_genes)
+        data <- list(
+            Seurat = VariableFeatures(seu),
+            Scanpy = scanpy_highly_variable_genes
+        )
         default_plotpath <- file_paths_default$upset_hvg
     } else if (comparison == "Marker" || comparison == "Marker Gene") {
-        data <- list(Seurat = seu,
-                     Scanpy = adata)
+        data <- list(
+            Seurat = seu,
+            Scanpy = adata
+        )
         default_plotpath <- default_plotpath <- file_paths_default$upset_markers
     }
-    
+
     p <- upset_plot_general(data, group1_name = "Seurat", group2_name = "Scanpy", comparison = comparison, before_filtering = FALSE, as_ggplot = as_ggplot, save = save, default_plotpath = default_plotpath)
-    
+
     print(p)
-    
+
     return(p)
-    
 }
 
 
@@ -328,87 +335,93 @@ make_euler_seurat_vs_scanpy <- function(seu, adata, comparison, before_QC = FALS
     if (comparison == "Gene") {
         data <- list(
             Seurat = rownames(seu@assays$RNA$counts),
-            Scanpy = unlist(adata$var_names$tolist()))
+            Scanpy = unlist(adata$var_names$tolist())
+        )
         default_plotpath <- ifelse(before_QC, file_paths_default$euler_before_qc_gene_file_path, file_paths_default$euler_after_qc_gene_file_path)
     } else if (comparison == "Cell") {
         data <- list(
             Seurat = colnames(seu@assays$RNA$counts),
-            Scanpy = unlist(adata$obs_names$tolist()))
+            Scanpy = unlist(adata$obs_names$tolist())
+        )
         default_plotpath <- ifelse(before_QC, file_paths_default$euler_before_qc_cell_file_path, file_paths_default$euler_after_qc_cell_file_path)
     } else if (comparison == "HVG") {
         py_run_string("scanpy_highly_variable_genes = adata.var.index[adata.var['highly_variable']]")
         scanpy_highly_variable_genes <- unlist(py$scanpy_highly_variable_genes$tolist())
-        data <- list(Seurat = VariableFeatures(seu),
-                     Scanpy = scanpy_highly_variable_genes)
+        data <- list(
+            Seurat = VariableFeatures(seu),
+            Scanpy = scanpy_highly_variable_genes
+        )
         default_plotpath <- file_paths_default$euler_after_qc_hvg_file_path
     } else if (comparison == "Marker" || comparison == "Marker Gene") {
-        data <- list(Seurat = seu,
-                     Scanpy = adata)
+        data <- list(
+            Seurat = seu,
+            Scanpy = adata
+        )
         default_plotpath <- file_paths_default$euler_after_qc_marker_file_path
     }
-    
+
     euler_data <- euler(data)
-    seu_unique <- euler_data$original.values['Seurat']
-    scan_unique <- euler_data$original.values['Scanpy']
-    total_overlap <- euler_data$original.values['Seurat&Scanpy']
-    
-    
+    seu_unique <- euler_data$original.values["Seurat"]
+    scan_unique <- euler_data$original.values["Scanpy"]
+    total_overlap <- euler_data$original.values["Seurat&Scanpy"]
+
+
     if (save_stats == TRUE || is.character(save_stats)) {
         default_statpath <- ifelse(before_QC, file_paths_default$euler_stats_before_QC_file, file_paths_default$euler_stats_after_QC_file)
         filepath <- make_save_path(filepath = save_stats, default_filepath = default_statpath)
         sink(filepath, append = TRUE, split = TRUE)
     }
-    
+
     print(glue("Total {comparison}s in Seurat: {seu_unique+total_overlap}"))
     print(glue("Total {comparison}s in Scanpy: {scan_unique+total_overlap}"))
     print(glue("Total {comparison}s overlapping: {total_overlap}"))
     print(glue("Fraction of {comparison}s in Seurat overlapping in Scanpy: {total_overlap/(total_overlap + scan_unique)}"))
     print(glue("Fraction of {comparison}s in Scanpy overlapping in Seurat: {total_overlap/(total_overlap + seu_unique)}"))
     print(glue("{comparison}s Jaccard: {total_overlap/(total_overlap + seu_unique + scan_unique)}"))
-    
+
     if (save_stats == TRUE || is.character(save_stats)) {
         sink()
     }
-    
+
     euler_plot <- plot(euler_data, fills = pal, quantities = list(cex = 2), labels = list(cex = 2))
-    
+
     euler_plot_ggplot_compatible <- as.ggplot(euler_plot)
-    
+
     if (before_QC) {
         title <- glue("{comparison}s (before QC)")
     } else {
         title <- glue("{comparison}s")
     }
-    
-    euler_plot_ggplot_compatible <- euler_plot_ggplot_compatible + 
-        ggtitle(glue("{comparison}s")) + 
+
+    euler_plot_ggplot_compatible <- euler_plot_ggplot_compatible +
+        ggtitle(glue("{comparison}s")) +
         theme(plot.title = element_text(size = 40, hjust = 0.5))
-    
+
     if (save_plot == TRUE || is.character(save_plot)) {
         filepath <- make_save_path(filepath = save_plot, default_filepath = default_plotpath)
-        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")  
+        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
     }
-    
+
     return(euler_plot_ggplot_compatible)
 }
 
 
 plot_differences_histogram_seurat_vs_scanpy <- function(df, column, title, median_or_variance = NULL, x_label = "Differences", save = FALSE) {
     column_sym <- sym(column)
-    
+
     p <- ggplot(df, aes(x = !!column_sym)) +
-        geom_histogram(aes(y = after_stat(density)), binwidth=0.1, fill=seurat_v_scanpy_baseline_color, color=seurat_v_scanpy_baseline_color, alpha=0.7) +
+        geom_histogram(aes(y = after_stat(density)), binwidth = 0.1, fill = seurat_v_scanpy_baseline_color, color = seurat_v_scanpy_baseline_color, alpha = 0.7) +
         ggtitle(title) +
         xlab(x_label) +
         ylab("Density") +
         theme(plot.title = element_text(hjust = 0.5))
-    
+
     if (column == "FC_difference_magnitude") {
         p <- p + xlim(0, 10)
     } else if (column == "FC_difference_signed") {
         p <- p + xlim(-10, 2.5)
     }
-    
+
     if (grepl("FC", column)) {
         if (column == "logFC_difference_magnitude") {
             p <- p + xlim(0, 10)
@@ -429,22 +442,22 @@ plot_differences_histogram_seurat_vs_scanpy <- function(df, column, title, media
             inset_plot_coordinates <- list(xmin = -5, xmax = -2, ymin = 0.2, ymax = 0.5)
             x_scale_breaks <- c(-65, -45, -25, -5)
         }
-        
+
         df_inset <- df %>% filter((!!column_sym >= inset_xlim$min) & (!!column_sym <= inset_xlim$max))
         p_inset <- ggplot(df_inset, aes(x = !!column_sym)) +
             geom_histogram(aes(y = after_stat(density)), binwidth = inset_bin_width, fill = seurat_v_scanpy_baseline_color, color = seurat_v_scanpy_baseline_color, alpha = 0.7) +
             xlim(inset_xlim$min, inset_xlim$max) +
-            xlab(x_label) +  # Set x-axis label based on variable x_label
+            xlab(x_label) + # Set x-axis label based on variable x_label
             scale_x_continuous(breaks = x_scale_breaks) +
             theme(axis.title.x = element_text(size = 8))
-        
+
         # Create a grob from the inset plot
         inset_grob <- ggplotGrob(p_inset)
-        
+
         p <- p +
             annotation_custom(grob = inset_grob, xmin = inset_plot_coordinates$xmin, xmax = inset_plot_coordinates$xmax, ymin = inset_plot_coordinates$ymin, ymax = inset_plot_coordinates$ymax)
     }
-    
+
     if (column == "logFC_difference_magnitude") {
         default_plotpath <- file_paths_default$logFC_histogram_magnitude_file_path
     } else if (column == "logFC_difference_signed") {
@@ -456,30 +469,30 @@ plot_differences_histogram_seurat_vs_scanpy <- function(df, column, title, media
     } else {
         default_plotpath <- NULL
     }
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi)  
+        ggsave(filepath, plot = p, dpi = dpi)
     }
-    
+
     return(p)
 }
 
 
 plot_differences_boxplot_seurat_vs_scanpy <- function(df, column, title, x_label = "Differences", save = FALSE) {
     column_sym <- sym(column)
-    
-    p <- ggplot(markers2, aes(x = "", y = !!column_sym)) + 
+
+    p <- ggplot(markers2, aes(x = "", y = !!column_sym)) +
         geom_boxplot() +
-        xlab("") + 
-        ylab(x_label) + 
+        xlab("") +
+        ylab(x_label) +
         ggtitle(title)
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi)  
+        ggsave(filepath, plot = p, dpi = dpi)
     }
-    
+
     if (column == "logFC_difference_magnitude") {
         default_plotpath <- file_paths_default$logFC_boxplot_magnitude_file_path
     } else if (column == "logFC_difference_signed") {
@@ -491,12 +504,12 @@ plot_differences_boxplot_seurat_vs_scanpy <- function(df, column, title, x_label
     } else {
         default_plotpath <- NULL
     }
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi)  
+        ggsave(filepath, plot = p, dpi = dpi)
     }
-    
+
     return(p)
 }
 
@@ -512,7 +525,7 @@ scatterplot_naming <- function(group1_name, group2_name) {
         logFC_group1 <- glue("avg_log2FC.{group1_name}")
         p_val_adj_group1 <- glue("p_val_adj.{group1_name}")
     }
-        
+
     if (group2_name == "Seurat") {
         logFC_group2 <- "logFC_r"
         p_val_adj_group2 <- "p_val_adj_r"
@@ -523,71 +536,75 @@ scatterplot_naming <- function(group1_name, group2_name) {
         logFC_group2 <- glue("avg_log2FC.{group2_name}")
         p_val_adj_group2 <- glue("p_val_adj.{group2_name}")
     }
-    
+
     return(list(logFC_group1 = logFC_group1, logFC_group2 = logFC_group2, p_val_adj_group1 = p_val_adj_group1, p_val_adj_group2 = p_val_adj_group2))
 }
 
 
 plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = FALSE, show_legend = FALSE, group1_name = "Seurat", group2_name = "Scanpy", save = FALSE) {
     scatterplot_names <- scatterplot_naming(group1_name, group2_name)
-    
+
     p_val_adj_group1 <- scatterplot_names$p_val_adj_group1
     p_val_adj_group2 <- scatterplot_names$p_val_adj_group2
-    
+
     markers2$log_p_val_adj_1 <- -log(markers2[[p_val_adj_group1]], base = 10)
     markers2$log_p_val_adj_2 <- -log(markers2[[p_val_adj_group2]], base = 10)
-    
+
     markers2$log_p_val_adj_1 <- ifelse(is.infinite(markers2$log_p_val_adj_1), 330, markers2$log_p_val_adj_1)
     markers2$log_p_val_adj_2 <- ifelse(is.infinite(markers2$log_p_val_adj_2), 330, markers2$log_p_val_adj_2)
-    
-    max_log_p <- max(max(markers2$log_p_val_adj_2, na.rm = TRUE), 
-                     max(markers2$log_p_val_adj_1, na.rm = TRUE))
-    
+
+    max_log_p <- max(
+        max(markers2$log_p_val_adj_2, na.rm = TRUE),
+        max(markers2$log_p_val_adj_1, na.rm = TRUE)
+    )
+
     if (outliers_excluded) {
         plot_title <- glue("{group1_name} vs. {group2_name} adjusted p-value (excluding outliers)")
     } else {
         plot_title <- glue("{group1_name} vs. {group2_name} adjusted p-value")
     }
-    
+
     p <- ggplot(markers2, aes(log_p_val_adj_2, log_p_val_adj_1)) +
         ggpointdensity::geom_pointdensity(size = 0.3, alpha = 1, adjust = 0.2, show.legend = FALSE) +
         scico::scale_color_scico(palette = "grayC", direction = -1, end = 0.8) +
         coord_equal() +
-        theme(plot.title = element_text(hjust = 0.48)) +  # Center the title
+        theme(plot.title = element_text(hjust = 0.48)) + # Center the title
         coord_fixed(ratio = 1, xlim = c(0, max_log_p), ylim = c(0, max_log_p)) +
         labs(
             x = bquote(-log[10](.(group2_name) ~ "adjusted p-value")),
             y = bquote(-log[10](.(group1_name) ~ "adjusted p-value")),
             title = plot_title
         )
-    
+
     df_inset <- markers2 %>% filter((log_p_val_adj_1 <= 10) & (log_p_val_adj_2 <= 10))
-    
+
     p_inset <- ggplot(df_inset, aes(log_p_val_adj_2, log_p_val_adj_1)) +
         ggpointdensity::geom_pointdensity(size = 0.3, alpha = 1, adjust = 0.2, show.legend = FALSE) +
         scico::scale_color_scico(palette = "grayC", direction = -1, end = 0.8) +
         xlim(0, 10) +
         ylim(0, 10) +
-        geom_hline(yintercept = -log(0.05, base = 10), linetype = "dashed", color = "black") +  # Horizontal line at y = 0.05
+        geom_hline(yintercept = -log(0.05, base = 10), linetype = "dashed", color = "black") + # Horizontal line at y = 0.05
         geom_vline(xintercept = -log(0.05, base = 10), linetype = "dashed", color = "black") +
-        theme(axis.title.x = element_blank(),      # Remove x-axis label
-              axis.title.y = element_blank(),
-              panel.background = element_rect(fill = "transparent", colour = NA),  # Transparent background
-              plot.background = element_rect(fill = "transparent", colour = NA),  # Transparent plot background
-              axis.text = element_text(size = 5))  # Adjust text size for axis labels
-    
+        theme(
+            axis.title.x = element_blank(), # Remove x-axis label
+            axis.title.y = element_blank(),
+            panel.background = element_rect(fill = "transparent", colour = NA), # Transparent background
+            plot.background = element_rect(fill = "transparent", colour = NA), # Transparent plot background
+            axis.text = element_text(size = 5)
+        ) # Adjust text size for axis labels
+
     # Create a grob from the inset plot
     inset_grob <- ggplotGrob(p_inset)
-    
+
     p <- p +
-        annotation_custom(grob = inset_grob, xmin = 170, xmax = 320, ymin = -10, ymax = 140)   # 170, 320   # 320, 470
-    
+        annotation_custom(grob = inset_grob, xmin = 170, xmax = 320, ymin = -10, ymax = 140) # 170, 320   # 320, 470
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$wilcoxon_scatterplot_file_path)
-        ggsave(filepath, plot = p, dpi = dpi)  
+        ggsave(filepath, plot = p, dpi = dpi)
     }
-    
-    return (p)
+
+    return(p)
 }
 
 
@@ -595,82 +612,81 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
     scatterplot_names <- scatterplot_naming(group1_name, group2_name)
     logFC_group1 <- scatterplot_names$logFC_group1
     logFC_group2 <- scatterplot_names$logFC_group2
-    
+
     lm_model <- lm(as.formula(paste(logFC_group1, "~", logFC_group2)), data = markers2)
     # equation_x_position <- -5
     # equation_y_position <- 20
-    
+
     if (!outliers_excluded) {
         markers2 |>
-            filter(abs(.data[[logFC_group1]]) < 15) |> 
+            filter(abs(.data[[logFC_group1]]) < 15) |>
             filter(abs(.data[[logFC_group2]]) < 15) -> markers2_filtered
-        
+
         lm_filtered <- lm(as.formula(paste(logFC_group1, "~", logFC_group2)), data = markers2_filtered)
         r_squared_filtered <- summary(lm_filtered)$r.squared
         coefficients_filtered <- coef(lm_filtered)
-        m_filtered = round(coefficients_filtered[2], 2)
-        b_filtered = round(coefficients_filtered[1], 2)
-        
+        m_filtered <- round(coefficients_filtered[2], 2)
+        b_filtered <- round(coefficients_filtered[1], 2)
     } else {
         r_squared_filtered <- 0
     }
-    
+
     p <- ggplot(markers2, aes(!!sym(logFC_group2), !!sym(logFC_group1))) +
         labs(x = bquote(log[2](.(group2_name) ~ "fold change")), y = bquote(log[2](.(group1_name) ~ "fold change")))
 
     coefficients <- coef(lm_model)
-    m = round(coefficients[2], 2)
-    b = round(coefficients[1], 2)
+    m <- round(coefficients[2], 2)
+    b <- round(coefficients[1], 2)
     # equation <- glue("m = {m}")
     # # equation <- glue("y = {m}x + {b}")
-    
+
     r_squared <- summary(lm_model)$r.squared
     r_squared <- round(r_squared, 2)
-    
+
     if (r_squared > 0.25 || r_squared_filtered > 0.25) {
         if (!outliers_excluded) {
             baseline_linear_model_filtered <- glue("Linear model excluding outliers: y={m_filtered}x+{b_filtered} (R^2={sprintf('%.2f', r_squared_filtered)})")
         }
 
         baseline_linear_model <- glue("Baseline linear model: y={m}x+{b} (R^2={r_squared})")
-        
+
         if (show_legend) {
             p <- p +
                 geom_smooth(method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = TRUE, aes(linetype = baseline_linear_model, color = baseline_linear_model)) +
-                geom_abline(aes(slope=1, intercept=0, linetype="y=x", color = "y=x"), show.legend = FALSE, linewidth = 0.5)
+                geom_abline(aes(slope = 1, intercept = 0, linetype = "y=x", color = "y=x"), show.legend = FALSE, linewidth = 0.5)
             if (!outliers_excluded) {
                 p <- p +
                     geom_smooth(data = markers2_filtered, method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = FALSE, aes(linetype = baseline_linear_model_filtered, color = baseline_linear_model_filtered)) +
-                    scale_color_manual(name = "", values=c("black", "black", "gray30")) +
-                    scale_linetype_manual(name = "", values=c(2, 3, 1))
+                    scale_color_manual(name = "", values = c("black", "black", "gray30")) +
+                    scale_linetype_manual(name = "", values = c(2, 3, 1))
             } else {
                 p <- p +
-                    scale_color_manual(name = "", values=c("black", "gray30")) +
-                    scale_linetype_manual(name = "", values=c(2, 1))
+                    scale_color_manual(name = "", values = c("black", "gray30")) +
+                    scale_linetype_manual(name = "", values = c(2, 1))
             }
         } else {
             p <- p +
                 geom_smooth(method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = FALSE, linetype = 2, color = "black") +
-                geom_abline(slope=1, intercept=0, linetype=1, color = "gray30", show.legend = FALSE, linewidth = 0.5) +
+                geom_abline(slope = 1, intercept = 0, linetype = 1, color = "gray30", show.legend = FALSE, linewidth = 0.5) +
                 geom_smooth(data = markers2_filtered, method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = FALSE, linetype = 3, color = "black")
         }
     }
-    
+
     if (show_legend) {
         p <- p +
             geom_point(alpha = 0.2, size = 0.3, color = "gray60") +
-            theme(legend.position = "bottom", legend.direction = "vertical", legend.background = element_blank(), legend.box.spacing = grid::unit(-0.8, "lines"),) +
+            theme(legend.position = "bottom", legend.direction = "vertical", legend.background = element_blank(), legend.box.spacing = grid::unit(-0.8, "lines"), ) +
             guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1)))
     } else {
         p <- p +
             ggpointdensity::geom_pointdensity(size = 0.3, alpha = 1, adjust = 0.2, show.legend = FALSE) +
             scico::scale_color_scico(palette = "grayC", direction = -1, end = 0.8)
     }
-    
+
     p <- p +
         coord_equal() +
-        theme(plot.title = element_text(hjust = 0.48))  # Center the title
-    
+        theme(plot.title = element_text(hjust = 0.48)) # Center the title
+
     if (!outliers_excluded) {
         p <- p + labs(title = glue("{group1_name} vs. {group2_name} logFC"))
         default_plotpath <- file_paths_default$logFC_scatterplot_file_path
@@ -678,13 +694,13 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
         p <- p + labs(title = glue("{group1_name} vs. {group2_name} logFC (excluding outliers)"))
         default_plotpath <- file_paths_default$logFC_scatterplot_outliers_removed_file_path
     }
-    
+
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi)  
+        ggsave(filepath, plot = p, dpi = dpi)
     }
-    
+
     return(p)
 }
 
@@ -696,13 +712,13 @@ make_bar_plot <- function(df, metric, save = FALSE, filename = NULL) {
         labs(y = metric, x = "Category", title = metric) +
         theme_minimal() +
         theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
-    
+
     print(p)
-    
+
     if (save) {
-        ggsave(filename, plot=p, dpi = dpi)
+        ggsave(filename, plot = p, dpi = dpi)
     }
-    
+
     return(p)
 }
 
@@ -716,19 +732,22 @@ plot_var_explained <- function(eigs_df, npcs = 20, group_names = waiver(), save 
         group_by(package) %>%
         slice_head(n = npcs) %>%
         ungroup()
-    
+
     p <- ggplot(required_rows, aes(PC, value, color = package, shape = package)) +
         geom_point(size = 3) +
         scale_color_manual(values = pal, labels = group_names) +
         scale_shape_manual(values = c(16, 17), labels = group_names) +
         scale_x_continuous(
             minor_breaks = setdiff(seq(0, 50, by = 1), seq(0, 50, by = 5)),
-            breaks = seq(0, 50, by = 5)) +
-            # breaks = scales::breaks_pretty(Q = c(1,5,2,4,3))) +
-        labs(y = "Variance Explained",
-             # title = "PC Similarity",
-             color = "Package",  # Change legend title for color
-             shape = "Package") +  # Change legend title for shape
+            breaks = seq(0, 50, by = 5)
+        ) +
+        # breaks = scales::breaks_pretty(Q = c(1,5,2,4,3))) +
+        labs(
+            y = "Variance Explained",
+            # title = "PC Similarity",
+            color = "Package", # Change legend title for color
+            shape = "Package"
+        ) + # Change legend title for shape
         theme(
             legend.text = element_text(size = rel(1.4)),
             legend.title = element_blank(),
@@ -738,18 +757,18 @@ plot_var_explained <- function(eigs_df, npcs = 20, group_names = waiver(), save 
             legend.margin = margin(-10, -10, -10, -10),
             plot.title = element_text(size = rel(1), hjust = 0.5),
             axis.title = element_text(size = rel(1)),
-            axis.text = element_text(size = rel(1)) 
+            axis.text = element_text(size = rel(1))
         ) +
         guides(
             color = guide_legend(override.aes = list(size = 3)), # Increase legend symbols size for color
-            shape = guide_legend(override.aes = list(size = 3))  # Increase legend symbols size for shape
+            shape = guide_legend(override.aes = list(size = 3)) # Increase legend symbols size for shape
         )
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_elbow_filepath_combined)
-        ggsave(filepath, plot = p, dpi = dpi)  
+        ggsave(filepath, plot = p, dpi = dpi)
     }
-    
+
     return(p)
 }
 
@@ -768,24 +787,29 @@ plot_pca_compare <- function(embeddings1, embeddings2,
     namesy <- paste("y", c(group1_name, group2_name), sep = "_")
     p <- ggplot(df) +
         geom_point(aes(x, y, color = package, shape = package),
-                   size = 1.8, alpha = 0.7) +
-        geom_segment(data = dfp, aes(x = .data[[namesx[1]]], y = .data[[namesy[1]]],
-                                     xend = .data[[namesx[2]]], yend = .data[[namesy[2]]]),
-                     alpha = 0.25, linewidth = 0.1) +
+            size = 1.8, alpha = 0.7
+        ) +
+        geom_segment(
+            data = dfp, aes(
+                x = .data[[namesx[1]]], y = .data[[namesy[1]]],
+                xend = .data[[namesx[2]]], yend = .data[[namesy[2]]]
+            ),
+            alpha = 0.25, linewidth = 0.1
+        ) +
         scale_color_manual(values = pal, labels = group_labels) +
         scale_shape_manual(values = c(16, 17), labels = group_labels) +
-        labs(# title = glue("PCA embeddings, {group1_name} vs. {group2_name}"),
-            x = paste0("PC", pcs[1]), 
+        labs( # title = glue("PCA embeddings, {group1_name} vs. {group2_name}"),
+            x = paste0("PC", pcs[1]),
             y = paste0("PC", pcs[2]), color = "Package", shape = "Package"
-             ) +
-        guides(shape = guide_legend(title=""), color = guide_legend(title="", override.aes = list(alpha = 1))) +
+        ) +
+        guides(shape = guide_legend(title = ""), color = guide_legend(title = "", override.aes = list(alpha = 1))) +
         theme(
-            axis.text = element_text(size = rel(axis_element_size)),  # Increase axis tick labels size
-            axis.title = element_text(size = rel(axis_element_size)),  # Increase axis titles size
+            axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(axis_element_size)), # Increase axis titles size
             legend.text = element_text(size = rel(1.5)),
             legend.title = element_text(size = rel(1.5))
         )
-    
+
     if (identical(pcs, 1:2)) {
         default_filepath <- file_paths_default$pca_12_filepath
     } else if (identical(pcs, 3:4)) {
@@ -793,54 +817,55 @@ plot_pca_compare <- function(embeddings1, embeddings2,
     } else {
         default_filepath <- NULL
     }
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$knee_plot)
         ggsave(filepath, plot = p, dpi = dpi)
     }
-    
-    return (p)
+
+    return(p)
 }
 
 
 plot_loading_diffs <- function(df, mean_loadings_diff = NULL, save = FALSE) {
     df$differences[is.na(df$differences)] <- .Machine$double.eps
     df$differences[(df$differences == 0)] <- .Machine$double.eps
-    
+
     min_y <- min(sqrt(.Machine$double.eps), min(df$differences))
-    
+
     p <- ggplot(df, aes(PC, differences, color = type)) +
         geom_point(color = "black") +
         # geom_col(fill = seurat_v_scanpy_baseline_color, color = "black") +
         scale_x_continuous(
             minor_breaks = setdiff(seq(0, 50, by = 1), seq(0, 50, by = 5)),
             breaks = scales::breaks_width(5)
-            ) +
+        ) +
         labs(
-            y = "Sine of PCA Eigenvectors θ") +
+            y = "Sine of PCA Eigenvectors θ"
+        ) +
         theme(
             plot.title = element_text(size = rel(1.5), hjust = 0.5),
-            axis.title.x = element_text(size = rel(1.74)),  # X axis label size
-            axis.text = element_text(size = rel(1))      # Y axis tick number size
+            axis.title.x = element_text(size = rel(1.74)), # X axis label size
+            axis.text = element_text(size = rel(1)) # Y axis tick number size
         ) +
         scale_color_manual(values = ditto_colors) +
         guides(color = FALSE) +
         scale_y_log10(limits = c(min_y, 1)) +
         annotation_logticks(sides = "l") +
         geom_hline(yintercept = sqrt(.Machine$double.eps), linetype = 2, color = "gray30") +
-        annotate("text", x = 37, y = sqrt(.Machine$double.eps)*1.4, label = "Double Precision Limit", hjust = 0, vjust = 0, color = "gray30", size = 4)
-    
+        annotate("text", x = 37, y = sqrt(.Machine$double.eps) * 1.4, label = "Double Precision Limit", hjust = 0, vjust = 0, color = "gray30", size = 4)
+
     if (!is.null(mean_loadings_diff)) {
         mean_loadings_diff <- format(mean_loadings_diff, scientific = TRUE, digits = 2)
         p <- p + annotate("text", x = 20, y = 3.5e-09, label = glue("PC1-3 mean value: {mean_loadings_diff}"), hjust = 0, vjust = 0, color = "black", size = 4)
     }
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_loading_diffs)
-        ggsave(filepath, plot = p, dpi = dpi)  
+        ggsave(filepath, plot = p, dpi = dpi)
     }
-    
-    return (p)
+
+    return(p)
 }
 
 
@@ -850,38 +875,41 @@ plot_eigs_diffs <- function(df, save = FALSE) {
         # geom_col(fill = seurat_v_scanpy_baseline_color, color = "black") +
         annotation_logticks(sides = "l") +
         scale_color_manual(values = ditto_colors) +
-        geom_hline(yintercept = sqrt(.Machine$double.eps), linetype = 2,
-                   color = "gray30") +
+        geom_hline(
+            yintercept = sqrt(.Machine$double.eps), linetype = 2,
+            color = "gray30"
+        ) +
         labs(
             # title = "Proportion of variance explained",
-             y = "Absolute differences",) +
+            y = "Absolute differences",
+        ) +
         theme(plot.title = element_text(size = rel(1.5), hjust = 0.5)) +
         guides(color = FALSE)
-    
+
     if (!all(df$value == 0)) {
         p <- p + scale_y_log10()
     }
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_eigs_diff)
-        ggsave(filepath, plot = p, dpi = dpi)  
+        ggsave(filepath, plot = p, dpi = dpi)
     }
-    
-    return (p)
+
+    return(p)
 }
 
 
 make_jaccard_plot <- function(jaccards, median_jaccard = NULL, save = FALSE) {
-    if(all(jaccards$Jaccard == 1)) {
+    if (all(jaccards$Jaccard == 1)) {
         # All values are 1, proceed with plotting
-        
+
         # Create a simple data frame for plotting
         plot_data <- data.frame(Jaccard = 1, Fraction = 1)
-        
+
         # Plot
         jaccard_plot <- ggplot(plot_data, aes(x = Jaccard, y = Fraction)) +
-            geom_point(size = 4, color = "black") +  # Adjust point size as needed
-            xlim(0.9, 1.1) +  # Adjust limits to focus on the point
+            geom_point(size = 4, color = "black") + # Adjust point size as needed
+            xlim(0.9, 1.1) + # Adjust limits to focus on the point
             ylim(0.9, 1.1) +
             xlab("Jaccard") +
             ylab("Fraction of Data Points") +
@@ -892,25 +920,25 @@ make_jaccard_plot <- function(jaccards, median_jaccard = NULL, save = FALSE) {
             labs(y = "Density") +
             scale_color_manual(values = ditto_colors)
     }
-    
+
     jaccard_plot <- jaccard_plot +
         theme(
-            axis.text = element_text(size = rel(axis_element_size)),  # Increase axis tick labels size
-            axis.title = element_text(size = rel(axis_element_size)),  # Increase axis titles size
+            axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(axis_element_size)), # Increase axis titles size
             plot.margin = margin(5.5, 17, 5.5, 5.5)
         )
-    
+
     if (!is.null(median_jaccard)) {
         max_density <- max(density(jaccards$Jaccard)$y)
         median_jaccard <- sprintf("%.2f", median_jaccard)
         jaccard_plot <- jaccard_plot + annotate("text", x = 0.57, y = max_density, label = glue("Median jaccard: {median_jaccard}"), hjust = 0, vjust = 0.23, color = "black", size = 6.8)
     }
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_eigs_diff)
-        ggsave(filepath, plot = jaccard_plot, dpi = dpi)  
+        ggsave(filepath, plot = jaccard_plot, dpi = dpi)
     }
-    
+
     return(jaccard_plot)
 }
 
@@ -922,31 +950,34 @@ make_knn_scatterplot <- function(nei_pairs, save = FALSE) {
         coord_equal() +
         labs(x = "Degree (Seurat)", y = "Degree (Scanpy)") +
         theme(
-            axis.text = element_text(size = rel(axis_element_size)),  # Increase axis tick labels size
-            axis.title = element_text(size = rel(axis_element_size)))
-    
+            axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(axis_element_size))
+        )
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$knn_scatterplot)
-        ggsave(filepath, plot = knn_scatterplot, dpi = dpi)  
+        ggsave(filepath, plot = knn_scatterplot, dpi = dpi)
     }
-    
-    return (knn_scatterplot)
+
+    return(knn_scatterplot)
 }
 
 
 make_combined_pc_variance_loadings_plot <- function(combined_pc_variance, loading_diffs, save = FALSE) {
-    combined_pc_variance_mod <- combined_pc_variance + 
-        theme(axis.title.x = element_blank(),    # Remove x-axis title
-              axis.text.x = element_blank(),      # Remove x-axis labels
-              axis.ticks.x = element_blank())
-    
+    combined_pc_variance_mod <- combined_pc_variance +
+        theme(
+            axis.title.x = element_blank(), # Remove x-axis title
+            axis.text.x = element_blank(), # Remove x-axis labels
+            axis.ticks.x = element_blank()
+        )
+
     combined_plot <- combined_pc_variance_mod / loading_diffs
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$combined_pc_variance_loadings_plot)
-        ggsave(filepath, plot = combined_plot, dpi = dpi)  
+        ggsave(filepath, plot = combined_plot, dpi = dpi)
     }
-    
+
     return(combined_plot)
 }
 
@@ -954,17 +985,21 @@ make_combined_pc_variance_loadings_plot <- function(combined_pc_variance, loadin
 make_knn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn", save = FALSE) {
     xmax <- ceiling(max(abs(jaccards$logged_degree_ratio)))
     xmin <- -xmax
-    
-    p <- ggplot(jaccards, aes(x = logged_degree_ratio, y = Jaccard)) + 
+
+    p <- ggplot(jaccards, aes(x = logged_degree_ratio, y = Jaccard)) +
         ggpointdensity::geom_pointdensity(size = 0.3, alpha = 1, adjust = 0.2) +
         scico::scale_color_scico(palette = "grayC", direction = -1, end = 0.8) +
         geom_vline(xintercept = 0, color = "black", linetype = "solid") +
         geom_hline(yintercept = 0, color = "black", linetype = "solid") +
-        scale_y_continuous(minor_breaks = seq(0, 1, by = 0.1),
-                           breaks = seq(0, 1, by = 0.2)) +
+        scale_y_continuous(
+            minor_breaks = seq(0, 1, by = 0.1),
+            breaks = seq(0, 1, by = 0.2)
+        ) +
         scale_x_continuous(breaks = seq(xmin, xmax, by = 1)) +
-        coord_cartesian(xlim = c(xmin, xmax),
-                        ylim = c(0,1)) +
+        coord_cartesian(
+            xlim = c(xmin, xmax),
+            ylim = c(0, 1)
+        ) +
         theme_minimal() +
         stat_function(fun = function(x) 2^x, color = "grey30", linetype = 2, xlim = c(xmin, 0)) +
         stat_function(fun = function(x) 2^(-x), color = "grey30", linetype = 2, xlim = c(0, xmax)) +
@@ -975,68 +1010,67 @@ make_knn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
             panel.grid.major.x = element_line(color = "grey90", linewidth = 0.2),
             panel.grid.major.y = element_line(color = "grey80", linewidth = 0.2)
         )
-        # geom_density_2d()
-    
+    # geom_density_2d()
+
     if (neighbor_space == "umap") {
         p <- p +
-            labs(x = bquote(log[2]('UMAP SNN Degree Ratio')), y = "UMAP SNN Jaccard")
+            labs(x = bquote(log[2]("UMAP SNN Degree Ratio")), y = "UMAP SNN Jaccard")
     } else {
         p <- p +
-            labs(x = bquote(log[2]('SNN Degree Ratio')), y = "SNN Jaccard")
+            labs(x = bquote(log[2]("SNN Degree Ratio")), y = "SNN Jaccard")
     }
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$jaccard_degree_scatterplot)
         ggsave(filepath, plot = p, dpi = dpi, bg = "white")
     }
-    
-    return (p)
+
+    return(p)
 }
 
 
 make_umap_jaccard_plot <- function(jaccards_df, facet = NULL, save = FALSE) {
-    if(all(jaccards_df$JaccardIndex == 1)) {
+    if (all(jaccards_df$JaccardIndex == 1)) {
         # Create a simple data frame for plotting
         plot_data <- data.frame(JaccardIndex = 1, Density = 1)
-        
+
         # Plot
         umap_jaccard_plot <- ggplot(plot_data, aes(x = JaccardIndex, y = Density)) +
-            geom_point(size = 4, color = "black") +  # Adjust point size as needed
-            xlim(0.9, 1.1) +  # Adjust limits to focus on the point
+            geom_point(size = 4, color = "black") + # Adjust point size as needed
+            xlim(0.9, 1.1) + # Adjust limits to focus on the point
             ylim(0.9, 1.1) +
             xlab("SNN Jaccard") +
             ylab("Density") +
             theme_minimal()
-        
     } else {
         umap_jaccard_plot <- ggplot(jaccards_df, aes(x = JaccardIndex)) +
             geom_density(fill = NA, color = "black") +
             labs(y = "Density", x = "SNN Jaccard") +
             scale_x_continuous(
-                breaks = seq(0, 1, by = 0.1),  # Major breakpoints
-                minor_breaks = seq(0, 1, by = 0.05)  # Minor breakpoints
+                breaks = seq(0, 1, by = 0.1), # Major breakpoints
+                minor_breaks = seq(0, 1, by = 0.05) # Minor breakpoints
             ) +
             scale_color_manual(values = ditto_colors) +
             coord_cartesian(xlim = c(0, 1)) +
             theme(
-                axis.text = element_text(size = rel(axis_element_size)),  # Increase axis tick labels size
-                axis.title = element_text(size = rel(axis_element_size)),  # Increase axis titles size
+                axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
+                axis.title = element_text(size = rel(axis_element_size)), # Increase axis titles size
                 plot.margin = margin(5.5, 17, 5.5, 5.5)
             )
-        
+
         if (!is.null(facet)) {
             umap_jaccard_plot <- umap_jaccard_plot +
                 facet_wrap(~ .data[[facet]]) +
                 theme(axis.text = element_text(size = 5.5))
         }
     }
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$umap_jaccard_knn_density)
         ggsave(filepath, plot = umap_jaccard_plot, dpi = dpi, bg = "white")
     }
-    
-    return (umap_jaccard_plot)
+
+    return(umap_jaccard_plot)
 }
 
 
@@ -1048,7 +1082,7 @@ plot_heatmap <- function(jacc_seu_sc3, ari_value = NULL, show_axis_titles = FALS
         treeheight_row <- 0
         treeheight_col <- 0
     }
-    
+
     cluster_pheatmap <- as.ggplot(pheatmap::pheatmap(jacc_seu_sc3, color = scales::viridis_pal(end = max(jacc_seu_sc3))(255), treeheight_row = treeheight_row, treeheight_col = treeheight_col))
     if (show_axis_titles || !is.null(ari_value)) {
         cluster_pheatmap <- cluster_pheatmap + coord_cartesian(clip = "off") +
@@ -1063,40 +1097,40 @@ plot_heatmap <- function(jacc_seu_sc3, ari_value = NULL, show_axis_titles = FALS
             cluster_pheatmap <- cluster_pheatmap + annotate("text", x = 0.81, y = 1, label = glue("ARI: {ari_value}"), hjust = 0.6, vjust = 0.2, color = "black", size = 8)
         }
     }
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pheatmap)
-        ggsave(filepath, plot = cluster_pheatmap, dpi = dpi, bg = "white")  
+        ggsave(filepath, plot = cluster_pheatmap, dpi = dpi, bg = "white")
     }
-    return (cluster_pheatmap)
+    return(cluster_pheatmap)
 }
 
 
 plot_alluvial <- function(clus_df_gather, group1_name = "Seurat", group2_name = "Scanpy", color_boxes = TRUE, color_bands = FALSE, alluvial_alpha = 0.5, save = FALSE) {
     num_levels_group1 <- length(levels(clus_df_gather[[group1_name]]))
     num_levels_group2 <- length(levels(clus_df_gather[[group2_name]]))
-    
+
     # Extract colors for each factor, assuming ditto_colors is long enough
     colors_group1 <- ditto_colors[1:num_levels_group1]
     colors_group2 <- ditto_colors[1:num_levels_group2]
-    
+
     colors_group1_reverse <- rev(ditto_colors[1:num_levels_group1])
     colors_group2_reverse <- rev(ditto_colors[1:num_levels_group2])
-    
+
     # Combine the colors
     combined_colors <- c(colors_group1, colors_group2)
     combined_colors_reverse <- c(colors_group1_reverse, colors_group2_reverse)
-    
+
     p <- ggplot(data = clus_df_gather, aes(axis1 = !!sym(group1_name), axis2 = !!sym(group2_name), y = value))
-    
+
     if (color_bands) {
         if (num_levels_group2 > num_levels_group1) {
-            p <- p + 
+            p <- p +
                 geom_alluvium(aes(fill = !!sym(group2_name)), alpha = alluvial_alpha) +
                 scale_fill_manual(values = colors_group2) +
                 labs(fill = NULL)
         } else {
-            p <- p + 
+            p <- p +
                 geom_alluvium(aes(fill = !!sym(group1_name)), alpha = alluvial_alpha) +
                 scale_fill_manual(values = colors_group1) +
                 labs(fill = NULL)
@@ -1104,14 +1138,14 @@ plot_alluvial <- function(clus_df_gather, group1_name = "Seurat", group2_name = 
     } else {
         p <- p + geom_alluvium()
     }
-    
+
     if (color_boxes) {
         p <- p + geom_stratum(fill = combined_colors_reverse)
     } else {
         p <- p + geom_stratum()
     }
-    
-    p <- p + 
+
+    p <- p +
         # geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
         theme_void() +
         annotate("text", x = 1.023, y = 1, label = num_levels_group1, hjust = 1, vjust = 1.35, size = 5) + # Adjust x, y for Seurat
@@ -1119,14 +1153,13 @@ plot_alluvial <- function(clus_df_gather, group1_name = "Seurat", group2_name = 
         theme(
             legend.text = element_text(size = rel(axis_element_size))
         )
-        
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$alluvial)
         ggsave(filepath, plot = p, dpi = dpi, bg = "white")
-    } 
-    
-    return (p)
-    
+    }
+
+    return(p)
 }
 
 
@@ -1136,109 +1169,109 @@ make_umap_plot <- function(dataframe, package, title = "UMAP", overall_min_dim1 
         xlim(overall_min_dim1, overall_max_dim1) +
         ylim(overall_min_dim2, overall_max_dim2) +
         labs(
-            x = "",  # Remove x-axis title
-            y = "",   # Remove y-axis title
+            x = "", # Remove x-axis title
+            y = "", # Remove y-axis title
             title = title
-            ) +
+        ) +
         theme(
-            axis.text.x = element_blank(),  # Turn off x-axis numbers
-            axis.text.y = element_blank(),  # Turn off y-axis numbers
-            axis.ticks = element_blank(),   # Optionally, turn off axis ticks as well
-            axis.text = element_text(size = rel(axis_element_size)),  # Increase axis tick labels size
+            axis.text.x = element_blank(), # Turn off x-axis numbers
+            axis.text.y = element_blank(), # Turn off y-axis numbers
+            axis.ticks = element_blank(), # Optionally, turn off axis ticks as well
+            axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
             plot.title = element_text(size = rel(axis_element_size), hjust = 0.5) # Center the title
         ) +
         scale_color_manual(values = ditto_colors, name = "Cluster") +
         guides(color = guide_legend(override.aes = list(size = 3)))
-    
+
     if (!show_legend) {
         p <- p +
             theme(legend.position = "none")
     }
-    
+
     return(p)
 }
 
 
 plot_umap <- function(group1_umap_info, group1_clusters, group2_umap_info, group2_clusters, group1 = "Seurat", group2 = "Scanpy", group1_title = "", group2_title = "", show_legend = FALSE, save = FALSE) {
     umap_df_group1 <- as.data.frame(group1_umap_info)
-    names(umap_df_group1) <- c('UMAP_1', 'UMAP_2')
+    names(umap_df_group1) <- c("UMAP_1", "UMAP_2")
     umap_df_group1$cluster <- group1_clusters
     group1_max_cluster_id <- max(as.numeric(as.character(group1_clusters[!is.na(group1_clusters)])))
     group1_min_cluster_id <- min(as.numeric(as.character(group1_clusters[!is.na(group1_clusters)])))
     umap_df_group1$cluster <- factor(umap_df_group1$cluster, levels = as.character(group1_min_cluster_id:group1_max_cluster_id))
-    
+
     umap_df_group2 <- as.data.frame(group2_umap_info)
-    names(umap_df_group2) <- c('UMAP_1', 'UMAP_2')
+    names(umap_df_group2) <- c("UMAP_1", "UMAP_2")
     umap_df_group2$cluster <- group2_clusters
     group2_max_cluster_id <- max(as.numeric(as.character(group2_clusters[!is.na(group2_clusters)])))
     group2_min_cluster_id <- min(as.numeric(as.character(group2_clusters[!is.na(group2_clusters)])))
     umap_df_group2$cluster <- factor(umap_df_group2$cluster, levels = as.character(group2_min_cluster_id:group2_max_cluster_id))
-    
-    
+
+
     group1_min_dim1 <- min(group1_umap_info[, 1])
     group1_min_dim2 <- min(group1_umap_info[, 2])
     group1_max_dim1 <- max(group1_umap_info[, 1])
     group1_max_dim2 <- max(group1_umap_info[, 2])
-    
+
     group2_min_dim1 <- min(group2_umap_info[, 1])
     group2_min_dim2 <- min(group2_umap_info[, 2])
     group2_max_dim1 <- max(group2_umap_info[, 1])
     group2_max_dim2 <- max(group2_umap_info[, 2])
-    
+
     overall_min_dim1 <- min(group1_min_dim1, group2_min_dim1)
     overall_min_dim2 <- min(group1_min_dim2, group2_min_dim2)
     overall_max_dim1 <- max(group1_max_dim1, group2_max_dim1)
     overall_max_dim2 <- max(group1_max_dim2, group2_max_dim2)
-    
+
     if (group1_title == "") {
         group1_title <- tools::toTitleCase(group1)
     }
-    
+
     if (group2_title == "") {
         group2_title <- tools::toTitleCase(group2)
     }
-    
+
     p1 <- make_umap_plot(umap_df_group1, package = group1, title = group1_title, overall_min_dim1, overall_max_dim1, overall_min_dim2, overall_max_dim2, show_legend = show_legend)
     p2 <- make_umap_plot(umap_df_group2, package = group2, title = group2_title, overall_min_dim1, overall_max_dim1, overall_min_dim2, overall_max_dim2, show_legend = show_legend)
-        
-    
-    if(length(save) > 1) {
+
+
+    if (length(save) > 1) {
         save_1 <- save[1]
         save_2 <- save[2]
     } else {
         save_1 <- save
         save_2 <- save
     }
-    
+
     if (save_1 == TRUE || (is.character(save_1)) && !is.na(save_1)) {
         filepath_1 <- make_save_path(filepath = save_1, default_filepath = file_paths_default$umap_seu)
         ggsave(filepath_1, plot = p1, dpi = dpi, bg = "white", width = 2100, height = 2100, units = "px")
     }
-    
+
     if (save_2 == TRUE || (is.character(save_2)) && !is.na(save_2)) {
         filepath_2 <- make_save_path(filepath = save_2, default_filepath = file_paths_default$umap_scan)
         ggsave(filepath_2, plot = p2, dpi = dpi, bg = "white", width = 2100, height = 2100, units = "px")
     }
-    
-    return (list(p1, p2))
+
+    return(list(p1, p2))
 }
 
 
 calculate_individual_de_stats <- function(markers2, column_name, column_equation) {
     markers2[[column_name]] <- column_equation
-    
+
     # Calculating the mean magnitude of the difference
-    mean_stat = mean(markers2[[column_name]], na.rm = TRUE)
+    mean_stat <- mean(markers2[[column_name]], na.rm = TRUE)
     print(glue("Mean magnitude of {column_name}: {mean_stat}"))
-    
-    median_stat = median(markers2[[column_name]], na.rm = TRUE)
+
+    median_stat <- median(markers2[[column_name]], na.rm = TRUE)
     print(glue("Median magnitude of {column_name}: {median_stat}"))
-    
-    variance_stat = var(markers2[[column_name]], na.rm = TRUE)
+
+    variance_stat <- var(markers2[[column_name]], na.rm = TRUE)
     print(glue("Variance of magnitude of {column_name}: {variance_stat}"))
-    
+
     print("------------------------------------------------------------------------------")
-    
+
     return(markers2)
 }
 
@@ -1249,61 +1282,61 @@ calculate_de_stats <- function(markers2, group1_name = "Seurat", group2_name = "
     logFC_group2 <- de_names$logFC_group2
     p_val_adj_group1 <- de_names$p_val_adj_group1
     p_val_adj_group2 <- de_names$p_val_adj_group2
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$de_stats_file)
-        sink(filepath, split = TRUE, append = TRUE) 
+        sink(filepath, split = TRUE, append = TRUE)
     }
-    
+
     logFC_difference_magnitude_equation <- abs(markers2[[logFC_group1]] - markers2[[logFC_group2]])
-    markers2 <- calculate_individual_de_stats(markers2, column_name="logFC_difference_magnitude", column_equation=logFC_difference_magnitude_equation)
-    
+    markers2 <- calculate_individual_de_stats(markers2, column_name = "logFC_difference_magnitude", column_equation = logFC_difference_magnitude_equation)
+
     logFC_difference_signed_equation <- (markers2[[logFC_group1]] - markers2[[logFC_group2]])
-    markers2 <- calculate_individual_de_stats(markers2, column_name="logFC_difference_signed", column_equation=logFC_difference_signed_equation)
-    
-    
+    markers2 <- calculate_individual_de_stats(markers2, column_name = "logFC_difference_signed", column_equation = logFC_difference_signed_equation)
+
+
     # filtered_markers2 <- subset(markers2, abs(logFC_r) < 20 & abs(logFC_py) < 20)
     # filtered_logFC_difference_magnitude_equation <- abs(filtered_markers2$logFC_r - filtered_markers2$logFC_py)
     # filtered_logFC_difference_signed_equation <- (filtered_markers2$logFC_r - filtered_markers2$logFC_py)
-    # 
+    #
     # filtered_markers2 <- calculate_individual_stat(filtered_markers2, column_name="filtered_logFC_difference_magnitude", column_equation=filtered_logFC_difference_magnitude_equation)
     # filtered_markers2 <- calculate_individual_stat(filtered_markers2, column_name="filtered_logFC_difference_signed", column_equation=filtered_logFC_difference_signed_equation)
-    
+
     # p_val_adj
     pvaladj_difference_magnitude_equation <- abs(markers2[[p_val_adj_group1]] - markers2[[p_val_adj_group2]])
-    markers2 <- calculate_individual_de_stats(markers2, column_name="pvaladj_difference_magnitude", column_equation=pvaladj_difference_magnitude_equation)
-    
+    markers2 <- calculate_individual_de_stats(markers2, column_name = "pvaladj_difference_magnitude", column_equation = pvaladj_difference_magnitude_equation)
+
     pvaladj_difference_signed_equation <- (markers2[[p_val_adj_group1]] - markers2[[p_val_adj_group2]])
-    markers2 <- calculate_individual_de_stats(markers2, column_name="pvaladj_difference_signed", column_equation=pvaladj_difference_signed_equation)
-    
+    markers2 <- calculate_individual_de_stats(markers2, column_name = "pvaladj_difference_signed", column_equation = pvaladj_difference_signed_equation)
+
     p_both_small <- nrow(markers2 %>% filter(!!sym(p_val_adj_group1) <= 0.05, !!sym(p_val_adj_group2) <= 0.05))
-    
+
     p1_small <- nrow(markers2 %>% filter(!!sym(p_val_adj_group1) <= 0.05, !!sym(p_val_adj_group2) > 0.05))
-    
+
     p2_small <- nrow(markers2 %>% filter(!!sym(p_val_adj_group1) > 0.05, !!sym(p_val_adj_group2) <= 0.05))
-    
+
     p_both_big <- nrow(markers2 %>% filter(!!sym(p_val_adj_group1) > 0.05, !!sym(p_val_adj_group2) > 0.05))
-    
-    
+
+
     fraction_flipped <- (p1_small + p2_small) / nrow(markers2)
-    
+
     print(glue("Adjusted p value, fraction <=0.05 in both groups: {p_both_small/nrow(markers2)}"))
     print(glue("Adjusted p value, fraction <=0.05 in {group1_name} but >0.05 in {group2_name}: {p1_small/nrow(markers2)}"))
     print(glue("Adjusted p value, fraction <=0.05 in {group2_name} but >0.05 in {group1_name}: {p2_small/nrow(markers2)}"))
     print(glue("Adjusted p value, fraction >0.05 in both groups: {p_both_big/nrow(markers2)}"))
     print(glue("Adjusted p value, fraction that flipped across 0.05 threshold: {fraction_flipped}"))
-    
+
     # # FC (exponentiated)
     # FC_difference_magnitude_equation <- abs(markers2$FC_r - markers2$FC_py)
     # markers2 <- calculate_individual_de_stats(markers2, column_name="FC_difference_magnitude", column_equation=FC_difference_magnitude_equation)
-    # 
+    #
     # FC_difference_signed_equation <- (markers2$FC_r - markers2$FC_py)
     # markers2 <- calculate_individual_de_stats(markers2, column_name="FC_difference_signed", column_equation=FC_difference_signed_equation)
-    
+
     if (save == TRUE || is.character(save)) {
-        sink() 
+        sink()
     }
-    
+
     return(markers2)
 }
 
@@ -1312,7 +1345,8 @@ make_upset_scanpy <- function(adata1, adata2, comparison = comparison, group_nam
     if (comparison == "Gene") {
         data <- list(
             Scanpy1 = unlist(adata1$var_names$tolist()),
-            Scanpy2 = unlist(adata2$var_names$tolist()))
+            Scanpy2 = unlist(adata2$var_names$tolist())
+        )
         default_plotpath <- file_paths_default$upset_genes
     } else if (comparison == "Cell") {
         data <- list(
@@ -1325,22 +1359,25 @@ make_upset_scanpy <- function(adata1, adata2, comparison = comparison, group_nam
         py_run_string("scanpy_highly_variable_genes2 = adata2.var.index[adata2.var['highly_variable']]")
         scanpy_highly_variable_genes1 <- unlist(py$scanpy_highly_variable_genes1$tolist())
         scanpy_highly_variable_genes2 <- unlist(py$scanpy_highly_variable_genes2$tolist())
-        data <- list(Scanpy1 = scanpy_highly_variable_genes1,
-                     Scanpy2 = scanpy_highly_variable_genes2)
+        data <- list(
+            Scanpy1 = scanpy_highly_variable_genes1,
+            Scanpy2 = scanpy_highly_variable_genes2
+        )
         default_plotpath <- file_paths_default$upset_hvg
     } else if (comparison == "Marker" || comparison == "Marker Gene") {
         data <- list(
             Scanpy1 = adata1,
-            Scanpy2 = adata2)
+            Scanpy2 = adata2
+        )
         default_plotpath <- default_plotpath <- file_paths_default$upset_markers
     }
-    
+
     data <- setNames(data, unlist(group_names))
-    
+
     p <- upset_plot_general(data, group1_name = group_names$Scanpy1, group2_name = group_names$Scanpy2, comparison = comparison, before_filtering = before_filtering, as_ggplot = as_ggplot, save = save, default_plotpath = default_plotpath)
-    
+
     print(p)
-    
+
     return(p)
 }
 
@@ -1361,21 +1398,23 @@ make_upset_seurat <- function(group1, group2, comparison = comparison, group_nam
     } else if (comparison == "HVG") {
         data <- list(
             Seurat1 = VariableFeatures(group1),
-            Seurat2 = VariableFeatures(group2))
+            Seurat2 = VariableFeatures(group2)
+        )
         default_plotpath <- file_paths_default$upset_hvg
     } else if (comparison == "Marker" || comparison == "Marker Gene") {
         data <- list(
             Seurat1 = group1,
-            Seurat2 = group2)
+            Seurat2 = group2
+        )
         default_plotpath <- default_plotpath <- file_paths_default$upset_markers
     }
 
     data <- setNames(data, unlist(group_names))
-    
+
     p <- upset_plot_general(data, group1_name = group_names$Seurat1, group2_name = group_names$Seurat2, comparison = comparison, before_filtering = before_filtering, as_ggplot = as_ggplot, save = save, default_plotpath = default_plotpath)
-    
+
     print(p)
-    
+
     return(p)
 }
 
@@ -1384,7 +1423,8 @@ make_euler_scanpy <- function(adata1, adata2, comparison, before_QC = FALSE, gro
     if (comparison == "Gene") {
         data <- list(
             Scanpy1 = unlist(adata1$var_names$tolist()),
-            Scanpy2 = unlist(adata2$var_names$tolist()))
+            Scanpy2 = unlist(adata2$var_names$tolist())
+        )
         default_plotpath <- file_paths_default$upset_genes
     } else if (comparison == "Cell") {
         data <- list(
@@ -1397,63 +1437,66 @@ make_euler_scanpy <- function(adata1, adata2, comparison, before_QC = FALSE, gro
         py_run_string("scanpy_highly_variable_genes2 = adata2.var.index[adata2.var['highly_variable']]")
         scanpy_highly_variable_genes1 <- unlist(py$scanpy_highly_variable_genes1$tolist())
         scanpy_highly_variable_genes2 <- unlist(py$scanpy_highly_variable_genes2$tolist())
-        data <- list(Scanpy1 = scanpy_highly_variable_genes1,
-                     Scanpy2 = scanpy_highly_variable_genes2)
+        data <- list(
+            Scanpy1 = scanpy_highly_variable_genes1,
+            Scanpy2 = scanpy_highly_variable_genes2
+        )
         default_plotpath <- file_paths_default$upset_hvg
     } else if (comparison == "Marker" || comparison == "Marker Gene") {
         data <- list(
             Scanpy1 = adata1,
-            Scanpy2 = adata2)
+            Scanpy2 = adata2
+        )
         default_plotpath <- default_plotpath <- file_paths_default$upset_markers
     }
-    
+
     data <- setNames(data, unlist(group_names))
     scanpy1_name <- unlist(group_names)["Scanpy1"]
     scanpy2_name <- unlist(group_names)["Scanpy2"]
-    overlap_name <- glue('{scanpy1_name}&{scanpy2_name}')
-    
+    overlap_name <- glue("{scanpy1_name}&{scanpy2_name}")
+
     euler_data <- euler(data)
     scan1_unique <- euler_data$original.values[scanpy1_name]
     scan2_unique <- euler_data$original.values[scanpy2_name]
     total_overlap <- euler_data$original.values[overlap_name]
-    
-    
+
+
     if (save_stats == TRUE || is.character(save_stats)) {
         default_statpath <- ifelse(before_QC, file_paths_default$euler_stats_before_QC_file, file_paths_default$euler_stats_after_QC_file)
         filepath <- make_save_path(filepath = save_stats, default_filepath = default_statpath)
         sink(filepath, append = TRUE, split = TRUE)
     }
-    
+
     print(glue("Total {comparison}s in {scanpy1_name}: {scan1_unique+total_overlap}"))
     print(glue("Total {comparison}s in {scanpy2_name}: {scan2_unique+total_overlap}"))
     print(glue("Total {comparison}s overlapping: {total_overlap}"))
     print(glue("Fraction of {comparison}s in {scanpy1_name} overlapping in {scanpy2_name}: {total_overlap/(total_overlap + scan2_unique)}"))
     print(glue("Fraction of {comparison}s in {scanpy2_name} overlapping in {scanpy1_name}: {total_overlap/(total_overlap + scan1_unique)}"))
     print(glue("{comparison}s Jaccard: {total_overlap/(total_overlap + scan1_unique + scan2_unique)}"))
-    
+
     if (save_stats == TRUE || is.character(save_stats)) {
         sink()
     }
-    
+
     euler_plot <- plot(euler_data, fills = pal, quantities = list(cex = 2), labels = list(cex = 2))
-    
+
     euler_plot_ggplot_compatible <- as.ggplot(euler_plot)
-    
+
     if (before_QC) {
         title <- glue("{comparison}s (before QC)")
     } else {
         title <- glue("{comparison}s")
     }
-    
-    euler_plot_ggplot_compatible <- euler_plot_ggplot_compatible + 
-        ggtitle(glue("{comparison}s")) + 
+
+    euler_plot_ggplot_compatible <- euler_plot_ggplot_compatible +
+        ggtitle(glue("{comparison}s")) +
         theme(plot.title = element_text(size = 40, hjust = 0.5))
-    
+
     if (save_plot == TRUE || is.character(save_plot)) {
         filepath <- make_save_path(filepath = save_plot, default_filepath = default_plotpath)
-        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")  
+        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
     }
-    
+
     return(euler_plot_ggplot_compatible)
 }
 
@@ -1462,106 +1505,114 @@ make_euler_seurat <- function(seu1, seu2, comparison, before_QC = FALSE, group_n
     if (comparison == "Gene") {
         data <- list(
             Seurat1 = rownames(seu1@assays$RNA$counts),
-            Seurat2 = rownames(seu2@assays$RNA$counts))
+            Seurat2 = rownames(seu2@assays$RNA$counts)
+        )
         default_plotpath <- ifelse(before_QC, file_paths_default$euler_before_qc_cell_file_path, file_paths_default$euler_after_qc_cell_file_path)
     } else if (comparison == "Cell") {
         data <- list(
             Seurat1 = colnames(seu1@assays$RNA$counts),
-            Seurat2 = colnames(seu2@assays$RNA$counts))
+            Seurat2 = colnames(seu2@assays$RNA$counts)
+        )
         default_plotpath <- ifelse(before_QC, file_paths_default$euler_before_qc_gene_file_path, file_paths_default$euler_after_qc_gene_file_path)
     } else if (comparison == "HVG") {
         data <- list(
             Seurat1 = VariableFeatures(seu1),
-            Seurat2 = VariableFeatures(seu2))
+            Seurat2 = VariableFeatures(seu2)
+        )
         default_plotpath <- file_paths_default$euler_after_qc_hvg_file_path
     } else if (comparison == "Marker" || comparison == "Marker Gene") {
         data <- list(
             Seurat1 = seu1,
-            Seurat2 = seu2)
+            Seurat2 = seu2
+        )
         default_plotpath <- file_paths_default$euler_after_qc_marker_file_path
     }
-    
+
     data <- setNames(data, unlist(group_names))
     seurat1_name <- unlist(group_names)["Seurat1"]
     seurat2_name <- unlist(group_names)["Seurat2"]
-    overlap_name <- glue('{seurat1_name}&{seurat2_name}')
-    
+    overlap_name <- glue("{seurat1_name}&{seurat2_name}")
+
     euler_data <- euler(data)
     seu1_unique <- euler_data$original.values[seurat1_name]
     seu2_unique <- euler_data$original.values[seurat2_name]
     total_overlap <- euler_data$original.values[overlap_name]
-    
-    
+
+
     if (save_stats == TRUE || is.character(save_stats)) {
         default_statpath <- ifelse(before_QC, file_paths_default$euler_stats_before_QC_file, file_paths_default$euler_stats_after_QC_file)
         filepath <- make_save_path(filepath = save_stats, default_filepath = default_statpath)
         sink(filepath, append = TRUE, split = TRUE)
     }
-    
+
     print(glue("Total {comparison}s in {seurat1_name}: {seu1_unique+total_overlap}"))
     print(glue("Total {comparison}s in {seurat2_name}: {seu2_unique+total_overlap}"))
     print(glue("Total {comparison}s overlapping: {total_overlap}"))
     print(glue("Fraction of {comparison}s in {seurat1_name} overlapping in {seurat2_name}: {total_overlap/(total_overlap + seu2_unique)}"))
     print(glue("Fraction of {comparison}s in {seurat2_name} overlapping in {seurat1_name}: {total_overlap/(total_overlap + seu1_unique)}"))
     print(glue("{comparison}s Jaccard: {total_overlap/(total_overlap + seu1_unique + seu2_unique)}"))
-    
+
     if (save_stats == TRUE || is.character(save_stats)) {
         sink()
     }
-    
+
     euler_plot <- plot(euler_data, fills = pal, quantities = list(cex = 2), labels = list(cex = 2))
-    
+
     euler_plot_ggplot_compatible <- as.ggplot(euler_plot)
-    
+
     if (before_QC) {
         title <- glue("{comparison}s (before QC)")
     } else {
         title <- glue("{comparison}s")
     }
-    
-    euler_plot_ggplot_compatible <- euler_plot_ggplot_compatible + 
-        ggtitle(glue("{comparison}s")) + 
+
+    euler_plot_ggplot_compatible <- euler_plot_ggplot_compatible +
+        ggtitle(glue("{comparison}s")) +
         theme(plot.title = element_text(size = 40, hjust = 0.5))
-    
+
     if (save_plot == TRUE || is.character(save_plot)) {
         filepath <- make_save_path(filepath = save_plot, default_filepath = default_plotpath)
-        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")  
+        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
     }
-    
+
     return(euler_plot_ggplot_compatible)
 }
 
 
 make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group2_name = "Group 2", save = FALSE) {
-    vln_seu1 <- VlnPlot(seu1, features = "nFeature_RNA", pt.size = 0, cols = group1_color) + 
+    vln_seu1 <- VlnPlot(seu1, features = "nFeature_RNA", pt.size = 0, cols = group1_color) +
         coord_cartesian(ylim = c(0, 8250), clip = "off") +
         scale_y_continuous(breaks = seq(0, 8500, by = 2000)) +
         annotate("text", x = 1, y = -Inf, label = group1_name, vjust = 2, hjust = 0.5) +
-        theme(legend.position = "none",
-              plot.margin = margin(r = 0, b = 20, unit = "pt"),
-              axis.text.x = element_blank(),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank())
-    
-    vln_seu2 <- VlnPlot(seu2, features = "nFeature_RNA", pt.size = 0, cols = group2_color) + 
+        theme(
+            legend.position = "none",
+            plot.margin = margin(r = 0, b = 20, unit = "pt"),
+            axis.text.x = element_blank(),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank()
+        )
+
+    vln_seu2 <- VlnPlot(seu2, features = "nFeature_RNA", pt.size = 0, cols = group2_color) +
         coord_cartesian(ylim = c(0, 8250), clip = "off") +
         scale_y_continuous(breaks = seq(0, 8500, by = 2000)) +
         annotate("text", x = 1, y = -Inf, label = group2_name, vjust = 2, hjust = 0.5) +
-        theme(legend.position = "none",
-              plot.margin = margin(l = 0, b = 20, unit = "pt"),
-              axis.text.x = element_blank(),
-              axis.text.y = element_blank(),
-              axis.title.x = element_blank(),
-              axis.ticks.y = element_blank(),
-              axis.title.y = element_blank())
-    
+        theme(
+            legend.position = "none",
+            plot.margin = margin(l = 0, b = 20, unit = "pt"),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            axis.title.x = element_blank(),
+            axis.ticks.y = element_blank(),
+            axis.title.y = element_blank()
+        )
+
     # Combine the plots
     combined_plot <- vln_seu1 + vln_seu2 + plot_layout(ncol = 2, widths = c(0.3, 0.3))
-    
+
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$violin_counts_comparison)
-        ggsave(filepath, plot = combined_plot, dpi = dpi)  
+        ggsave(filepath, plot = combined_plot, dpi = dpi)
     }
-    
+
     return(combined_plot)
 }

@@ -23,7 +23,7 @@ seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
 R Imports
 ```{r}
 conda_env <- "analysis_env"
-Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep="/"))
+Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
 library(reticulate)
 use_condaenv(conda_env)
 library(Seurat)
@@ -83,25 +83,20 @@ output_data_file_paths <- list(
 # FALSE to have no save
 file_paths <- list(
     filter_arguments = glue::glue("{output_base_path}/stats/filter_stats.txt"),
-    euler_stats_before_QC_file = FALSE,  # glue::glue("{output_base_path}/stats/euler_stats_beforeQC.txt"),
+    euler_stats_before_QC_file = FALSE, # glue::glue("{output_base_path}/stats/euler_stats_beforeQC.txt"),
     euler_stats_after_QC_file = glue::glue("{output_base_path}/stats/euler_stats_afterQC.txt"),
     pca_knn_clustering_umap_file = glue::glue("{output_base_path}/stats/pca_knn_clustering_umap_stats.txt"),
     de_stats_file = glue::glue("{output_base_path}/stats/de_stats.txt"),
-    
     upset_cells = glue::glue("{output_base_path}/plots/upset_cells.tiff"),
     upset_genes = glue::glue("{output_base_path}/plots/upset_genes.tiff"),
     upset_hvgs = glue::glue("{output_base_path}/plots/upset_hvgs.tiff"),
     upset_markers_genes_only = glue::glue("{output_base_path}/plots/upset_marker_genes_only.tiff"),
     upset_markers = glue::glue("{output_base_path}/plots/upset_markers.tiff"),
-    
     pca_12_overlay_filepath = glue::glue("{output_base_path}/plots/pca_scatterplot_12.tiff"),
     combined_pc_variance_loadings_plot = glue::glue("{output_base_path}/plots/combined_pc_variance_loadings_plot.tiff"),
-    
     jaccard_degree_scatterplot = glue::glue("{output_base_path}/plots/jaccard_degree_scatterplot.tiff"),
-    
     alluvial = glue::glue("{output_base_path}/plots/cluster_alluvial.tiff"),
     alluvial_legend = glue::glue("{output_base_path}/plots/cluster_alluvial_legend.tiff"),
-
     umap_seu1 = glue::glue("{output_base_path}/plots/umap_seu_{seu1_name}.tiff"),
     umap_seu2 = glue::glue("{output_base_path}/plots/umap_seu_{seu2_name}.tiff"),
     umap_jaccard_degree_scatterplot = glue::glue("{output_base_path}/plots/umap_jaccard_degree_scatterplot.tiff"),
@@ -111,7 +106,6 @@ file_paths <- list(
     umap_alluvial = glue::glue("{output_base_path}/plots/umap_alluvial.tiff"),
     umap_umap_leiden_seu1 = glue::glue("{output_base_path}/plots/umap_umap_leiden_seu1.tiff"),
     umap_umap_leiden_seu2 = glue::glue("{output_base_path}/plots/umap_umap_leiden_seu2.tiff"),
-
     logFC_scatterplot_file_path = glue::glue("{output_base_path}/plots/logFC_scatterplot.tiff"),
     wilcoxon_scatterplot_file_path = glue::glue("{output_base_path}/plots/wilcoxon_scatterplot.tiff"),
     logFC_scatterplot_file_path_with_legend = glue::glue("{output_base_path}/plots/logFC_scatterplot_with_legend.tiff"),
@@ -121,17 +115,17 @@ file_paths <- list(
 for (path in output_data_file_paths) {
     dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
 }
-    
-    
+
+
 if (save_data) {
     for (path in file_paths) {
         if (is.character(path)) {
             # Extract the directory part of the path
             specific_output_path <- dirname(path)
-            
+
             # Create the directory if it does not exist
             if (!dir.exists(specific_output_path)) {
-              dir.create(specific_output_path, recursive = TRUE, showWarnings = FALSE)
+                dir.create(specific_output_path, recursive = TRUE, showWarnings = FALSE)
             }
         }
     }
@@ -160,14 +154,16 @@ upset_hvg <- make_upset_seurat(seu1, seu2, comparison = "HVG", group_names = seu
 upset_hvg
 
 tot_variance1 <- Misc(Reductions(seu1, "pca"))[["total.variance"]]
-var_explained1 <- Stdev(seu1, reduction = "pca")^2/tot_variance1
+var_explained1 <- Stdev(seu1, reduction = "pca")^2 / tot_variance1
 
 tot_variance2 <- Misc(Reductions(seu2, "pca"))[["total.variance"]]
-var_explained2 <- Stdev(seu2, reduction = "pca")^2/tot_variance2
+var_explained2 <- Stdev(seu2, reduction = "pca")^2 / tot_variance2
 
-eigs_df <- tibble(Seurat1 = var_explained1,
-                  Seurat2 = var_explained2,
-                  PC = 1:50)
+eigs_df <- tibble(
+    Seurat1 = var_explained1,
+    Seurat2 = var_explained2,
+    PC = 1:50
+)
 
 combined_pc_variance <- plot_var_explained(eigs_df, npcs = 50, group_names = unlist(seurat_group_names), save = FALSE)
 
@@ -180,23 +176,27 @@ pca12_plot
 pca_loadings_seu1 <- Loadings(seu1, reduction = "pca")
 pca_loadings_seu2 <- Loadings(seu2, reduction = "pca")
 
-df_loadings <- make_pc_diffs_df(list(Seurat1 = pca_loadings_seu1,
-                            Seurat2 = pca_loadings_seu2), npcs = 50)
+df_loadings <- make_pc_diffs_df(list(
+    Seurat1 = pca_loadings_seu1,
+    Seurat2 = pca_loadings_seu2
+), npcs = 50)
 
 mean_loadings_diff <- mean(df_loadings$differences[1:3])
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, split = TRUE, append = TRUE)
 }
 
 print(glue("Mean loading difference of PC1-3: {mean_loadings_diff}"))
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
 
-mylist <- list(Seurat1 = pca_loadings_seu1,
-               Seurat2 = pca_loadings_seu2)
+mylist <- list(
+    Seurat1 = pca_loadings_seu1,
+    Seurat2 = pca_loadings_seu2
+)
 
 loading_diffs <- plot_loading_diffs(df_loadings, save = FALSE)
 
@@ -233,8 +233,10 @@ jaccard_plot <- make_jaccard_plot(jaccards, median_jaccard, save = FALSE)
 
 jaccard_plot
 
-nei_sizes <- tibble(Seurat1 = lengths(seu1_list),
-                    Seurat2 = lengths(seu2_list))
+nei_sizes <- tibble(
+    Seurat1 = lengths(seu1_list),
+    Seurat2 = lengths(seu2_list)
+)
 
 nei_pairs <- make_pairwise_df(nei_sizes)
 
@@ -249,14 +251,14 @@ jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
 median_logged_degree_ratio <- median(jaccards$logged_degree_ratio)
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
 print(glue("Median jaccard of KNN: {median_jaccard}"))
 print(glue("Median log degree ratio of KNN: {median_logged_degree_ratio}"))
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
 
@@ -269,16 +271,16 @@ seu2_clusters <- Idents(seu2)
 
 seu1_clusters_vector <- as.vector(seu1_clusters)
 seu2_clusters_vector <- as.vector(seu2_clusters)
-ari_value = mclust::adjustedRandIndex(seu1_clusters_vector, seu2_clusters_vector)
+ari_value <- mclust::adjustedRandIndex(seu1_clusters_vector, seu2_clusters_vector)
 
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
 print(glue("Adjusted Rand index between clusters: {ari_value}"))
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
 ```
@@ -288,8 +290,10 @@ Clustering, UMAP
 seu1_clusters <- Idents(seu1)
 seu2_clusters <- Idents(seu2)
 
-df <- tibble(Seurat1 = seu1_clusters,
-             Seurat2 = seu2_clusters)
+df <- tibble(
+    Seurat1 = seu1_clusters,
+    Seurat2 = seu2_clusters
+)
 
 df <- setNames(df, unlist(seurat_group_names))
 
@@ -302,8 +306,8 @@ alluvial_plot_legend <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_
 alluvial_plot
 alluvial_plot_legend
 
-seu1_umap_info <- RunUMAP(seu1, dims = 1:50, min.dist=seu_umap_min_dist, umap.method = seu_umap_method, seed.use = 42, metric = seu_umap_metric)
-seu2_umap_info <- RunUMAP(seu2, dims = 1:50, min.dist=seu_umap_min_dist, umap.method = seu_umap_method, seed.use = 42, metric = seu_umap_metric)
+seu1_umap_info <- RunUMAP(seu1, dims = 1:50, min.dist = seu_umap_min_dist, umap.method = seu_umap_method, seed.use = 42, metric = seu_umap_metric)
+seu2_umap_info <- RunUMAP(seu2, dims = 1:50, min.dist = seu_umap_min_dist, umap.method = seu_umap_method, seed.use = 42, metric = seu_umap_metric)
 
 umap_plots <- plot_umap(group1_umap_info = seu1_umap_info$umap@cell.embeddings, group1_clusters = seu1$seurat_clusters, group2_umap_info = seu2_umap_info$umap@cell.embeddings, group2_clusters = seu2$seurat_clusters, group1 = seu1_name, group2 = seu2_name, save = c(file_paths$umap_seu1, file_paths$umap_seu2))
 seu1_umap <- umap_plots[[1]]
@@ -322,13 +326,13 @@ jaccards_all_cells <- calculate_knn_jaccards(seu1_umap_knn$id, seu2_umap_knn$id)
 
 median_jaccard_umap_knn <- median(jaccards_all_cells)
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
 print(glue("Median jaccard of UMAP KNN: {median_jaccard_umap_knn}"))
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
 
@@ -337,7 +341,6 @@ jaccards_df <- data.frame(Cells = overlapping_inds, JaccardIndex = jaccards_all_
 umap_jaccard_plot <- make_umap_jaccard_plot(jaccards_df, save = file_paths$umap_jaccard_knn_density)
 
 umap_jaccard_plot
-
 ```
 
 FROM THIS POINT ON, MAKE SURE I AM USING MARKERS DATAFRAMES WITH THE SAME CLUSTER INFO (if that comes from defaults then great, otherwise do a seu1 input run as well)
@@ -350,7 +353,7 @@ vectorized_seu1_filtered_markers <- unique(seu1_filtered_markers$gene)
 vectorized_seu2_filtered_markers <- unique(seu2_filtered_markers$gene)
 
 
-markers_euler_genes_only <- make_euler_seurat(vectorized_seu1_filtered_markers, vectorized_seu2_filtered_markers, comparison="Marker Gene", group_names = seurat_group_names, save_plot = FALSE, save_stats = FALSE)
+markers_euler_genes_only <- make_euler_seurat(vectorized_seu1_filtered_markers, vectorized_seu2_filtered_markers, comparison = "Marker Gene", group_names = seurat_group_names, save_plot = FALSE, save_stats = FALSE)
 markers_euler_genes_only
 
 upset_marker_gene_only <- make_upset_seurat(vectorized_seu1_filtered_markers, vectorized_seu2_filtered_markers, comparison = "Marker Gene", group_names = seurat_group_names, save = "4.tiff")
@@ -361,19 +364,19 @@ seu2_markers_df <- markers_seu2 %>% select(gene = gene, cluster = cluster)
 vectorized_seu1_markers <- paste(seu1_markers_df$gene, seu1_markers_df$cluster, sep = "-")
 vectorized_seu2_markers <- paste(seu2_markers_df$gene, seu2_markers_df$cluster, sep = "-")
 
-markers_euler <- make_euler_seurat(vectorized_seu1_markers, vectorized_seu2_markers, comparison="Marker", group_names = seurat_group_names, save_plot = FALSE, save_stats = FALSE)
+markers_euler <- make_euler_seurat(vectorized_seu1_markers, vectorized_seu2_markers, comparison = "Marker", group_names = seurat_group_names, save_plot = FALSE, save_stats = FALSE)
 markers_euler
 
 upset_markers_all <- make_upset_seurat(vectorized_seu1_markers, vectorized_seu2_markers, comparison = "Marker", group_names = seurat_group_names, save = "3.tiff")
 
-markers2 <- markers_seu1 |> 
-    inner_join(markers_seu2, by = c("cluster", "gene"), suffix = c(glue(".{seu1_name}"), glue(".{seu2_name}")))   #? originally left join
+markers2 <- markers_seu1 |>
+    inner_join(markers_seu2, by = c("cluster", "gene"), suffix = c(glue(".{seu1_name}"), glue(".{seu2_name}"))) # ? originally left join
 
-markers2 <- markers2 |> 
-    mutate(cluster = factor(cluster, levels = as.character(seq_len(length(unique(cluster)))-1)))
+markers2 <- markers2 |>
+    mutate(cluster = factor(cluster, levels = as.character(seq_len(length(unique(cluster))) - 1)))
 
-markers2 <- markers2 |> 
-    group_by(cluster) |> 
+markers2 <- markers2 |>
+    group_by(cluster) |>
     mutate(rank_r = seq_along(gene))
 
 

@@ -13,9 +13,9 @@ theme_set(theme_bw())
 source("/workspace/analysis/scripts/plotting_and_stats.R")
 
 file_paths <- list()
-file_paths$logFC_scatterplot_file_path = glue::glue("/workspace/analysis/logFC_scatterplot.tiff")
-file_paths$wilcoxon_scatterplot_file_path = glue::glue("/workspace/analysis/wilcoxon_scatterplot.tiff")
-file_paths$logFC_scatterplot_file_path_with_legend = glue::glue("/workspace/analysis/logFC_scatterplot_with_legend.tiff")
+file_paths$logFC_scatterplot_file_path <- glue::glue("/workspace/analysis/logFC_scatterplot.tiff")
+file_paths$wilcoxon_scatterplot_file_path <- glue::glue("/workspace/analysis/wilcoxon_scatterplot.tiff")
+file_paths$logFC_scatterplot_file_path_with_legend <- glue::glue("/workspace/analysis/logFC_scatterplot_with_legend.tiff")
 
 markers2 <- readRDS(rds_path)
 

@@ -7,45 +7,45 @@ date: "2024-01-01"
 HYPERPARAMETERS
 ```{r}
 # Random seeds
-read_downsample_seed <- "0"  # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-R_random_seed <- 100   # including for cell downsampling
+read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
+R_random_seed <- 100 # including for cell downsampling
 
 # Downsample fractions
-seu_read_fraction_after_downsampling <- "1.0"  # fraction of reads after downsampling - any number from (0,1.0] 
-scan_read_fraction_after_downsampling <- "1.0"  # fraction of reads after downsampling - any number from (0,1.0]
+seu_read_fraction_after_downsampling <- "1.0" # fraction of reads after downsampling - any number from (0,1.0]
+scan_read_fraction_after_downsampling <- "1.0" # fraction of reads after downsampling - any number from (0,1.0]
 
-seu_cell_fraction_after_downsampling <- "1.0"  # fraction of cells after downsampling - any number from (0,1.0]
-scan_cell_fraction_after_downsampling <- "1.0"  # fraction of cells after downsampling - any number from (0,1.0]
+seu_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
+scan_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
 
 # Matrix generation methods
-seu_matrix_generation_method <- "kb"  # str["kb", "cellranger"]
+seu_matrix_generation_method <- "kb" # str["kb", "cellranger"]
 seu_matrix_generation_method_version <- "0.28.0"
-seu_matrix_include_unspliced <- FALSE  # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
-seu_matrix_source <- "generated"  # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
-seu_matrix_qc <- "raw"  # "raw" or "filtered"
+seu_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
+seu_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
+seu_matrix_qc <- "raw" # "raw" or "filtered"
 
-scan_matrix_generation_method <- "kb"  # str["kb", "cellranger"]
+scan_matrix_generation_method <- "kb" # str["kb", "cellranger"]
 scan_matrix_generation_method_version <- "0.28.0"
-scan_matrix_include_unspliced <- FALSE  # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
-scan_matrix_source <- "generated"  # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
-scan_matrix_qc <- "raw"  # "raw" or "filtered"
+scan_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
+scan_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
+scan_matrix_qc <- "raw" # "raw" or "filtered"
 
 # Function argument and input settings
-analysis_methods <- "default"  # str["default", "seurat_like", "scanpy_like"]
-data_input <- "default"  # str["default", "seurat", "scanpy"]
+analysis_methods <- "default" # str["default", "seurat_like", "scanpy_like"]
+data_input <- "default" # str["default", "seurat", "scanpy"]
 
 # Package versions
 seurat_version <- "4.3.0"
 scanpy_version <- "1.9.5"
 
 # Custom parameters
-inflection_UMI_manual <- NULL  # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
+inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
 min_cells <- 3
 min_features <- 200
-max_pct_mct <- 20  # default 5
-max_n_genes_by_counts_scanpy <- 12000  # default 2500
+max_pct_mct <- 20 # default 5
+max_n_genes_by_counts_scanpy <- 12000 # default 2500
 
-seu_num_pcs <- 50  # number 1-50; or NULL to select after elbow plot visualization
+seu_num_pcs <- 50 # number 1-50; or NULL to select after elbow plot visualization
 scan_num_pcs <- 50
 umap_knn_k <- 50
 umap_leiden_clustering_resolution <- 0.8
@@ -63,7 +63,7 @@ R Setting up variables
 set.seed(R_random_seed)
 options(max.print = 130)
 
-seu_read_fraction_after_downsampling <- gsub("\\.", "_", as.character(seu_read_fraction_after_downsampling))  # fraction of reads after downsampling, as string representation and using underscores in place of decimal
+seu_read_fraction_after_downsampling <- gsub("\\.", "_", as.character(seu_read_fraction_after_downsampling)) # fraction of reads after downsampling, as string representation and using underscores in place of decimal
 scan_read_fraction_after_downsampling <- gsub("\\.", "_", as.character(scan_read_fraction_after_downsampling))
 seu_cell_fraction_after_downsampling <- gsub("\\.", "_", as.character(seu_cell_fraction_after_downsampling))
 scan_cell_fraction_after_downsampling <- gsub("\\.", "_", as.character(scan_cell_fraction_after_downsampling))
@@ -84,8 +84,8 @@ group2_color <- "#56B4E9"
 
 Data paths
 ```{r}
-seu_data_path <- glue::glue('{project_base_path}/count_matrix_collection/{data_name}/{seu_matrix_generation_method_full}/frac{seu_read_fraction_after_downsampling}_seed{read_downsample_seed}')
-scan_data_path <- glue::glue('{project_base_path}/count_matrix_collection/{data_name}/{scan_matrix_generation_method_full}/frac{scan_read_fraction_after_downsampling}_seed{read_downsample_seed}')
+seu_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu_matrix_generation_method_full}/frac{seu_read_fraction_after_downsampling}_seed{read_downsample_seed}")
+scan_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan_matrix_generation_method_full}/frac{scan_read_fraction_after_downsampling}_seed{read_downsample_seed}")
 ```
 
 File path definitions
@@ -100,11 +100,13 @@ if (seu_matrix_generation_method == scan_matrix_generation_method &&
     matrix_generation_method_full <- glue::glue("seu_{seu_matrix_generation_method_full}_{seu_included_transcripts}__scan_{scan_matrix_generation_method_full}_{scan_included_transcripts}")
 }
 
-read_fraction_after_downsampling <- ifelse(seu_read_fraction_after_downsampling == scan_read_fraction_after_downsampling, seu_read_fraction_after_downsampling, 
-                                   paste("seu", seu_read_fraction_after_downsampling, "vs", "scan", scan_read_fraction_after_downsampling, sep = "_"))
+read_fraction_after_downsampling <- ifelse(seu_read_fraction_after_downsampling == scan_read_fraction_after_downsampling, seu_read_fraction_after_downsampling,
+    paste("seu", seu_read_fraction_after_downsampling, "vs", "scan", scan_read_fraction_after_downsampling, sep = "_")
+)
 
-cell_fraction_after_downsampling <- ifelse(seu_cell_fraction_after_downsampling == scan_cell_fraction_after_downsampling, seu_cell_fraction_after_downsampling, 
-                                   paste("seu", seu_cell_fraction_after_downsampling, "vs", "scan", scan_cell_fraction_after_downsampling, sep = "_"))
+cell_fraction_after_downsampling <- ifelse(seu_cell_fraction_after_downsampling == scan_cell_fraction_after_downsampling, seu_cell_fraction_after_downsampling,
+    paste("seu", seu_cell_fraction_after_downsampling, "vs", "scan", scan_cell_fraction_after_downsampling, sep = "_")
+)
 
 if (include_seeds_in_file_paths) {
     read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{read_downsample_seed}")
@@ -123,58 +125,52 @@ output_data_file_paths <- list(
 
 # FALSE to have no save
 file_paths <- list(
-    euler_stats_before_QC_file = FALSE,  # glue::glue("{output_base_path}/stats/euler_stats_beforeQC.txt"),
+    euler_stats_before_QC_file = FALSE, # glue::glue("{output_base_path}/stats/euler_stats_beforeQC.txt"),
     euler_stats_after_QC_file = glue::glue("{output_base_path}/stats/euler_stats_afterQC.txt"),
     pca_knn_clustering_umap_file = glue::glue("{output_base_path}/stats/pca_knn_clustering_umap_stats.txt"),
     de_stats_file = glue::glue("{output_base_path}/stats/de_stats.txt"),
-    
-    pre_filtering_upset_cell = FALSE,  # glue::glue("{output_base_path}/plots/pre_filtering_upset_cell.tiff"),
-    pre_filtering_upset_gene = FALSE,  # glue::glue("{output_base_path}/plots/pre_filtering_upset_gene.tiff"),
-    
-    knee_plot = FALSE,  # glue::glue("{output_base_path}/plots/knee_plot.tiff"),
-    umi_scatterplot = FALSE,  # glue::glue("{output_base_path}/plots/umi_scatterplot.tiff"),
-    
-    violin_counts_comparison <- FALSE,  # glue::glue("{output_base_path}/plots/violin_counts_comparison.tiff"),
-    seu_violin_file_path = FALSE,  # glue::glue("{output_base_path}/plots/seu_violin_plot.tiff"),
-    scan_violin_file_path_genes = FALSE,  # glue::glue("{output_base_path}/plots/scan_violin_plot_genes.tiff"),
-    scan_violin_file_path_counts = FALSE,  # glue::glue("{output_base_path}/plots/scan_violin_plot_counts.tiff"),
-    scan_violin_file_path_mt = FALSE,  # glue::glue("{output_base_path}/plots/scan_violin_plot_mt.tiff"),
-    
+    pre_filtering_upset_cell = FALSE, # glue::glue("{output_base_path}/plots/pre_filtering_upset_cell.tiff"),
+    pre_filtering_upset_gene = FALSE, # glue::glue("{output_base_path}/plots/pre_filtering_upset_gene.tiff"),
+
+    knee_plot = FALSE, # glue::glue("{output_base_path}/plots/knee_plot.tiff"),
+    umi_scatterplot = FALSE, # glue::glue("{output_base_path}/plots/umi_scatterplot.tiff"),
+
+    violin_counts_comparison <- FALSE, # glue::glue("{output_base_path}/plots/violin_counts_comparison.tiff"),
+    seu_violin_file_path = FALSE, # glue::glue("{output_base_path}/plots/seu_violin_plot.tiff"),
+    scan_violin_file_path_genes = FALSE, # glue::glue("{output_base_path}/plots/scan_violin_plot_genes.tiff"),
+    scan_violin_file_path_counts = FALSE, # glue::glue("{output_base_path}/plots/scan_violin_plot_counts.tiff"),
+    scan_violin_file_path_mt = FALSE, # glue::glue("{output_base_path}/plots/scan_violin_plot_mt.tiff"),
+
     upset_cells = glue::glue("{output_base_path}/plots/upset_cells.tiff"),
     upset_genes = glue::glue("{output_base_path}/plots/upset_genes.tiff"),
     upset_hvgs = glue::glue("{output_base_path}/plots/upset_hvgs.tiff"),
     upset_markers_genes_only = glue::glue("{output_base_path}/plots/upset_marker_genes_only.tiff"),
     upset_markers = glue::glue("{output_base_path}/plots/upset_markers.tiff"),
-    
-    
-    euler_before_qc_cell_file_path = FALSE,  # glue::glue("{output_base_path}/plots/euler_cells_beforeQC.tiff"),
-    euler_before_qc_gene_file_path = FALSE,  # glue::glue("{output_base_path}/plots/euler_genes_beforeQC.tiff"),
-    
-    euler_after_qc_cell_file_path = FALSE,  # glue::glue("{output_base_path}/plots/euler_cells_afterQC.tiff"),
-    euler_after_qc_gene_file_path = FALSE,  # glue::glue("{output_base_path}/plots/euler_genes_afterQC.tiff"),
-    euler_after_qc_hvg_file_path = FALSE,  # glue::glue("{output_base_path}/plots/euler_hvgs_afterQC.tiff"),
-    euler_after_qc_marker_file_path = FALSE,  # glue::glue("{output_base_path}/plots/euler_markers.tiff"),
-    euler_after_qc_marker_manual_bonferroni_file_path = FALSE,  # glue::glue("{output_base_path}/plots/euler_markers_manual_bonferroni.tiff"),
-    euler_after_qc_marker_genes_only = FALSE,  # glue::glue("{output_base_path}/plots/euler_markers_genes.tiff"),
-    
-    pca_elbow_filepath_combined = FALSE,  # glue::glue("{output_base_path}/plots/pca_elbow_combined.tiff"),
+    euler_before_qc_cell_file_path = FALSE, # glue::glue("{output_base_path}/plots/euler_cells_beforeQC.tiff"),
+    euler_before_qc_gene_file_path = FALSE, # glue::glue("{output_base_path}/plots/euler_genes_beforeQC.tiff"),
+
+    euler_after_qc_cell_file_path = FALSE, # glue::glue("{output_base_path}/plots/euler_cells_afterQC.tiff"),
+    euler_after_qc_gene_file_path = FALSE, # glue::glue("{output_base_path}/plots/euler_genes_afterQC.tiff"),
+    euler_after_qc_hvg_file_path = FALSE, # glue::glue("{output_base_path}/plots/euler_hvgs_afterQC.tiff"),
+    euler_after_qc_marker_file_path = FALSE, # glue::glue("{output_base_path}/plots/euler_markers.tiff"),
+    euler_after_qc_marker_manual_bonferroni_file_path = FALSE, # glue::glue("{output_base_path}/plots/euler_markers_manual_bonferroni.tiff"),
+    euler_after_qc_marker_genes_only = FALSE, # glue::glue("{output_base_path}/plots/euler_markers_genes.tiff"),
+
+    pca_elbow_filepath_combined = FALSE, # glue::glue("{output_base_path}/plots/pca_elbow_combined.tiff"),
     pca_12_overlay_filepath = glue::glue("{output_base_path}/plots/pca_scatterplot_12.tiff"),
-    pca_34_overlay_filepath = FALSE,  # glue::glue("{output_base_path}/plots/pca_scatterplot_34.tiff"),
-    pca_loading_diffs = FALSE,  # glue::glue("{output_base_path}/plots/pc_loading_diffs.tiff"),
-    pca_eigs_diff = FALSE,  # glue::glue("{output_base_path}/plots/pc_eig_diff.tiff"),
-    pca_cluster_filepath_seu = FALSE,  # glue::glue("{output_base_path}/plots/pca_scatterplot_clusters_seu.tiff"),
-    pca_cluster_filepath_scan = FALSE,  # glue::glue("{output_base_path}/plots/pca_scatterplot_clusters_scan.tiff"),
+    pca_34_overlay_filepath = FALSE, # glue::glue("{output_base_path}/plots/pca_scatterplot_34.tiff"),
+    pca_loading_diffs = FALSE, # glue::glue("{output_base_path}/plots/pc_loading_diffs.tiff"),
+    pca_eigs_diff = FALSE, # glue::glue("{output_base_path}/plots/pc_eig_diff.tiff"),
+    pca_cluster_filepath_seu = FALSE, # glue::glue("{output_base_path}/plots/pca_scatterplot_clusters_seu.tiff"),
+    pca_cluster_filepath_scan = FALSE, # glue::glue("{output_base_path}/plots/pca_scatterplot_clusters_scan.tiff"),
     combined_pc_variance_loadings_plot = glue::glue("{output_base_path}/plots/combined_pc_variance_loadings_plot.tiff"),
-    
-    jaccards = FALSE,  # glue::glue("{output_base_path}/plots/jaccards.tiff"),
-    knn_scatterplot = FALSE,  # glue::glue("{output_base_path}/plots/knn_scatterplot.tiff"),
+    jaccards = FALSE, # glue::glue("{output_base_path}/plots/jaccards.tiff"),
+    knn_scatterplot = FALSE, # glue::glue("{output_base_path}/plots/knn_scatterplot.tiff"),
     jaccard_degree_scatterplot = glue::glue("{output_base_path}/plots/jaccard_degree_scatterplot.tiff"),
-    
-    pheatmap = FALSE,  # glue::glue("{output_base_path}/plots/cluster_pheatmap.tiff"),
+    pheatmap = FALSE, # glue::glue("{output_base_path}/plots/cluster_pheatmap.tiff"),
     alluvial = glue::glue("{output_base_path}/plots/cluster_alluvial.tiff"),
     alluvial_legend = glue::glue("{output_base_path}/plots/cluster_alluvial_legend.tiff"),
     alluvial_legend_high_alpha = glue::glue("{output_base_path}/plots/cluster_alluvial_legend_high_alpha.tiff"),
-    
     umap_seu = glue::glue("{output_base_path}/plots/umap_seu.tiff"),
     umap_scan = glue::glue("{output_base_path}/plots/umap_scan.tiff"),
     umap_seu_clusters_scan = glue::glue("{output_base_path}/plots/umap_seu_clusters_scan.tiff"),
@@ -187,41 +183,40 @@ file_paths <- list(
     umap_alluvial_legend = glue::glue("{output_base_path}/plots/umap_alluvial_legend.tiff"),
     umap_umap_leiden_seu = glue::glue("{output_base_path}/plots/umap_umap_leiden_seu.tiff"),
     umap_umap_leiden_scan = glue::glue("{output_base_path}/plots/umap_umap_leiden_scan.tiff"),
+    logFC_histogram_magnitude_file_path = FALSE, # glue::glue("{output_base_path}/plots/logFC_histogram_magnitude.tiff"),
+    logFC_histogram_signed_file_path = FALSE, # glue::glue("{output_base_path}/plots/logFC_histogram_signed.tiff"),
+    wilcoxon_histogram_magnitude_file_path = FALSE, # glue::glue("{output_base_path}/plots/wilcoxon_histogram_magnitude.tiff"),
+    wilcoxon_histogram_signed_file_path = FALSE, # glue::glue("{output_base_path}/plots/wilcoxon_histogram_signed.tiff"),
 
-    logFC_histogram_magnitude_file_path = FALSE,  # glue::glue("{output_base_path}/plots/logFC_histogram_magnitude.tiff"),
-    logFC_histogram_signed_file_path = FALSE,  # glue::glue("{output_base_path}/plots/logFC_histogram_signed.tiff"),
-    wilcoxon_histogram_magnitude_file_path = FALSE,  # glue::glue("{output_base_path}/plots/wilcoxon_histogram_magnitude.tiff"),
-    wilcoxon_histogram_signed_file_path = FALSE,  # glue::glue("{output_base_path}/plots/wilcoxon_histogram_signed.tiff"),
-    
     logFC_scatterplot_file_path = glue::glue("{output_base_path}/plots/logFC_scatterplot.tiff"),
     wilcoxon_scatterplot_file_path = glue::glue("{output_base_path}/plots/wilcoxon_scatterplot.tiff"),
     logFC_scatterplot_file_path_with_legend = glue::glue("{output_base_path}/plots/logFC_scatterplot_with_legend.tiff"),
     wilcoxon_scatterplot_file_path_with_legend = glue::glue("{output_base_path}/plots/wilcoxon_scatterplot_with_legend.tiff"),
-    logFC_scatterplot_outliers_removed_file_path = FALSE,  # glue::glue("{output_base_path}/plots/logFC_scatterplot_no_outliers.tiff"),
-    wilcoxon_scatterplot_outliers_removed_file_path = FALSE,  # glue::glue("{output_base_path}/plots/wilcoxon_scatterplot_no_outliers.tiff"),
-    
-    logFC_boxplot_magnitude_file_path = FALSE,  # glue::glue("{output_base_path}/plots/logFC_boxplot_magnitude.tiff"),
-    logFC_boxplot_signed_file_path = FALSE,  # glue::glue("{output_base_path}/plots/logFC_boxplot_signed.tiff"),
-    wilcoxon_boxplot_magnitude_file_path = FALSE,  # glue::glue("{output_base_path}/plots/wilcoxon_boxplot_magnitude.tiff"),
-    wilcoxon_boxplot_signed_file_path = FALSE,  # glue::glue("{output_base_path}/plots/wilcoxon_boxplot_signed.tiff"),
-    
-    FC_histogram_magnitude_file_path = FALSE,  # glue::glue("{output_base_path}/plots/FC_histogram_magnitude.tiff"),
-    FC_histogram_signed_file_path = FALSE  # glue::glue("{output_base_path}/plots/FC_histogram_signed.tiff")
+    logFC_scatterplot_outliers_removed_file_path = FALSE, # glue::glue("{output_base_path}/plots/logFC_scatterplot_no_outliers.tiff"),
+    wilcoxon_scatterplot_outliers_removed_file_path = FALSE, # glue::glue("{output_base_path}/plots/wilcoxon_scatterplot_no_outliers.tiff"),
+
+    logFC_boxplot_magnitude_file_path = FALSE, # glue::glue("{output_base_path}/plots/logFC_boxplot_magnitude.tiff"),
+    logFC_boxplot_signed_file_path = FALSE, # glue::glue("{output_base_path}/plots/logFC_boxplot_signed.tiff"),
+    wilcoxon_boxplot_magnitude_file_path = FALSE, # glue::glue("{output_base_path}/plots/wilcoxon_boxplot_magnitude.tiff"),
+    wilcoxon_boxplot_signed_file_path = FALSE, # glue::glue("{output_base_path}/plots/wilcoxon_boxplot_signed.tiff"),
+
+    FC_histogram_magnitude_file_path = FALSE, # glue::glue("{output_base_path}/plots/FC_histogram_magnitude.tiff"),
+    FC_histogram_signed_file_path = FALSE # glue::glue("{output_base_path}/plots/FC_histogram_signed.tiff")
 )
 
 for (path in output_data_file_paths) {
     dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
 }
-    
+
 if (save_data) {
     for (path in file_paths) {
         if (is.character(path)) {
             # Extract the directory part of the path
             specific_output_path <- dirname(path)
-            
+
             # Create the directory if it does not exist
             if (!dir.exists(specific_output_path)) {
-              dir.create(specific_output_path, recursive = TRUE, showWarnings = FALSE)
+                dir.create(specific_output_path, recursive = TRUE, showWarnings = FALSE)
             }
         }
     }
@@ -242,7 +237,7 @@ for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clusteri
 R Imports
 ```{r}
 conda_env <- "analysis_env"
-Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep="/"))
+Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
 library(reticulate)
 use_condaenv(conda_env)
 library(Seurat)
@@ -318,7 +313,7 @@ if (analysis_methods == "default" || analysis_methods == "seurat_like") {
     seu_umap_method <- "umap-learn"
     seu_umap_min_dist <- 0.5
     seu_umap_metric <- "correlation"
-    # correction method = benjamini-hochberg 
+    # correction method = benjamini-hochberg
 } else {
     paste(analysis_methods, "is not a valid input for analysis_methods. Please choose from 'default', 'seurat_like', or 'scanpy_like'.")
 }
@@ -377,11 +372,11 @@ if (seu_matrix_qc == "raw") {
     if (seu_matrix_generation_method == "kb") {
         res_mat <- read_count_output_modified(seu_data_path, name = "cells_x_genes", unspliced = seu_matrix_include_unspliced, tcc = FALSE)
     } else if (seu_matrix_generation_method == "cellranger") {
-        res_mat <- Read10X(seu_data_path, gene.column=1)
+        res_mat <- Read10X(seu_data_path, gene.column = 1)
     } else {
         print(seu_matrix_generation_method, "is not a valid input for seu_matrix_generation_method")
     }
-    
+
     if (seu_cell_fraction_after_downsampling != "1_0") {
         total_cells <- ncol(res_mat)
         numeric_seu_cell_fraction_after_downsampling <- gsub("_", ".", seu_cell_fraction_after_downsampling) %>% as.numeric()
@@ -389,10 +384,10 @@ if (seu_matrix_qc == "raw") {
         sampled_cells <- sample(total_cells, cells_to_sample)
         res_mat <- res_mat[, sampled_cells]
     }
-        
+
     tot_counts <- Matrix::colSums(res_mat)
     bc_rank <- barcodeRanks(res_mat)
-} 
+}
 ```
 
 Knee plot
@@ -418,11 +413,11 @@ Apply filtering from knee plot
 ```{r}
 if (seu_matrix_qc == "raw") {
     res_mat_filtered <- res_mat[, tot_counts > UMI_cutoff]
-    res_mat_filtered <- res_mat_filtered[Matrix::rowSums(res_mat_filtered) > 0,]
+    res_mat_filtered <- res_mat_filtered[Matrix::rowSums(res_mat_filtered) > 0, ]
     dim(res_mat_filtered)
     seu <- CreateSeuratObject(counts = res_mat_filtered, min.cells = min_cells, min.features = min_features)
 } else if (seu_matrix_qc == "filtered") {
-    seu <- CreateSeuratObject(Read10X(seu_data_path, gene.column=1), min.cells = min_cells, min.features = min_features)
+    seu <- CreateSeuratObject(Read10X(seu_data_path, gene.column = 1), min.cells = min_cells, min.features = min_features)
 } else {
     stop("Invalid value for seu_matrix_qc. It should be either 'raw' or 'filtered'.")
 }
@@ -608,15 +603,14 @@ If data_input == "scanpy": Apply Cells and Genes from Scanpy to Seurat
 if (data_input == "scanpy") {
     if (seu_matrix_generation_method == "kb") {
         res_mat <- read_count_output_modified(seu_data_path, name = "cells_x_genes", unspliced = seu_matrix_include_unspliced, tcc = FALSE)
+    } else if (seu_matrix_generation_method == "cellranger") {
+        res_mat <- Read10X(seu_data_path, gene.column = 1)
     }
-    else if (seu_matrix_generation_method == "cellranger") {
-        res_mat <- Read10X(seu_data_path, gene.column=1)
-    }
-    res_mat <- res_mat[, tot_counts > UMI_cutoff]   # uncomment if wanting faster execution
-    res_mat <- res_mat[Matrix::rowSums(res_mat) > 0,]  # uncomment if wanting faster execution
+    res_mat <- res_mat[, tot_counts > UMI_cutoff] # uncomment if wanting faster execution
+    res_mat <- res_mat[Matrix::rowSums(res_mat) > 0, ] # uncomment if wanting faster execution
     seu <- CreateSeuratObject(counts = res_mat)
     seu <- subset(seu, cells = scan_inds, features = scan_genes)
-    
+
     assay_gene_names <- rownames(seu[["RNA"]])
     assay_gene_names_trimmed <- gsub("\\..*", "", assay_gene_names)
     common_genes <- intersect(py$sc_mito_genes, assay_gene_names_trimmed)
@@ -630,16 +624,16 @@ If data_input is not default, then recompute cell and gene lists
 if (data_input != "default") {
     seu_inds <- colnames(seu)
     seu_genes <- rownames(seu)
-    
+
     scan_inds <- as.vector(py$adata$obs_names$values)
     scan_genes <- as.vector(py$adata$var_names$values)
-    
+
     overlapping_inds <- intersect(seu_inds, scan_inds)
     overlapping_genes <- intersect(seu_genes, scan_genes)
-    
+
     print(paste0("Cell vectors equal: ", all.equal(seu_inds, scan_inds)))
     print(paste0("Gene vectors equal: ", all.equal(seu_genes, scan_genes)))
-} 
+}
 ```
 
 Normalization
@@ -666,13 +660,13 @@ mat_py <- as(t(mat_py), "CsparseMatrix")
 mat_r <- GetAssayData(seu, "RNA", layer = "data")
 equal_after_normalization <- all.equal(mat_py@x, mat_r@x)
 
-if(file_paths$euler_stats_after_QC_file != FALSE) {
+if (file_paths$euler_stats_after_QC_file != FALSE) {
     sink(file_paths$euler_stats_after_QC_file, split = TRUE, append = TRUE)
 }
 
 print(glue("Equal after normalization: {equal_after_normalization}"))
 
-if(file_paths$euler_stats_after_QC_file != FALSE) {
+if (file_paths$euler_stats_after_QC_file != FALSE) {
     sink()
 }
 ```
@@ -758,7 +752,7 @@ seu_elbow <- Seurat::ElbowPlot(seu, 50)
 seu_elbow
 
 if (is.null(seu_num_pcs)) {
-    seu_num_pcs <- 50  # optimize as needed
+    seu_num_pcs <- 50 # optimize as needed
 }
 ```
 
@@ -780,12 +774,14 @@ if (analysis_methods == "scanpy_like") {
 }
 
 tot_variance <- Misc(Reductions(seu, "pca"))[["total.variance"]]
-var_explained <- Stdev(seu, reduction = "pca")^2/tot_variance
+var_explained <- Stdev(seu, reduction = "pca")^2 / tot_variance
 var_explained_py <- py$adata$uns[["pca"]][["variance_ratio"]]
 
-eigs_df <- tibble(Seurat = var_explained,
-                  Scanpy = var_explained_py,
-                  PC = 1:50)
+eigs_df <- tibble(
+    Seurat = var_explained,
+    Scanpy = var_explained_py,
+    PC = 1:50
+)
 ```
 
 ```{r}
@@ -828,38 +824,43 @@ pca34_plot
 Plot PCA eigenvectors (loadings), eigenvalues
 ```{r}
 is_hvg_py <- py$adata$var$highly_variable
-    
+
 pca_loadings_seu <- Loadings(seu, reduction = "pca")
 pca_loadings_py <- py$adata$varm["PCs"]
-pca_loadings_py <- pca_loadings_py[is_hvg_py,]
+pca_loadings_py <- pca_loadings_py[is_hvg_py, ]
 rownames(pca_loadings_py) <- hvgs$Scanpy
 colnames(pca_loadings_py) <- colnames(pca_loadings_seu)
 
-df_loadings <- make_pc_diffs_df(list(Seurat = pca_loadings_seu,
-                            Scanpy = pca_loadings_py), npcs = 50)
+df_loadings <- make_pc_diffs_df(list(
+    Seurat = pca_loadings_seu,
+    Scanpy = pca_loadings_py
+), npcs = 50)
 
 mean_loadings_diff <- mean(df_loadings$differences[1:3])
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, split = TRUE, append = TRUE)
 }
 
 print(glue("Mean loading difference of PC1-3: {mean_loadings_diff}"))
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
 
-mylist <- list(Seurat = pca_loadings_seu,
-                            Scanpy = pca_loadings_py)
+mylist <- list(
+    Seurat = pca_loadings_seu,
+    Scanpy = pca_loadings_py
+)
 
 loading_diffs <- plot_loading_diffs(df_loadings, save = file_paths$pca_loading_diffs)
 
 df_eigs <- tibble(
     `Seurat vs. Scanpy` = abs(var_explained - var_explained_py),
-    PC = 1:50)
+    PC = 1:50
+)
 
-df_eigs <- df_eigs |> 
+df_eigs <- df_eigs |>
     pivot_longer(-PC, names_to = "type", values_to = "value")
 
 eigs_diff <- plot_eigs_diffs(df_eigs, save = file_paths$pca_eigs_diff)
@@ -884,13 +885,13 @@ if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
 If data_input == "seurat": Apply PCs from Seurat to Scanpy
 ```{r}
 if (data_input == "seurat" && identical(seu_inds, scan_inds)) {
-    py$adata$obsm["X_pca"] = pca_embeddings
+    py$adata$obsm["X_pca"] <- pca_embeddings
 }
 ```
 
 Neighbors
 ```{r}
-seu <- FindNeighbors(seu, reduction = "pca", dims = 1:seu_num_pcs, k.param=seu_n_neighbors)
+seu <- FindNeighbors(seu, reduction = "pca", dims = 1:seu_num_pcs, k.param = seu_n_neighbors)
 snn_graph_seu <- seu@graphs$RNA_snn
 knn_graph_seu <- seu@graphs$RNA_nn
 ```
@@ -922,8 +923,10 @@ jaccard_plot <- make_jaccard_plot(jaccards, median_jaccard, save = file_paths$ja
 
 jaccard_plot
 
-nei_sizes <- tibble(Seurat = lengths(seu_list),
-                    Scanpy = lengths(sc_list))
+nei_sizes <- tibble(
+    Seurat = lengths(seu_list),
+    Scanpy = lengths(sc_list)
+)
 
 nei_pairs <- make_pairwise_df(nei_sizes)
 
@@ -938,14 +941,14 @@ jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
 median_logged_degree_ratio <- median(jaccards$logged_degree_ratio)
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
 print(glue("Median jaccard of KNN: {median_jaccard}"))
 print(glue("Median log degree ratio of KNN: {median_logged_degree_ratio}"))
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
 ```
@@ -974,8 +977,8 @@ if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
     colnames(snn_graph_scan_matrix) <- rownames(py$adata$obs)
     seu@graphs$RNA_snn <- as.Graph(snn_graph_scan_matrix)
     snn_graph_seu <- seu@graphs$RNA_snn
-    
-    knn_graph_scan_matrix <- as.matrix(py$adata$obsp['distances'], rownames.force = NA)
+
+    knn_graph_scan_matrix <- as.matrix(py$adata$obsp["distances"], rownames.force = NA)
     rownames(knn_graph_scan_matrix) <- rownames(py$adata$obs)
     colnames(knn_graph_scan_matrix) <- rownames(py$adata$obs)
     seu@graphs$RNA_nn <- as.Graph(knn_graph_scan_matrix)
@@ -991,7 +994,7 @@ if (seurat_clustering_algorithm == "louvain") {
     seurat_clustering_algorithm <- 4
 }
 
-seu <- FindClusters(seu, verbose = FALSE, algorithm = seurat_clustering_algorithm, resolution=seu_resolution)
+seu <- FindClusters(seu, verbose = FALSE, algorithm = seurat_clustering_algorithm, resolution = seu_resolution)
 
 seu_clusters <- Idents(seu)
 ```
@@ -1009,7 +1012,7 @@ new_cluster_pca <- DimPlot(seu, label = TRUE, group.by = "seurat_clusters", labe
 new_cluster_pca
 
 if (file_paths$pca_cluster_filepath_seu != FALSE) {
-    ggsave(file_paths$pca_cluster_filepath_seu, plot=new_cluster_pca, dpi = dpi)
+    ggsave(file_paths$pca_cluster_filepath_seu, plot = new_cluster_pca, dpi = dpi)
 }
 ```
 
@@ -1038,23 +1041,23 @@ names(scan_clusters) <- scan_inds
 if (!identical(seu_inds, scan_inds)) {
     seu_clusters <- seu_clusters[names(seu_clusters) %in% overlapping_inds]
     scan_clusters <- scan_clusters[names(scan_clusters) %in% overlapping_inds]
-    
+
     cell_order <- names(seu_clusters)
     scan_clusters <- scan_clusters[match(cell_order, names(scan_clusters))]
 }
 
 seu_clusters_vector <- as.vector(seu_clusters)
 scan_clusters_vector <- as.vector(scan_clusters)
-ari_value = mclust::adjustedRandIndex(seu_clusters_vector, scan_clusters_vector)
+ari_value <- mclust::adjustedRandIndex(seu_clusters_vector, scan_clusters_vector)
 
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
 print(glue("Adjusted Rand index between clusters: {ari_value}"))
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
 ```
@@ -1071,14 +1074,17 @@ cluster_heatmap
 
 Alluvial plot of clusters
 ```{r}
-df <- tibble(Seurat = seu_clusters,
-             Scanpy = scan_clusters)
+df <- tibble(
+    Seurat = seu_clusters,
+    Scanpy = scan_clusters
+)
 
 clus_df_gather <- get_alluvial_df(df)
 
 clus_df_gather <- clus_df_gather %>% mutate(
     group1_column_original_clusters := as.numeric(as.character(.data[["Seurat"]])),
-    group2_column_original_clusters := as.numeric(as.character(.data[["Scanpy"]])))
+    group2_column_original_clusters := as.numeric(as.character(.data[["Scanpy"]]))
+)
 
 clus_df_gather <- sort_clusters_by_agreement(clus_df_gather, stable_column = "Seurat", reordered_column = "Scanpy")
 
@@ -1095,7 +1101,7 @@ Reorder Scanpy clusters to match ordering in alluvial
 unique_mapping <- clus_df_gather %>%
     ungroup() %>%
     select(!!sym("Scanpy"), group2_column_original_clusters) %>%
-    distinct() %>% 
+    distinct() %>%
     arrange(group2_column_original_clusters)
 
 scanpy_clusters_df <- data.frame(cell_id = names(scan_clusters), group2_cluster = as.numeric(as.character(scan_clusters)))
@@ -1130,7 +1136,7 @@ if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
 
 UMAP
 ```{r}
-seu_umap_info <- RunUMAP(seu, dims = 1:seu_num_pcs, min.dist=seu_umap_min_dist, umap.method = seu_umap_method, metric = seu_umap_metric)
+seu_umap_info <- RunUMAP(seu, dims = 1:seu_num_pcs, min.dist = seu_umap_min_dist, umap.method = seu_umap_method, metric = seu_umap_metric)
 # DimPlot(seu_umap_info, reduction = "umap") + scale_color_manual(values = ditto_colors)
 ```
 
@@ -1141,7 +1147,7 @@ sc.tl.umap(adata, min_dist = r.scanpy_umap_min_dist)
 
 Plot UMAP
 ```{r}
-umap_plots <- plot_umap(group1_umap_info = seu_umap_info$umap@cell.embeddings, group1_clusters = seu$seurat_clusters, group2_umap_info = py$adata$obsm['X_umap'], group2_clusters = scanpy_clusters_renumbered, save = c(file_paths$umap_seu, file_paths$umap_scan))
+umap_plots <- plot_umap(group1_umap_info = seu_umap_info$umap@cell.embeddings, group1_clusters = seu$seurat_clusters, group2_umap_info = py$adata$obsm["X_umap"], group2_clusters = scanpy_clusters_renumbered, save = c(file_paths$umap_seu, file_paths$umap_scan))
 seu_umap <- umap_plots[[1]]
 scan_umap <- umap_plots[[2]]
 
@@ -1149,7 +1155,7 @@ seu_umap
 scan_umap
 
 
-umap_plots_swapped_clusters <- plot_umap(group1_umap_info = seu_umap_info$umap@cell.embeddings, group1_clusters = scanpy_clusters_renumbered, group2_umap_info = py$adata$obsm['X_umap'], group2_clusters = seu$seurat_clusters, group1_title = "Seurat UMAP with Scanpy clusters", group2_title = "Scanpy UMAP with Seurat clusters", save = c(file_paths$umap_seu_clusters_scan, file_paths$umap_scan_clusters_seu))
+umap_plots_swapped_clusters <- plot_umap(group1_umap_info = seu_umap_info$umap@cell.embeddings, group1_clusters = scanpy_clusters_renumbered, group2_umap_info = py$adata$obsm["X_umap"], group2_clusters = seu$seurat_clusters, group1_title = "Seurat UMAP with Scanpy clusters", group2_title = "Scanpy UMAP with Seurat clusters", save = c(file_paths$umap_seu_clusters_scan, file_paths$umap_scan_clusters_seu))
 seu_umap_scan_clusters <- umap_plots_swapped_clusters[[1]]
 scan_umap_seu_clusters <- umap_plots_swapped_clusters[[2]]
 
@@ -1160,26 +1166,26 @@ scan_umap_seu_clusters
 Compute KNN graph of UMAP space
 ```{r}
 seu_umap_data <- seu_umap_info$umap@cell.embeddings
-scan_umap_data <- py$adata$obsm['X_umap']
+scan_umap_data <- py$adata$obsm["X_umap"]
 
 if (!all.equal(colnames(seu), as.vector(py$adata$obs_names$values))) {
     seu_inds <- colnames(seu)
     scan_inds <- as.vector(py$adata$obs_names$values)
-    
+
     rownames(scan_umap_data) <- scan_inds
     scan_cluster_data_original <- setNames(scan_cluster_data_original, scan_inds)
-    
+
     overlapping_inds <- intersect(seu_inds, scan_inds)
-    
+
     seu_umap_data_filtered <- seu_umap_data[overlapping_inds, ]
     seu_umap_data <- seu_umap_data_filtered[order(rownames(seu_umap_data_filtered)), ]
-    
+
     scan_umap_data_filtered <- scan_umap_data[overlapping_inds, ]
     scan_umap_data <- scan_umap_data_filtered[order(rownames(scan_umap_data_filtered)), ]
-    
+
     seu_cluster_data_filtered <- seu_cluster_data_original[overlapping_inds]
     seu_cluster_data_original <- seu_cluster_data_filtered[order(names(seu_cluster_data_filtered))]
-    
+
     scan_cluster_data_filtered <- scan_cluster_data_original[overlapping_inds]
     scan_cluster_data_original <- scan_cluster_data_filtered[order(names(scan_cluster_data_filtered))]
 } else {
@@ -1197,13 +1203,13 @@ jaccards_all_cells <- calculate_knn_jaccards(seu_umap_knn$id, scan_umap_knn$id)
 
 median_jaccard_umap_knn <- median(jaccards_all_cells)
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
 print(glue("Median jaccard of UMAP KNN: {median_jaccard_umap_knn}"))
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
 ```
@@ -1214,7 +1220,7 @@ jaccards_df <- data.frame(Cells = overlapping_inds, JaccardIndex = jaccards_all_
 
 umap_jaccard_plot <- make_umap_jaccard_plot(jaccards_df, save = file_paths$umap_jaccard_knn_density)
 umap_jaccard_plot_seu_facet <- make_umap_jaccard_plot(jaccards_df, facet = "seu_clusters", save = file_paths$umap_jaccard_knn_density_seu_facet)
-umap_jaccard_plot_scan_facet <- make_umap_jaccard_plot(jaccards_df, facet = "scan_clusters",  save = file_paths$umap_jaccard_knn_density_scan_facet)
+umap_jaccard_plot_scan_facet <- make_umap_jaccard_plot(jaccards_df, facet = "scan_clusters", save = file_paths$umap_jaccard_knn_density_scan_facet)
 
 umap_jaccard_plot
 umap_jaccard_plot_seu_facet
@@ -1234,26 +1240,29 @@ scan_umap_knn_clusters <- reorder_clusters_descending(scan_umap_knn_clusters)
 
 Compute ARI and plot alluvial plot of leiden clustering results on KNN graphs from UMAP space
 ```{r}
-ari_value_umap = mclust::adjustedRandIndex(as.vector(seu_umap_knn_clusters), as.vector(scan_umap_knn_clusters))
+ari_value_umap <- mclust::adjustedRandIndex(as.vector(seu_umap_knn_clusters), as.vector(scan_umap_knn_clusters))
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
 print(glue("Adjusted Rand index between clusters: {ari_value_umap}"))
 
-if(file_paths$pca_knn_clustering_umap_file != FALSE) {
+if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
 
-df_umap <- tibble(Seurat = seu_umap_knn_clusters,
-             Scanpy = scan_umap_knn_clusters)
+df_umap <- tibble(
+    Seurat = seu_umap_knn_clusters,
+    Scanpy = scan_umap_knn_clusters
+)
 
 clus_df_gather_umap <- get_alluvial_df(df_umap)
 
 clus_df_gather_umap <- clus_df_gather_umap %>% mutate(
     group1_column_original_clusters := as.numeric(as.character(.data[["Seurat"]])),
-    group2_column_original_clusters := as.numeric(as.character(.data[["Scanpy"]])))
+    group2_column_original_clusters := as.numeric(as.character(.data[["Scanpy"]]))
+)
 
 clus_df_gather_umap <- sort_clusters_by_agreement(clus_df_gather_umap, stable_column = "Seurat", reordered_column = "Scanpy")
 
@@ -1268,7 +1277,7 @@ Reorder Scanpy UMAP clusters to match ordering in alluvial
 unique_mapping <- clus_df_gather_umap %>%
     ungroup() %>%
     select(!!sym("Scanpy"), group2_column_original_clusters) %>%
-    distinct() %>% 
+    distinct() %>%
     arrange(group2_column_original_clusters)
 
 scanpy_clusters_df <- data.frame(cell_id = overlapping_inds, group2_cluster = as.numeric(as.character(scan_umap_knn_clusters)))
@@ -1299,8 +1308,8 @@ if (!file.exists(output_data_file_paths$markers)) {
         markers <- FindAllMarkers(seu)
     } else if (analysis_methods == "scanpy_like") {
         saveRDS(seu, file = output_data_file_paths$seu_object)
-        markers <- FindAllMarkers(seu, logfc.threshold=0, min.pct=0, return.thresh=1.0001)   # if this crashes R, then run de_alone.R
-        markers$p_val_adj = p.adjust(degs$p_val, method='BH')
+        markers <- FindAllMarkers(seu, logfc.threshold = 0, min.pct = 0, return.thresh = 1.0001) # if this crashes R, then run de_alone.R
+        markers$p_val_adj <- p.adjust(degs$p_val, method = "BH")
     }
 } else {
     markers <- readRDS(output_data_file_paths$markers)
@@ -1326,9 +1335,9 @@ if (analysis_methods == "seurat_like" && data_input == "seurat") {
         filter(!(abs(log_fc) < 0.25)) %>%
         filter(p_value < 0.01)
 
-    min_logFC_filtered <- min(abs(result$log_fc), na.rm = TRUE)   # log_fc or avg_log2FC - should be 0.25
-    max_p_val_filtered <- max(result$p_value, na.rm = TRUE)   # p_value or p_val - should be 0.01
-    exists_row_filtered <- any(result$pts < 0.1 & result$pts_rest < 0.1)  # should be FALSE
+    min_logFC_filtered <- min(abs(result$log_fc), na.rm = TRUE) # log_fc or avg_log2FC - should be 0.25
+    max_p_val_filtered <- max(result$p_value, na.rm = TRUE) # p_value or p_val - should be 0.01
+    exists_row_filtered <- any(result$pts < 0.1 & result$pts_rest < 0.1) # should be FALSE
 
     min_logFC_filtered
     max_p_val_filtered
@@ -1344,18 +1353,18 @@ Compare marker genes
 #     markers <- readRDS("/workspace/analysis/seu_markers_after_de_scanlike.rds")
 # }
 
-seu_filtered_markers <- markers %>% 
-  filter(p_val_adj < 0.05)
+seu_filtered_markers <- markers %>%
+    filter(p_val_adj < 0.05)
 
 # vectorized_seu_unfiltered_markers <- unique(markers$gene)
 vectorized_seu_filtered_markers <- unique(seu_filtered_markers$gene)
 
-scan_filtered_markers <- result %>% 
-  filter(p_value_adj < 0.05)
+scan_filtered_markers <- result %>%
+    filter(p_value_adj < 0.05)
 
 vectorized_scan_filtered_markers <- unique(scan_filtered_markers$gene)
 
-markers_euler_genes_only <- make_euler_seurat_vs_scanpy(vectorized_seu_filtered_markers, vectorized_scan_filtered_markers, comparison="Marker Gene", save_plot = file_paths$euler_after_qc_marker_genes_only, save_stats = file_paths$de_stats_file)
+markers_euler_genes_only <- make_euler_seurat_vs_scanpy(vectorized_seu_filtered_markers, vectorized_scan_filtered_markers, comparison = "Marker Gene", save_plot = file_paths$euler_after_qc_marker_genes_only, save_stats = file_paths$de_stats_file)
 markers_euler_genes_only
 
 upset_marker_gene_only <- make_upset_seurat_vs_scanpy(vectorized_seu_filtered_markers, vectorized_scan_filtered_markers, comparison = "Marker Gene", save = file_paths$upset_markers_genes_only)
@@ -1368,7 +1377,7 @@ if (data_input == "default" || !identical(seu_inds, scan_inds)) {
         saveRDS(markers, file = output_data_file_paths$markers)
         saveRDS(result, file = output_data_file_paths$results_scan)
         saveRDS(seu, file = output_data_file_paths$seu_object)
-        py$adata$write_h5ad(output_data_file_paths$scan_adata, compression=py$hdf5plugin$FILTERS$zstd)
+        py$adata$write_h5ad(output_data_file_paths$scan_adata, compression = py$hdf5plugin$FILTERS$zstd)
     }
     sessionInfo()
     stop("data_input == 'default' or cell sets not identical, so not running further DE analysis, which requires clusters to be in agreement.")
@@ -1384,7 +1393,7 @@ scan_markers_df <- result %>% select(gene = gene, cluster = cluster)
 vectorized_seu_markers <- paste(seu_markers_df$gene, seu_markers_df$cluster, sep = "-")
 vectorized_scan_markers <- paste(scan_markers_df$gene, scan_markers_df$cluster, sep = "-")
 
-markers_euler <- make_euler_seurat_vs_scanpy(vectorized_seu_markers, vectorized_scan_markers, comparison="Marker", save_plot = file_paths$euler_after_qc_marker_file_path, save_stats = file_paths$de_stats_file)
+markers_euler <- make_euler_seurat_vs_scanpy(vectorized_seu_markers, vectorized_scan_markers, comparison = "Marker", save_plot = file_paths$euler_after_qc_marker_file_path, save_stats = file_paths$de_stats_file)
 markers_euler
 
 upset_markers_all <- make_upset_seurat_vs_scanpy(vectorized_seu_markers, vectorized_scan_markers, comparison = "Marker", save = file_paths$upset_markers)
@@ -1392,19 +1401,21 @@ upset_markers_all <- make_upset_seurat_vs_scanpy(vectorized_seu_markers, vectori
 
 Combine all DE data in one dataframe markers2
 ```{r}
-markers2 <- markers |> 
+markers2 <- markers |>
     left_join(result, by = c("cluster", "gene"))
 
-markers2 <- markers2 |> 
-    dplyr::rename(p_val_r = p_val, logFC_r = avg_log2FC, p_val_adj_r = p_val_adj,
-                  p_val_py = p_value, p_val_adj_py = p_value_adj,
-                  logFC_py = log_fc)
+markers2 <- markers2 |>
+    dplyr::rename(
+        p_val_r = p_val, logFC_r = avg_log2FC, p_val_adj_r = p_val_adj,
+        p_val_py = p_value, p_val_adj_py = p_value_adj,
+        logFC_py = log_fc
+    )
 
-markers2 <- markers2 |> 
-    mutate(cluster = factor(cluster, levels = as.character(seq_len(length(unique(cluster)))-1)))
+markers2 <- markers2 |>
+    mutate(cluster = factor(cluster, levels = as.character(seq_len(length(unique(cluster))) - 1)))
 
-markers2 <- markers2 |> 
-    group_by(cluster) |> 
+markers2 <- markers2 |>
+    group_by(cluster) |>
     mutate(rank_r = seq_along(gene))
 
 markers2$FC_r <- 2^markers2$logFC_r
@@ -1468,7 +1479,7 @@ if (save_data == TRUE) {
     saveRDS(result, file = output_data_file_paths$results_scan)
     saveRDS(subset_markers2, file = output_data_file_paths$markers2)
     saveRDS(seu, file = output_data_file_paths$seu_object)
-    py$adata$write_h5ad(output_data_file_paths$scan_adata, compression=py$hdf5plugin$FILTERS$zstd)
+    py$adata$write_h5ad(output_data_file_paths$scan_adata, compression = py$hdf5plugin$FILTERS$zstd)
 }
 ```
 

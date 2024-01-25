@@ -12,23 +12,23 @@ knitr::opts_chunk$set(echo = TRUE)
 Link generated count matrix in the correct place if exists
 ```{r}
 data_name <- "5k_pbmc_v3"
-matrix_generation_method <- "kb"  # "kb" or "cellranger"
-matrix_generation_method_version <- "0.28.0"  # version number or empty string
-matrix_source <- "generated"  # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
+matrix_generation_method <- "kb" # "kb" or "cellranger"
+matrix_generation_method_version <- "0.28.0" # version number or empty string
+matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 
 
 if (matrix_source == "generated") {
     matrix_generation_method_version_foldername <- gsub("\\.", "_", matrix_generation_method_version)
-    
+
     source_path <- paste0("../matrix_generation/count_matrix_collection/", data_name, "/", matrix_generation_method, matrix_generation_method_version_foldername, "_raw_feature_bc_matrix_collection")
     destination_path <- paste0("./count_matrix_collection/", data_name)
-    
+
     if (dir.exists(source_path)) {
         if (!dir.exists(destination_path)) {
-              dir.create(destination_path, recursive = TRUE, showWarnings = FALSE)
+            dir.create(destination_path, recursive = TRUE, showWarnings = FALSE)
         }
         # file.copy(source_path, destination_path, recursive = TRUE)
-        #! add if-else where if colab then download matrix from caltech data, else make symlink
+        # ! add if-else where if colab then download matrix from caltech data, else make symlink
         file.symlink(source_path, destination_path)
         file.rename(file.path(destination_path, basename(source_path)), file.path(destination_path, paste0(matrix_generation_method, matrix_generation_method_version_foldername, "_raw_generated")))
         cat("Directory linked successfully.\n")
@@ -47,29 +47,29 @@ if (!requireNamespace("rmarkdown", quietly = TRUE)) remotes::install_version("rm
 
 if (!requireNamespace("Seurat", quietly = TRUE)) remotes::install_version("Seurat", version = "4.3.0")
 if (!requireNamespace("Matrix", quietly = TRUE)) remotes::install_version("Matrix", version = "1.6.3")
-if (!requireNamespace("reticulate", quietly = TRUE)) remotes::install_version("reticulate", version="1.34.0")
-if (!requireNamespace("patchwork", quietly = TRUE)) remotes::install_version("patchwork", version="1.1.3")
-if (!requireNamespace("eulerr", quietly = TRUE)) remotes::install_version("eulerr", version="7.0.0")
-if (!requireNamespace("scattermore", quietly = TRUE)) remotes::install_version("scattermore", version="1.2")
-if (!requireNamespace("assertthat", quietly = TRUE)) remotes::install_version("assertthat", version="0.2.1")
-if (!requireNamespace("pheatmap", quietly = TRUE)) remotes::install_version("pheatmap", version="1.0.12")
-if (!requireNamespace("ggforce", quietly = TRUE)) remotes::install_version("ggforce", version="0.4.1")
-if (!requireNamespace("ggplotify", quietly = TRUE)) remotes::install_version("ggplotify", version="0.1.2")
-if (!requireNamespace("mclust", quietly = TRUE)) remotes::install_version("mclust", version="6.0.1")
-if (!requireNamespace("ggalluvial", quietly = TRUE)) remotes::install_version("ggalluvial", version="0.12.5")
-if (!requireNamespace("UpSetR", quietly = TRUE)) remotes::install_version("UpSetR", version="1.4.0")
-if (!requireNamespace("ggpointdensity", quietly = TRUE)) remotes::install_version("ggpointdensity", version="0.1.0")
-if (!requireNamespace("dbscan", quietly = TRUE)) remotes::install_version("dbscan", version="1.1.12")
+if (!requireNamespace("reticulate", quietly = TRUE)) remotes::install_version("reticulate", version = "1.34.0")
+if (!requireNamespace("patchwork", quietly = TRUE)) remotes::install_version("patchwork", version = "1.1.3")
+if (!requireNamespace("eulerr", quietly = TRUE)) remotes::install_version("eulerr", version = "7.0.0")
+if (!requireNamespace("scattermore", quietly = TRUE)) remotes::install_version("scattermore", version = "1.2")
+if (!requireNamespace("assertthat", quietly = TRUE)) remotes::install_version("assertthat", version = "0.2.1")
+if (!requireNamespace("pheatmap", quietly = TRUE)) remotes::install_version("pheatmap", version = "1.0.12")
+if (!requireNamespace("ggforce", quietly = TRUE)) remotes::install_version("ggforce", version = "0.4.1")
+if (!requireNamespace("ggplotify", quietly = TRUE)) remotes::install_version("ggplotify", version = "0.1.2")
+if (!requireNamespace("mclust", quietly = TRUE)) remotes::install_version("mclust", version = "6.0.1")
+if (!requireNamespace("ggalluvial", quietly = TRUE)) remotes::install_version("ggalluvial", version = "0.12.5")
+if (!requireNamespace("UpSetR", quietly = TRUE)) remotes::install_version("UpSetR", version = "1.4.0")
+if (!requireNamespace("ggpointdensity", quietly = TRUE)) remotes::install_version("ggpointdensity", version = "0.1.0")
+if (!requireNamespace("dbscan", quietly = TRUE)) remotes::install_version("dbscan", version = "1.1.12")
 
 
-if (!requireNamespace("BiocManager", quietly = TRUE)) remotes::install_version("BiocManager", version="1.30.22")
+if (!requireNamespace("BiocManager", quietly = TRUE)) remotes::install_version("BiocManager", version = "1.30.22")
 bioconductor_version <- "3.18"
 
-if (!requireNamespace("BUSpaRse", quietly = TRUE)) BiocManager::install("BUSpaRse", version=bioconductor_version)
-if (!requireNamespace("DropletUtils", quietly = TRUE)) BiocManager::install("DropletUtils", version=bioconductor_version)
-if (!requireNamespace("Voyager", quietly = TRUE)) BiocManager::install("Voyager", version=bioconductor_version, update = FALSE)
-if (!requireNamespace("concordexR", quietly = TRUE)) BiocManager::install("concordexR", version=bioconductor_version, update = FALSE)
-if (!requireNamespace("biomaRt", quietly = TRUE)) BiocManager::install("biomaRt", version=bioconductor_version, update = FALSE)
+if (!requireNamespace("BUSpaRse", quietly = TRUE)) BiocManager::install("BUSpaRse", version = bioconductor_version)
+if (!requireNamespace("DropletUtils", quietly = TRUE)) BiocManager::install("DropletUtils", version = bioconductor_version)
+if (!requireNamespace("Voyager", quietly = TRUE)) BiocManager::install("Voyager", version = bioconductor_version, update = FALSE)
+if (!requireNamespace("concordexR", quietly = TRUE)) BiocManager::install("concordexR", version = bioconductor_version, update = FALSE)
+if (!requireNamespace("biomaRt", quietly = TRUE)) BiocManager::install("biomaRt", version = bioconductor_version, update = FALSE)
 ```
 
 Set up conda environment
@@ -84,38 +84,38 @@ library(reticulate)
 
 if (!(conda_env_name %in% conda_list(conda_binary)$name)) {
     conda_create(envname = conda_env_name, python_version = "3.9", conda = conda_binary)
-    
+
     conda_install(
         conda = conda_binary,
         envname = conda_env_name,
         channel = "conda-forge",
-            c(
-              "scanpy==1.9.5",
-              "python-igraph==0.11.2",
-              "leidenalg==0.10.1",
-              "pandas==2.1.1",
-              "matplotlib==3.7.2",
-              "numpy==1.23.4",
-              "anndata==0.10.2",
-              "hdf5plugin==4.2.0"
-            )
+        c(
+            "scanpy==1.9.5",
+            "python-igraph==0.11.2",
+            "leidenalg==0.10.1",
+            "pandas==2.1.1",
+            "matplotlib==3.7.2",
+            "numpy==1.23.4",
+            "anndata==0.10.2",
+            "hdf5plugin==4.2.0"
         )
-    
+    )
+
     conda_install(
         conda = conda_binary,
         envname = conda_env_name,
         pip = TRUE,
-            c(
-                "kb-python==0.27.3",
-                "umap-learn==0.5.2",
-                "louvain==0.8.1"
-            )
+        c(
+            "kb-python==0.27.3",
+            "umap-learn==0.5.2",
+            "louvain==0.8.1"
         )
+    )
 } else {
     conda_create(environment = yaml_path)
 }
 
-Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env_name, "bin/python3.9", sep="/"))
+Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env_name, "bin/python3.9", sep = "/"))
 use_condaenv(conda_env_name)
 ```
 
