@@ -89,6 +89,12 @@ seu2_included_transcripts <- ifelse(seu2_matrix_include_unspliced == TRUE, "sua"
 seu1_matrix_generation_method_full <- glue::glue("{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}_{seu1_matrix_qc}_{seu1_matrix_source}")
 seu2_matrix_generation_method_full <- glue::glue("{seu2_matrix_generation_method}{seu2_matrix_generation_method_version}_{seu2_matrix_qc}_{seu2_matrix_source}")
 
+seu1_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", seu1_matrix_generation_method_version))
+seu2_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", seu2_matrix_generation_method_version))
+
+seu1_used_batch <- ifelse(seu1_kb_major_version >= 28, TRUE, FALSE)
+seu2_used_batch <- ifelse(seu2_kb_major_version >= 28, TRUE, FALSE)
+
 seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
 ```
 
@@ -295,7 +301,7 @@ Read the data into Seurat1 and create knee plot:
 ```{r}
 if (seu1_matrix_qc == "raw") {
     if (seu1_matrix_generation_method == "kb") {
-        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", unspliced = seu1_matrix_include_unspliced, tcc = FALSE)
+        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", unspliced = seu1_matrix_include_unspliced, batch = seu1_used_batch, tcc = FALSE)
     } else if (seu1_matrix_generation_method == "cellranger") {
         res_mat1 <- Read10X(seu1_data_path, gene.column = 1)
     } else {
@@ -351,7 +357,7 @@ Read the data into Seurat2 and create knee plot:
 ```{r}
 if (seu2_matrix_qc == "raw") {
     if (seu2_matrix_generation_method == "kb") {
-        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", unspliced = seu2_matrix_include_unspliced, tcc = FALSE)
+        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", unspliced = seu2_matrix_include_unspliced, batch = seu2_used_batch, tcc = FALSE)
     } else if (seu2_matrix_generation_method == "cellranger") {
         res_mat2 <- Read10X(seu2_data_path, gene.column = 1)
     } else {
@@ -515,7 +521,7 @@ If data_input == "seu1" or "seu2": Apply Cells and Genes to be the same for both
 ```{r}
 if (data_input == "seu1") {
     if (seu2_matrix_generation_method == "kb") {
-        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", unspliced = seu2_matrix_include_unspliced, tcc = FALSE)
+        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", unspliced = seu2_matrix_include_unspliced, batch = seu2_used_batch, tcc = FALSE)
     } else if (seu2_matrix_generation_method == "cellranger") {
         res_mat2 <- Read10X(seu2_data_path, gene.column = 1)
     }
@@ -546,7 +552,7 @@ if (data_input == "seu1") {
 
 if (data_input == "seu2") {
     if (seu1_matrix_generation_method == "kb") {
-        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", unspliced = seu1_matrix_include_unspliced, tcc = FALSE)
+        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", unspliced = seu1_matrix_include_unspliced, batch = seu1_used_batch, tcc = FALSE)
     } else if (seu1_matrix_generation_method == "cellranger") {
         res_mat1 <- Read10X(seu1_data_path, gene.column = 1)
     }

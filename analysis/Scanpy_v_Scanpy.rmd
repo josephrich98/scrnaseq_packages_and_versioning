@@ -91,6 +91,12 @@ scan2_included_transcripts <- ifelse(scan2_matrix_include_unspliced == TRUE, "su
 scan1_matrix_generation_method_full <- glue::glue("{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}_{scan1_matrix_qc}_{scan1_matrix_source}")
 scan2_matrix_generation_method_full <- glue::glue("{scan2_matrix_generation_method}{scan2_matrix_generation_method_version}_{scan2_matrix_qc}_{scan2_matrix_source}")
 
+scan1_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", scan1_matrix_generation_method_version))
+scan2_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", scan2_matrix_generation_method_version))
+
+scan1_used_batch <- ifelse(scan1_kb_major_version >= 28, TRUE, FALSE)
+scan2_used_batch <- ifelse(scan2_kb_major_version >= 28, TRUE, FALSE)
+
 scanpy_group_names <- list(Scanpy1 = scan1_name, Scanpy2 = scan2_name)
 ```
 
@@ -344,13 +350,19 @@ Import adata1
 if r.scan1_matrix_qc == "raw":
     if (scan1_matrix_generation_method=="kb" and r.scan1_matrix_include_unspliced):
         matrix_file = "cells_x_genes.total.mtx"
-        adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
+        if r.scan1_used_batch:
+            adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
+        else:
+            adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
     elif (scan1_matrix_generation_method=="kb" and not r.scan1_matrix_include_unspliced):
         matrix_file = "cells_x_genes.cell.mtx"
         if not os.path.exists(f"{scan1_data_path}/{matrix_file}"):
             # If it doesn't exist, use the alternative .mtx file
             matrix_file = "cells_x_genes.mtx"
-        adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
+        if r.scan1_used_batch:
+            adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
+        else:
+            adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
     elif scan1_matrix_generation_method=="cellranger":
         adata1 = sc.read_10x_mtx(scan1_data_path, var_names='gene_ids')
     
@@ -425,13 +437,19 @@ Import adata2
 if r.scan2_matrix_qc == "raw":
     if (scan2_matrix_generation_method=="kb" and r.scan2_matrix_include_unspliced):
         matrix_file = "cells_x_genes.total.mtx"
-        adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
+        if r.scan2_used_batch:
+            adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
+        else:
+            adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
     elif (scan2_matrix_generation_method=="kb" and not r.scan2_matrix_include_unspliced):
         matrix_file = "cells_x_genes.cell.mtx"
         if not os.path.exists(f"{scan2_data_path}/{matrix_file}"):
             # If it doesn't exist, use the alternative .mtx file
             matrix_file = "cells_x_genes.mtx"
-        adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
+        if r.scan2_used_batch:
+            adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
+        else:
+            adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
     elif scan2_matrix_generation_method=="cellranger":
         adata2 = sc.read_10x_mtx(scan2_data_path, var_names='gene_ids')
     

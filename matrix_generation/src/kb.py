@@ -43,17 +43,23 @@ def custom_sort(filename):
 
 def find_kb_reference(instance, count = False):
     kb_reference_path_parent = os.path.join(instance.reference_path, "kb")
+
+    kb_version_parts = instance.kb_version.split('.')
+
     if instance.reference_selector == "most_recent":
         if count:
             directories = [item for item in os.listdir(kb_reference_path_parent) if os.path.isdir(os.path.join(kb_reference_path_parent, item))]
-            kb_reference_path = max(int(dir_name.split('_')[0]) for dir_name in directories if '_' in dir_name)
+            filtered_dirs = [dir_name for dir_name in directories if dir_name.endswith(f'_v{kb_version_parts[1]}')]
+            if filtered_dirs:
+                kb_reference_path = max(filtered_dirs, key=lambda x: int(x.split('_')[0]))
+                kb_reference_path = kb_reference_path.split('_')[0]
+            else:
+                kb_reference_path = None
 
         else:
             kb_reference_path = os.path.join(kb_reference_path_parent, now.strftime('%y%m'))
     else:
         kb_reference_path = os.path.join(kb_reference_path_parent, instance.reference_selector)
-    
-    kb_version_parts = instance.kb_version.split('.')
     
     kb_reference_path_full = os.path.join(kb_reference_path_parent, str(kb_reference_path) + f"_v{kb_version_parts[1]}")
     
@@ -100,6 +106,10 @@ def kb_count_function(instance, baseline, threads):
 
     if instance.kb_version != "":
         check_kb_version(instance.kb_version)
+    
+    kb_version = pkg_resources.get_distribution("kb-python").version
+
+    kb_version_major = int(kb_version.split('.')[1])
 
     print("about to enter kb count")
     for frac in frac_list:
@@ -111,7 +121,7 @@ def kb_count_function(instance, baseline, threads):
             else:
                 specific_fastq_directory = os.path.join(instance.downsampled_fastq_directory, f"frac{frac_str}_seed{seed}")
 
-            kb_version_str = str(instance.kb_version).replace('.', '_')
+            kb_version_str = str(kb_version).replace('.', '_')
 
             out_dir = os.path.join(instance.output_directory, f"kb{kb_version_str}", f"frac{frac_str}_seed{seed}")
             if not os.path.exists(out_dir):
@@ -157,10 +167,6 @@ def kb_count_function(instance, baseline, threads):
 
             sorted_files = [file for file in sorted_files if "_I1_" not in file and "_I2_" not in file]
 
-            kb_version = pkg_resources.get_distribution("kb-python").version
-
-            kb_version_major = int(kb_version.split('.')[1])
-
             if kb_version_major >= 28:
                 lane_files = {}
                 for file in sorted_files:
@@ -185,6 +191,13 @@ def kb_count_function(instance, baseline, threads):
 
             # Run the command
             subprocess.run(kb_count_command, shell=True, executable="/bin/bash")
+
+            if kb_version_major >= 28:
+                os.chdir(os.path.join(out_dir, "counts_unfiltered"))
+
+                cmd = "paste -d'_' cells_x_genes.barcodes.prefix.txt cells_x_genes.barcodes.txt > cells_x_genes.barcodes.combined.txt"
+
+                subprocess.run(cmd, shell=True, check=True)
 
             # organize_output(instance.output_directory, seed, frac_str, matrix_source = "kb")
             

@@ -19,13 +19,13 @@ scan_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsam
 
 # Matrix generation methods
 seu_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-seu_matrix_generation_method_version <- "0.28.0"
+seu_matrix_generation_method_version <- "0.24.4"
 seu_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 seu_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 seu_matrix_qc <- "raw" # "raw" or "filtered"
 
 scan_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-scan_matrix_generation_method_version <- "0.28.0"
+scan_matrix_generation_method_version <- "0.24.4"
 scan_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 scan_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 scan_matrix_qc <- "raw" # "raw" or "filtered"
@@ -52,7 +52,7 @@ umap_leiden_clustering_resolution <- 0.8
 
 # Output path specifications
 project_base_path <- "/workspace/analysis"
-data_name <- "5k_pbmc_v3"
+data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
 include_seeds_in_file_paths <- FALSE
 save_data <- FALSE
 dpi <- 350
@@ -76,6 +76,12 @@ scan_included_transcripts <- ifelse(scan_matrix_include_unspliced == TRUE, "sua"
 
 seu_matrix_generation_method_full <- glue::glue("{seu_matrix_generation_method}{seu_matrix_generation_method_version}_{seu_matrix_qc}_{seu_matrix_source}")
 scan_matrix_generation_method_full <- glue::glue("{scan_matrix_generation_method}{scan_matrix_generation_method_version}_{scan_matrix_qc}_{scan_matrix_source}")
+
+seu_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", seu_matrix_generation_method_version))
+scan_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", scan_matrix_generation_method_version))
+
+seu_used_batch <- ifelse(seu_kb_major_version >= 28, TRUE, FALSE)
+scan_used_batch <- ifelse(scan_kb_major_version >= 28, TRUE, FALSE)
 
 # Seurat vs Scanpy
 group1_color <- "#D55E00"
@@ -370,7 +376,7 @@ Read the data into Seurat and create knee plot:
 ```{r}
 if (seu_matrix_qc == "raw") {
     if (seu_matrix_generation_method == "kb") {
-        res_mat <- read_count_output_modified(seu_data_path, name = "cells_x_genes", unspliced = seu_matrix_include_unspliced, tcc = FALSE)
+        res_mat <- read_count_output_modified(seu_data_path, name = "cells_x_genes", unspliced = seu_matrix_include_unspliced, batch = seu_used_batch, tcc = FALSE)
     } else if (seu_matrix_generation_method == "cellranger") {
         res_mat <- Read10X(seu_data_path, gene.column = 1)
     } else {
@@ -428,13 +434,19 @@ Read the data into Scanpy and apply basic filtering (knee plot)
 if r.scan_matrix_qc == "raw":  
     if (scan_matrix_generation_method=="kb" and r.scan_matrix_include_unspliced):
         matrix_file = "cells_x_genes.total.mtx"
-        adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
+        if r.scan_used_batch:
+            adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
+        else:
+            adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
     elif (scan_matrix_generation_method=="kb" and not r.scan_matrix_include_unspliced):
         matrix_file = "cells_x_genes.cell.mtx"
         if not os.path.exists(f"{scan_data_path}/{matrix_file}"):
             # If it doesn't exist, use the alternative .mtx file
             matrix_file = "cells_x_genes.mtx"
-        adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
+        if r.scan_used_batch:
+            adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
+        else:
+            adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
     elif scan_matrix_generation_method=="cellranger":
         adata = sc.read_10x_mtx(scan_data_path, var_names='gene_ids')
     
@@ -467,8 +479,8 @@ res_mat_py <- t(py$adata_unfiltered$X)
 rownames(res_mat_py) <- py$adata_unfiltered$var_names$to_list()
 colnames(res_mat_py) <- py$adata_unfiltered$obs_names$to_list()
 
-umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat, res_mat2 = res_mat_py, UMI_cutoff1 = UMI_cutoff, UMI_cutoff2 = UMI_cutoff, res_mat1_name = "Seurat", res_mat2_name = "Scanpy", point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)
-umi_scatterplot
+# umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat, res_mat2 = res_mat_py, UMI_cutoff1 = UMI_cutoff, UMI_cutoff2 = UMI_cutoff, res_mat1_name = "Seurat", res_mat2_name = "Scanpy", point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)  #*
+# umi_scatterplot  #*
 ```
 
 Find list of mitochondrial Ensembl gene names
@@ -602,7 +614,7 @@ If data_input == "scanpy": Apply Cells and Genes from Scanpy to Seurat
 ```{r}
 if (data_input == "scanpy") {
     if (seu_matrix_generation_method == "kb") {
-        res_mat <- read_count_output_modified(seu_data_path, name = "cells_x_genes", unspliced = seu_matrix_include_unspliced, tcc = FALSE)
+        res_mat <- read_count_output_modified(seu_data_path, name = "cells_x_genes", unspliced = seu_matrix_include_unspliced, batch = seu_used_batch, tcc = FALSE)
     } else if (seu_matrix_generation_method == "cellranger") {
         res_mat <- Read10X(seu_data_path, gene.column = 1)
     }

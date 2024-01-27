@@ -1,4 +1,4 @@
-read_count_output_modified <- function(dir, name, unspliced = FALSE, tcc = FALSE) {
+read_count_output_modified <- function(dir, name, unspliced = FALSE, batch = FALSE, tcc = FALSE) {
     dir <- normalizePath(dir, mustWork = TRUE)
     if (unspliced) {
         m <- readMM(paste0(dir, "/", name, ".total.mtx"))
@@ -15,7 +15,11 @@ read_count_output_modified <- function(dir, name, unspliced = FALSE, tcc = FALSE
     # The matrix read has cells in rows
     ge <- if (tcc) ".ec.txt" else ".genes.txt"
     con_genes <- file(paste0(dir, "/", name, ge))
-    con_bcs <- file(paste0(dir, "/", name, ".barcodes.txt"))
+    if (batch) {
+        con_bcs <- file(paste0(dir, "/", name, ".barcodes.combined.txt"))
+    } else {
+        con_bcs <- file(paste0(dir, "/", name, ".barcodes.txt"))
+    }
     genes <- readLines(con_genes)
     barcodes <- readLines(con_bcs)
     colnames(m) <- barcodes
