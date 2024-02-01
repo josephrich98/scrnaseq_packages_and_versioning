@@ -225,20 +225,20 @@ make_umi_scatterplot <- function(res_mat1, res_mat2, UMI_cutoff1 = NULL, UMI_cut
 
 make_violin_plot <- function(seu, show_points = FALSE, color = NULL, save = FALSE) {
     pt.size <- ifelse(show_points == TRUE, 0.01, 0)
-    p1 <- VlnPlot(seu, features = "nFeature_RNA", pt.size = pt.size, cols = color) +
+    p1 <- VlnPlot(seu, features = "nFeature_RNA", group.by = "orig.ident", pt.size = pt.size, cols = color) +
         coord_cartesian(ylim = c(0, 8250)) +
         scale_y_continuous(breaks = seq(0, 8500, by = 2000)) +
-        theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
+        theme(legend.position = "none", axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
 
-    p2 <- VlnPlot(seu, features = "nCount_RNA", pt.size = pt.size, cols = color) +
+    p2 <- VlnPlot(seu, features = "nCount_RNA", group.by = "orig.ident", pt.size = pt.size, cols = color) +
         coord_cartesian(ylim = c(0, 64000)) +
         scale_y_continuous(breaks = seq(0, 60000, by = 20000)) +
-        theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
+        theme(legend.position = "none", axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
 
-    p3 <- VlnPlot(seu, features = "pct_mt", pt.size = pt.size, cols = color) +
+    p3 <- VlnPlot(seu, features = "pct_mt", group.by = "orig.ident", pt.size = pt.size, cols = color) +
         coord_cartesian(ylim = c(0, 80)) +
         scale_y_continuous(breaks = seq(0, 80, by = 10)) +
-        theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
+        theme(legend.position = "none", axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
 
     # Arrange the plots into one plot with 3 columns
     combined_plot <- (p1 | p2 | p3) + plot_layout(ncol = 3)
@@ -265,7 +265,9 @@ upset_plot_general <- function(data, group1_name, group2_name, comparison, befor
     )
 
 
-    df <- df %>% mutate(across(everything(), as.integer))
+    df <- df %>%
+        mutate(!!sym(group1_name) := as.integer(!!sym(group1_name)),
+               !!sym(group2_name) := as.integer(!!sym(group2_name)))
 
     if (before_filtering) {
         y_label <- glue("{comparison} Intersection (before UMI filtering)")
@@ -273,7 +275,7 @@ upset_plot_general <- function(data, group1_name, group2_name, comparison, befor
         y_label <- glue("{comparison} Intersection")
     }
 
-    p <- UpSetR::upset(df[, -1], mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), empty.intersections = TRUE)
+    p <- UpSetR::upset(df[, -1], mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), text.scale = c(2.1, 1.7, 1.7, 1, 1.7, 1.7), empty.intersections = TRUE)
 
     if (as_ggplot) {
         p <- as.ggplot(p)
@@ -574,6 +576,11 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
             x = bquote(-log[10](.(group2_name) ~ "adjusted p-value")),
             y = bquote(-log[10](.(group1_name) ~ "adjusted p-value")),
             title = plot_title
+        ) +
+        theme(
+            plot.title = element_blank(),          # Increase plot title size
+            axis.title = element_text(size = 12),          # Increase axis title size
+            axis.text = element_text(size = 10)            # Increase axis text size
         )
 
     df_inset <- markers2 %>% filter((log_p_val_adj_1 <= 10) & (log_p_val_adj_2 <= 10))
@@ -632,7 +639,12 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
     }
 
     p <- ggplot(markers2, aes(!!sym(logFC_group2), !!sym(logFC_group1))) +
-        labs(x = bquote(log[2](.(group2_name) ~ "fold change")), y = bquote(log[2](.(group1_name) ~ "fold change")))
+        labs(x = bquote(log[2](.(group2_name) ~ "fold change")), y = bquote(log[2](.(group1_name) ~ "fold change"))) +
+        theme(
+            plot.title = element_blank(),          # Increase plot title size
+            axis.title = element_text(size = 20),          # Increase axis title size
+            axis.text = element_text(size = 15)            # Increase axis text size
+        )
 
     coefficients <- coef(lm_model)
     m <- round(coefficients[2], 2)
@@ -645,16 +657,17 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
 
     if (r_squared > 0.25 || r_squared_filtered > 0.25) {
         if (!outliers_excluded) {
-            baseline_linear_model_filtered <- glue("Linear model excluding outliers: y={m_filtered}x+{b_filtered} (R^2={sprintf('%.2f', r_squared_filtered)})")
+            baseline_linear_model_filtered <- glue("Linear model excluding outliers: y={m_filtered}x+{b_filtered} (R²={sprintf('%.2f', r_squared_filtered)})")
         }
 
-        baseline_linear_model <- glue("Baseline linear model: y={m}x+{b} (R^2={r_squared})")
+        baseline_linear_model <- glue("Baseline linear model: y={m}x+{b} (R²={sprintf('%.2f', r_squared)})")
 
         if (show_legend) {
             p <- p +
                 geom_smooth(method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = TRUE, aes(linetype = baseline_linear_model, color = baseline_linear_model)) +
-                geom_abline(aes(slope = 1, intercept = 0, linetype = "y=x", color = "y=x"), show.legend = FALSE, linewidth = 0.5)
-            if (!outliers_excluded) {
+                geom_abline(aes(slope = 1, intercept = 0, linetype = "y=x", color = "y=x"), show.legend = FALSE, linewidth = 0.5) +
+                theme(legend.text = element_text(size = 12))
+            if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
                 p <- p +
                     geom_smooth(data = markers2_filtered, method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = FALSE, aes(linetype = baseline_linear_model_filtered, color = baseline_linear_model_filtered)) +
                     scale_color_manual(name = "", values = c("black", "black", "gray30")) +
@@ -671,7 +684,7 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
                 geom_smooth(data = markers2_filtered, method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = FALSE, linetype = 3, color = "black")
         }
     }
-
+    
     if (show_legend) {
         p <- p +
             geom_point(alpha = 0.2, size = 0.3, color = "gray60") +
@@ -682,16 +695,16 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
             ggpointdensity::geom_pointdensity(size = 0.3, alpha = 1, adjust = 0.2, show.legend = FALSE) +
             scico::scale_color_scico(palette = "grayC", direction = -1, end = 0.8)
     }
-
+    
     p <- p +
-        coord_equal() +
-        theme(plot.title = element_text(hjust = 0.48)) # Center the title
+        coord_equal()
+        # theme(plot.title = element_text(hjust = 0.48)) # Center the title
 
     if (!outliers_excluded) {
-        p <- p + labs(title = glue("{group1_name} vs. {group2_name} logFC"))
+        # p <- p + labs(title = glue("{group1_name} vs. {group2_name} logFC"))
         default_plotpath <- file_paths_default$logFC_scatterplot_file_path
     } else {
-        p <- p + labs(title = glue("{group1_name} vs. {group2_name} logFC (excluding outliers)"))
+        # p <- p + labs(title = glue("{group1_name} vs. {group2_name} logFC (excluding outliers)"))
         default_plotpath <- file_paths_default$logFC_scatterplot_outliers_removed_file_path
     }
 
@@ -774,7 +787,7 @@ plot_var_explained <- function(eigs_df, npcs = 20, group_names = waiver(), save 
 
 
 plot_pca_compare <- function(embeddings1, embeddings2,
-                             pcs = 1:2, group1_name = "Seurat", group2_name = "Scanpy", group_labels = waiver(), save = FALSE) {
+                             pcs = 1:2, group1_name = "Seurat", group2_name = "Scanpy", group_labels = waiver(), legend_position = "outside", save = FALSE) {
     # See if needs to be flipped
     embeddings2 <- flip_pcs(embeddings1, embeddings2, pcs)
     df1 <- make_pca_emb_df(embeddings1, group1_name, pcs)
@@ -809,6 +822,46 @@ plot_pca_compare <- function(embeddings1, embeddings2,
             legend.text = element_text(size = rel(1.5)),
             legend.title = element_text(size = rel(1.5))
         )
+    
+    if (is.character(legend_position) && legend_position != "outside") {
+        p <- p +
+            theme(
+                legend.margin = margin(-10, -10, -10, -10),  # Optional: Adjust margin to move closer to or further from the edges
+                legend.box.margin = margin(0, 0, 0, 0),  # Optional: Adjust box margin
+                legend.background = element_blank(),  # Optional: Remove background
+                legend.key = element_blank()
+            )
+        
+        if (legend_position == "TL") {
+            p <- p +
+                theme(
+                    legend.position = c(0.025, 1.02),
+                    legend.justification = c(0, 1),
+                    legend.box.just = "left"
+                )
+        } else if (legend_position == "BR") {
+            p <- p +
+                theme(
+                    legend.position = c(0.96, 0.12),
+                    legend.justification = c(1, 1),
+                    legend.box.just = "right"
+                )
+        } else if (legend_position == "BL") {
+            p <- p +
+                theme(
+                    legend.position = c(0.025, 0.12),
+                    legend.justification = c(0, 1),
+                    legend.box.just = "left"
+                )
+        } else {  # put it in the top-right
+            p <- p +
+                theme(
+                    legend.position = c(0.96, 1.02),  # Top-right corner
+                    legend.justification = c(1, 1),  # Anchor the legend at the top-right
+                    legend.box.just = "right"  # Justify the legend box at the right
+                )
+        }
+    }
 
     if (identical(pcs, 1:2)) {
         default_filepath <- file_paths_default$pca_12_filepath
@@ -982,7 +1035,7 @@ make_combined_pc_variance_loadings_plot <- function(combined_pc_variance, loadin
 }
 
 
-make_knn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn", save = FALSE) {
+make_snn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn", save = FALSE) {
     xmax <- ceiling(max(abs(jaccards$logged_degree_ratio)))
     xmin <- -xmax
 
@@ -1014,10 +1067,10 @@ make_knn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
 
     if (neighbor_space == "umap") {
         p <- p +
-            labs(x = bquote(log[2]("UMAP SNN Degree Ratio")), y = "UMAP SNN Jaccard")
+            labs(x = bquote(log[2]("Ratio of UMAP SNN Graph Degrees")), y = "UMAP SNN Graph Neighborhood Jaccard Index")
     } else {
         p <- p +
-            labs(x = bquote(log[2]("SNN Degree Ratio")), y = "SNN Jaccard")
+            labs(x = bquote(log[2]("Ratio of SNN Graph Degrees")), y = "SNN Graph Neighborhood Jaccard Index")
     }
 
     if (save == TRUE || is.character(save)) {
@@ -1287,6 +1340,10 @@ calculate_de_stats <- function(markers2, group1_name = "Seurat", group2_name = "
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$de_stats_file)
         sink(filepath, split = TRUE, append = TRUE)
     }
+    
+    logFC_ccc_results <- CCC(x = markers2[[logFC_group1]], y = markers2[[logFC_group2]])
+    logFC_ccc <- logFC_ccc_results$rho.c$est
+    print(glue("logFC CCC: {logFC_ccc}"))
 
     logFC_difference_magnitude_equation <- abs(markers2[[logFC_group1]] - markers2[[logFC_group2]])
     markers2 <- calculate_individual_de_stats(markers2, column_name = "logFC_difference_magnitude", column_equation = logFC_difference_magnitude_equation)
@@ -1615,4 +1672,77 @@ make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group
     }
 
     return(combined_plot)
+}
+
+
+# From DescTools v0.99.53
+CCC <- function(x, y, ci = "z-transform", conf.level = 0.95, na.rm = FALSE){
+    
+    dat <- data.frame(x, y)
+    
+    if(na.rm) dat <- na.omit(dat)
+    #   id <- complete.cases(dat)
+    #   nmissing <- sum(!complete.cases(dat))
+    #   dat <- dat[id,]
+    
+    
+    N. <- 1 - ((1 - conf.level) / 2)
+    zv <- qnorm(N., mean = 0, sd = 1)
+    lower <- "lwr.ci"
+    upper <- "upr.ci"
+    
+    k <- length(dat$y)
+    yb <- mean(dat$y)
+    sy2 <- var(dat$y) * (k - 1) / k
+    sd1 <- sd(dat$y)
+    
+    xb <- mean(dat$x)
+    sx2 <- var(dat$x) * (k - 1) / k
+    sd2 <- sd(dat$x)
+    
+    r <- cor(dat$x, dat$y)
+    sl <- r * sd1 / sd2
+    
+    sxy <- r * sqrt(sx2 * sy2)
+    p <- 2 * sxy / (sx2 + sy2 + (yb - xb)^2)
+    
+    delta <- (dat$x - dat$y)
+    rmean <- apply(dat, MARGIN = 1, FUN = mean)
+    blalt <- data.frame(mean = rmean, delta)
+    
+    # Scale shift:
+    v <- sd1 / sd2
+    # Location shift relative to the scale:
+    u <- (yb - xb) / ((sx2 * sy2)^0.25)
+    # Variable C.b is a bias correction factor that measures how far the best-fit line deviates from a line at 45 degrees (a measure of accuracy). No deviation from the 45 degree line occurs when C.b = 1. See Lin (1989 page 258).
+    # C.b <- (((v + 1) / (v + u^2)) / 2)^-1
+    
+    # The following taken from the Stata code for function "concord" (changed 290408):
+    C.b <- p / r
+    
+    # Variance, test, and CI for asymptotic normal approximation (per Lin (March 2000) Biometrics 56:325-5):
+    sep = sqrt(((1 - ((r)^2)) * (p)^2 * (1 - ((p)^2)) / (r)^2 + (2 * (p)^3 * (1 - p) * (u)^2 / r) - 0.5 * (p)^4 * (u)^4 / (r)^2 ) / (k - 2))
+    ll = p - zv * sep
+    ul = p + zv * sep
+    
+    # Statistic, variance, test, and CI for inverse hyperbolic tangent transform to improve asymptotic normality:
+    t <- log((1 + p) / (1 - p)) / 2
+    set = sep / (1 - ((p)^2))
+    llt = t - zv * set
+    ult = t + zv * set
+    llt = (exp(2 * llt) - 1) / (exp(2 * llt) + 1)
+    ult = (exp(2 * ult) - 1) / (exp(2 * ult) + 1)
+    
+    if(ci == "asymptotic"){
+        rho.c <- as.data.frame(cbind(p, ll, ul))
+        names(rho.c) <- c("est", lower, upper)
+        rval <- list(rho.c = rho.c, s.shift = v, l.shift = u, C.b = C.b, blalt = blalt ) # , nmissing = nmissing)
+    }
+    
+    else if(ci == "z-transform"){
+        rho.c <- as.data.frame(cbind(p, llt, ult))
+        names(rho.c) <- c("est", lower, upper)
+        rval <- list(rho.c = rho.c, s.shift = v, l.shift = u, C.b = C.b, blalt = blalt) #, nmissing = nmissing)
+    }
+    return(rval)
 }

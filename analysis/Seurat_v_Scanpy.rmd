@@ -19,20 +19,22 @@ scan_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsam
 
 # Matrix generation methods
 seu_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-seu_matrix_generation_method_version <- "0.24.4"
+seu_matrix_generation_method_version <- "0.28.0"
 seu_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 seu_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 seu_matrix_qc <- "raw" # "raw" or "filtered"
+seu_used_batch <- FALSE
 
 scan_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-scan_matrix_generation_method_version <- "0.24.4"
+scan_matrix_generation_method_version <- "0.28.0"
 scan_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 scan_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 scan_matrix_qc <- "raw" # "raw" or "filtered"
+scan_used_batch <- FALSE
 
 # Function argument and input settings
-analysis_methods <- "default" # str["default", "seurat_like", "scanpy_like"]
-data_input <- "default" # str["default", "seurat", "scanpy"]
+analysis_methods <- "scanpy_like" # str["default", "seurat_like", "scanpy_like"]
+data_input <- "scanpy" # str["default", "seurat", "scanpy"]
 
 # Package versions
 seurat_version <- "4.3.0"
@@ -79,9 +81,6 @@ scan_matrix_generation_method_full <- glue::glue("{scan_matrix_generation_method
 
 seu_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", seu_matrix_generation_method_version))
 scan_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", scan_matrix_generation_method_version))
-
-seu_used_batch <- ifelse(seu_kb_major_version >= 28, TRUE, FALSE)
-scan_used_batch <- ifelse(scan_kb_major_version >= 28, TRUE, FALSE)
 
 # Seurat vs Scanpy
 group1_color <- "#D55E00"
@@ -197,7 +196,6 @@ file_paths <- list(
     logFC_scatterplot_file_path = glue::glue("{output_base_path}/plots/logFC_scatterplot.tiff"),
     wilcoxon_scatterplot_file_path = glue::glue("{output_base_path}/plots/wilcoxon_scatterplot.tiff"),
     logFC_scatterplot_file_path_with_legend = glue::glue("{output_base_path}/plots/logFC_scatterplot_with_legend.tiff"),
-    wilcoxon_scatterplot_file_path_with_legend = glue::glue("{output_base_path}/plots/wilcoxon_scatterplot_with_legend.tiff"),
     logFC_scatterplot_outliers_removed_file_path = FALSE, # glue::glue("{output_base_path}/plots/logFC_scatterplot_no_outliers.tiff"),
     wilcoxon_scatterplot_outliers_removed_file_path = FALSE, # glue::glue("{output_base_path}/plots/wilcoxon_scatterplot_no_outliers.tiff"),
 
@@ -372,7 +370,7 @@ def save_scanpy_image(filepath):
     return save_file
 ```
 
-Read the data into Seurat and create knee plot:
+Read the data into Seurat and create knee plot:   ##%%%
 ```{r}
 if (seu_matrix_qc == "raw") {
     if (seu_matrix_generation_method == "kb") {
@@ -714,7 +712,7 @@ if r.scanpy_hvg_flavor == "seurat_v3":
 ```{python}
 if r.scanpy_hvg_flavor == "seurat_v3":
     sc.pp.log1p(adata)
-    
+
 adata.raw = adata
 ```
 
@@ -831,6 +829,12 @@ pca34_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, pcs = 3:4, sav
 
 pca12_plot
 pca34_plot
+
+#* erase
+pca12_plot_TR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, legend_position = "TR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"))
+pca12_plot_TL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, legend_position = "TL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"))
+pca12_plot_BR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, legend_position = "BR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"))
+pca12_plot_BL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, legend_position = "BL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"))
 ```
 
 Plot PCA eigenvectors (loadings), eigenvalues
@@ -951,14 +955,14 @@ jaccards$logged_degree_ratio <- log(jaccards$degree_ratio, base = 2)
 
 jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
-median_logged_degree_ratio <- median(jaccards$logged_degree_ratio)
+median_magnitude_logged_degree_ratio <- median(abs(jaccards$logged_degree_ratio))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
-print(glue("Median jaccard of KNN: {median_jaccard}"))
-print(glue("Median log degree ratio of KNN: {median_logged_degree_ratio}"))
+print(glue("Median jaccard of SNN: {median_jaccard}"))
+print(glue("Median magnitude of log degree ratio of SNN: {median_magnitude_logged_degree_ratio}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
@@ -967,7 +971,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
 
 Combine jaccard indices and degree ratios into a single plot
 ```{r}
-jaccard_degree_scatterplot <- make_knn_jaccard_degree_scatterplot(jaccards, save = file_paths$jaccard_degree_scatterplot)
+jaccard_degree_scatterplot <- make_snn_jaccard_degree_scatterplot(jaccards, save = file_paths$jaccard_degree_scatterplot)
 jaccard_degree_scatterplot
 ```
 
@@ -977,9 +981,28 @@ if data_input == "seurat" and (r.seu_inds == r.scan_inds):
     adata.obsp['connectivities'] = r.snn_graph_seu
     snn_graph_scan = adata.obsp['connectivities']
     
-    adata.obsp['distances'] = r.knn_graph_seu
-    knn_graph_scan = adata.obsp['distances']
+    # adata.obsp['distances'] = r.knn_graph_seu   #*
+    # knn_graph_scan = adata.obsp['distances']   #*
 ```
+
+#!!!
+```{r}
+# saveRDS(seu, file = output_data_file_paths$seu_object)
+# py$adata$write_h5ad(output_data_file_paths$scan_adata, compression = py$hdf5plugin$FILTERS$zstd)
+```
+
+```{r}
+# seu <- readRDS(output_data_file_paths$seu_object)
+# adata_path <- output_data_file_paths$scan_adata
+```
+
+```{python}
+# adata = anndata.read_h5ad(r.adata_path)
+# snn_graph_scan = adata.obsp['connectivities']
+```
+
+
+
 
 If data_input == "scanpy": Apply SNN graph from Scanpy to Seurat
 ```{r}
@@ -990,11 +1013,12 @@ if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
     seu@graphs$RNA_snn <- as.Graph(snn_graph_scan_matrix)
     snn_graph_seu <- seu@graphs$RNA_snn
 
-    knn_graph_scan_matrix <- as.matrix(py$adata$obsp["distances"], rownames.force = NA)
-    rownames(knn_graph_scan_matrix) <- rownames(py$adata$obs)
-    colnames(knn_graph_scan_matrix) <- rownames(py$adata$obs)
-    seu@graphs$RNA_nn <- as.Graph(knn_graph_scan_matrix)
-    knn_graph_seu <- seu@graphs$RNA_nn
+    #*
+    # knn_graph_scan_matrix <- as.matrix(py$adata$obsp["distances"], rownames.force = NA)
+    # rownames(knn_graph_scan_matrix) <- rownames(py$adata$obs)
+    # colnames(knn_graph_scan_matrix) <- rownames(py$adata$obs)
+    # seu@graphs$RNA_nn <- as.Graph(knn_graph_scan_matrix)
+    # knn_graph_seu <- seu@graphs$RNA_nn
 }
 ```
 

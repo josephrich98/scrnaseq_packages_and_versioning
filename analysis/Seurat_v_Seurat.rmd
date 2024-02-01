@@ -19,17 +19,19 @@ seu1_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsam
 seu2_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
 
 # Matrix generation methods
-seu1_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-seu1_matrix_generation_method_version <- "0.28.0"
-seu1_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
+seu1_matrix_generation_method <- "cellranger" # str["kb", "cellranger"]
+seu1_matrix_generation_method_version <- "7.2.0"
+seu1_matrix_include_unspliced <- TRUE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 seu1_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 seu1_matrix_qc <- "raw" # "raw" or "filtered"
+seu1_used_batch <- FALSE
 
-seu2_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-seu2_matrix_generation_method_version <- "0.24.4"
+seu2_matrix_generation_method <- "cellranger" # str["kb", "cellranger"]
+seu2_matrix_generation_method_version <- "3.1.0"
 seu2_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 seu2_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 seu2_matrix_qc <- "raw" # "raw" or "filtered"
+seu2_used_batch <- FALSE
 
 # Function argument and input settings
 data_input <- "default" # str["default", "seu1", "seu2"]
@@ -62,11 +64,11 @@ umap_seed2 <- 42
 
 # Output path specifications
 project_base_path <- "/workspace/analysis"
-data_name <- "5k_pbmc_v3"
-seu1_name <- "Cellrangerv7"
-seu2_name <- "Cellrangerv3"
+data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
+seu1_name <- "Cellranger7"
+seu2_name <- "Cellranger3"
 include_seeds_in_file_paths <- FALSE
-save_data <- FALSE
+save_data <- TRUE
 dpi <- 350
 ```
 
@@ -91,9 +93,6 @@ seu2_matrix_generation_method_full <- glue::glue("{seu2_matrix_generation_method
 
 seu1_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", seu1_matrix_generation_method_version))
 seu2_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", seu2_matrix_generation_method_version))
-
-seu1_used_batch <- ifelse(seu1_kb_major_version >= 28, TRUE, FALSE)
-seu2_used_batch <- ifelse(seu2_kb_major_version >= 28, TRUE, FALSE)
 
 seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
 ```
@@ -191,11 +190,11 @@ file_paths <- list(
     pheatmap = FALSE, # glue::glue("{output_base_path}/plots/cluster_pheatmap.tiff"),
     alluvial = glue::glue("{output_base_path}/plots/cluster_alluvial.tiff"),
     alluvial_legend = glue::glue("{output_base_path}/plots/cluster_alluvial_legend.tiff"),
-    alluvial_legend_high_alpha = glue::glue("{output_base_path}/plots/cluster_alluvial_legend_high_alpha.tiff"),
+    alluvial_legend_high_alpha = FALSE, # glue::glue("{output_base_path}/plots/cluster_alluvial_legend_high_alpha.tiff"),
     umap_seu1 = glue::glue("{output_base_path}/plots/umap_seu_{seu1_name}.tiff"),
     umap_seu2 = glue::glue("{output_base_path}/plots/umap_seu_{seu2_name}.tiff"),
-    umap_seu1_clusters_seu2 = glue::glue("{output_base_path}/plots/umap_seu_{seu1_name}_clusters_{seu2_name}.tiff"),
-    umap_seu2_clusters_seu1 = glue::glue("{output_base_path}/plots/umap_seu_{seu2_name}_clusters_{seu1_name}.tiff"),
+    umap_seu1_clusters_seu2 = FALSE, # glue::glue("{output_base_path}/plots/umap_seu_{seu1_name}_clusters_{seu2_name}.tiff"),
+    umap_seu2_clusters_seu1 = FALSE, # glue::glue("{output_base_path}/plots/umap_seu_{seu2_name}_clusters_{seu1_name}.tiff"),
     umap_jaccard_degree_scatterplot = glue::glue("{output_base_path}/plots/umap_jaccard_degree_scatterplot.tiff"),
     umap_jaccard_knn_density = glue::glue("{output_base_path}/plots/umap_jaccard_knn_density.tiff"),
     umap_jaccard_knn_density_seu1_facet = glue::glue("{output_base_path}/plots/umap_jaccard_knn_density_seu1_facet.tiff"),
@@ -212,7 +211,6 @@ file_paths <- list(
     logFC_scatterplot_file_path = glue::glue("{output_base_path}/plots/logFC_scatterplot.tiff"),
     wilcoxon_scatterplot_file_path = glue::glue("{output_base_path}/plots/wilcoxon_scatterplot.tiff"),
     logFC_scatterplot_file_path_with_legend = glue::glue("{output_base_path}/plots/logFC_scatterplot_with_legend.tiff"),
-    wilcoxon_scatterplot_file_path_with_legend = glue::glue("{output_base_path}/plots/wilcoxon_scatterplot_with_legend.tiff"),
     logFC_scatterplot_outliers_removed_file_path = FALSE, # glue::glue("{output_base_path}/plots/logFC_scatterplot_no_outliers.tiff"),
     wilcoxon_scatterplot_outliers_removed_file_path = FALSE, # glue::glue("{output_base_path}/plots/wilcoxon_scatterplot_no_outliers.tiff"),
 
@@ -441,8 +439,9 @@ Euler plots of cell, gene overlap before QC  #*
 
 UMI scatterplot between the two groups
 ```{r}
-umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = seurat_group_names$Seurat1, res_mat2_name = seurat_group_names$Seurat2, point_density = FALSE, color_points = FALSE, save = file_paths$umi_scatterplot) # set point_density = TRUE for finer-grained point density
-umi_scatterplot
+#*
+# umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = seurat_group_names$Seurat1, res_mat2_name = seurat_group_names$Seurat2, point_density = FALSE, color_points = FALSE, save = file_paths$umi_scatterplot) # set point_density = TRUE for finer-grained point density
+# umi_scatterplot
 ```
 
 Find list of mitochondrial Ensembl gene names
@@ -728,6 +727,12 @@ pca34_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "
 
 pca12_plot
 pca34_plot
+
+#* erase
+pca12_plot_TR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "TR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"))
+pca12_plot_TL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "TL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"))
+pca12_plot_BR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "BR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"))
+pca12_plot_BL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "BL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"))
 ```
 
 Plot PCA eigenvectors (loadings), eigenvalues
@@ -840,14 +845,14 @@ jaccards$logged_degree_ratio <- log(jaccards$degree_ratio, base = 2)
 
 jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
-median_logged_degree_ratio <- median(jaccards$logged_degree_ratio)
+median_magnitude_logged_degree_ratio <- median(abs(jaccards$logged_degree_ratio))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
-print(glue("Median jaccard of KNN: {median_jaccard}"))
-print(glue("Median log degree ratio of KNN: {median_logged_degree_ratio}"))
+print(glue("Median jaccard of SNN: {median_jaccard}"))
+print(glue("Median magnitude of log degree ratio of SNN: {median_logged_degree_ratio}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
@@ -856,7 +861,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
 
 Combine jaccard indices and degree ratios into a single plot
 ```{r}
-jaccard_degree_scatterplot <- make_knn_jaccard_degree_scatterplot(jaccards, save = file_paths$jaccard_degree_scatterplot)
+jaccard_degree_scatterplot <- make_snn_jaccard_degree_scatterplot(jaccards, save = file_paths$jaccard_degree_scatterplot)
 jaccard_degree_scatterplot
 ```
 
@@ -1181,10 +1186,18 @@ Find markers Seu2
 ```{r}
 if (!file.exists(output_data_file_paths$markers_seu2)) {
     markers_seu2 <- FindAllMarkers(seu2)
+    saveRDS(markers_seu2, file = output_data_file_paths$markers_seu2)  #!!!
 } else {
     markers_seu2 <- readRDS(output_data_file_paths$markers_seu2)
 }
 ```
+
+#* erase
+```{r}
+# markers_seu1 <- readRDS(output_data_file_paths$markers_seu1)
+# markers_seu2 <- readRDS(output_data_file_paths$markers_seu2)
+```
+
 
 Compare marker genes
 ```{r}
@@ -1194,7 +1207,6 @@ seu2_filtered_markers <- markers_seu2 %>% filter(p_val_adj < 0.05)
 # vectorized_seu_unfiltered_markers <- unique(markers$gene)
 vectorized_seu1_filtered_markers <- unique(seu1_filtered_markers$gene)
 vectorized_seu2_filtered_markers <- unique(seu2_filtered_markers$gene)
-
 
 markers_euler_genes_only <- make_euler_seurat(vectorized_seu1_filtered_markers, vectorized_seu2_filtered_markers, comparison = "Marker Gene", group_names = seurat_group_names, save_plot = file_paths$euler_after_qc_marker_genes_only, save_stats = file_paths$de_stats_file)
 markers_euler_genes_only
@@ -1286,3 +1298,30 @@ if (save_data == TRUE) {
 ```{r}
 sessionInfo()
 ```
+
+```{r}
+data_pca <- data.frame(Cellranger7 = markers2$avg_log2FC.Cellranger7, 
+                       Cellranger3 = markers2$avg_log2FC.Cellranger3)
+
+pca_result <- prcomp(data_pca, center = TRUE, scale. = FALSE)
+
+data_mean <- colMeans(data_pca)
+
+pc1_direction <- pca_result$rotation[,1]
+
+point1 <- data_mean - pc1_direction
+point2 <- data_mean + pc1_direction
+
+slope <- (point2[2] - point1[2]) / (point2[1] - point1[1])
+
+intercept <- data_mean[2] - slope * data_mean[1]
+
+p <- ggplot(data_pca, aes(x = Cellranger7, y = Cellranger3)) +
+    geom_point() +
+    labs(x = "Average log2 FC Cellranger 7", y = "Average log2 FC Cellranger 3", title = "PCA Fit Line with PC1") +
+    theme_minimal() + 
+    geom_abline(slope = slope, intercept = intercept, color = "blue")
+
+p
+```
+

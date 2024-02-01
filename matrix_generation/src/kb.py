@@ -167,23 +167,9 @@ def kb_count_function(instance, baseline, threads):
 
             sorted_files = [file for file in sorted_files if "_I1_" not in file and "_I2_" not in file]
 
-            if kb_version_major >= 28:
-                lane_files = {}
-                for file in sorted_files:
-                    lane_number = file.split('_')[-3]  # Extract lane number (e.g., L002)
-                    lane_files.setdefault(lane_number, []).append(file)
-
-                with open('batch.txt', 'w') as f:
-                    for lane, files in lane_files.items():
-                        line = lane + "\t" + '\t'.join(files) + "\n"
-                        f.write(line)
-
-                kb_count_command.append("--batch-barcodes batch.txt")
-
-            else:
-                # Append sorted filenames to kb_count_command
-                for file in sorted_files:
-                    kb_count_command.append(file)
+            # Append sorted filenames to kb_count_command
+            for file in sorted_files:
+                kb_count_command.append(file)
             
             print(' '.join(kb_count_command))
 
@@ -191,13 +177,6 @@ def kb_count_function(instance, baseline, threads):
 
             # Run the command
             subprocess.run(kb_count_command, shell=True, executable="/bin/bash")
-
-            if kb_version_major >= 28:
-                os.chdir(os.path.join(out_dir, "counts_unfiltered"))
-
-                cmd = "paste -d'_' cells_x_genes.barcodes.prefix.txt cells_x_genes.barcodes.txt > cells_x_genes.barcodes.combined.txt"
-
-                subprocess.run(cmd, shell=True, check=True)
 
             # organize_output(instance.output_directory, seed, frac_str, matrix_source = "kb")
             

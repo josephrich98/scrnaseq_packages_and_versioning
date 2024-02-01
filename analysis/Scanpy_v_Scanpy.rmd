@@ -24,12 +24,14 @@ scan1_matrix_generation_method_version <- "0.28.0"
 scan1_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 scan1_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 scan1_matrix_qc <- "raw" # "raw" or "filtered"
+scan1_used_batch <- FALSE
 
 scan2_matrix_generation_method <- "kb" # str["kb", "cellranger"]
 scan2_matrix_generation_method_version <- "0.28.0"
 scan2_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 scan2_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 scan2_matrix_qc <- "raw" # "raw" or "filtered"
+scan2_used_batch <- FALSE
 
 # Function argument and input settings
 data_input <- "default" # str["default", "scan1", "scan2"]
@@ -93,9 +95,6 @@ scan2_matrix_generation_method_full <- glue::glue("{scan2_matrix_generation_meth
 
 scan1_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", scan1_matrix_generation_method_version))
 scan2_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", scan2_matrix_generation_method_version))
-
-scan1_used_batch <- ifelse(scan1_kb_major_version >= 28, TRUE, FALSE)
-scan2_used_batch <- ifelse(scan2_kb_major_version >= 28, TRUE, FALSE)
 
 scanpy_group_names <- list(Scanpy1 = scan1_name, Scanpy2 = scan2_name)
 ```
@@ -218,7 +217,6 @@ file_paths <- list(
     logFC_scatterplot_file_path = glue::glue("{output_base_path}/plots/logFC_scatterplot.tiff"),
     wilcoxon_scatterplot_file_path = glue::glue("{output_base_path}/plots/wilcoxon_scatterplot.tiff"),
     logFC_scatterplot_file_path_with_legend = glue::glue("{output_base_path}/plots/logFC_scatterplot_with_legend.tiff"),
-    wilcoxon_scatterplot_file_path_with_legend = glue::glue("{output_base_path}/plots/wilcoxon_scatterplot_with_legend.tiff"),
     logFC_scatterplot_outliers_removed_file_path = FALSE, # glue::glue("{output_base_path}/plots/logFC_scatterplot_no_outliers.tiff"),
     wilcoxon_scatterplot_outliers_removed_file_path = FALSE, # glue::glue("{output_base_path}/plots/wilcoxon_scatterplot_no_outliers.tiff"),
 
@@ -551,6 +549,7 @@ Euler plots of cell, gene overlap before QC  #*
 
 UMI scatterplot between the two groups  #*
 ```{r}
+#*
 # umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = scanpy_group_names$Scanpy1, res_mat2_name = scanpy_group_names$Scanpy2, point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)
 # umi_scatterplot
 ```
@@ -920,6 +919,12 @@ pca34_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "
 
 pca12_plot
 pca34_plot
+
+#* erase
+pca12_plot_TR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "TR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"))
+pca12_plot_TL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "TL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"))
+pca12_plot_BR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "BR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"))
+pca12_plot_BL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "BL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"))
 ```
 
 ```{r}
@@ -1048,14 +1053,14 @@ jaccards$logged_degree_ratio <- log(jaccards$degree_ratio, base = 2)
 
 jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
-median_logged_degree_ratio <- median(jaccards$logged_degree_ratio)
+median_magnitude_logged_degree_ratio <- median(abs(jaccards$logged_degree_ratio))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
-print(glue("Median jaccard of KNN: {median_jaccard}"))
-print(glue("Median log degree ratio of KNN: {median_logged_degree_ratio}"))
+print(glue("Median jaccard of SNN: {median_jaccard}"))
+print(glue("Median magnitude of log degree ratio of SNN: {median_logged_degree_ratio}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
@@ -1064,7 +1069,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
 
 Combine jaccard indices and degree ratios into a single plot
 ```{r}
-jaccard_degree_scatterplot <- make_knn_jaccard_degree_scatterplot(jaccards, save = file_paths$jaccard_degree_scatterplot)
+jaccard_degree_scatterplot <- make_snn_jaccard_degree_scatterplot(jaccards, save = file_paths$jaccard_degree_scatterplot)
 jaccard_degree_scatterplot
 ```
 

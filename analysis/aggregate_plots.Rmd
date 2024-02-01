@@ -108,9 +108,9 @@ variable_sets <- list(
         output_plot_name = "pca.tiff"
     ),
     list(
-        statistic_name = "Median log(KNN degree ratio)",
+        statistic_name = "Median magnitude log(SNN degree ratio)",
         file_name = "pca_knn_clustering_umap_stats.txt",
-        extraction_phrase = "Median log degree ratio of KNN: ",
+        extraction_phrase = "Median magnitude of log degree ratio of SNN: ",
         baseline_value_seurat_vs_scanpy_default = 2.13750352374994,
         baseline_value_seurat_vs_scanpy_same_input = 2.15919859484925,
         ideal_value = 0,
@@ -152,16 +152,27 @@ variable_sets <- list(
         output_plot_name = "markers.tiff"
     ),
     list(
-        statistic_name = "Median magnitude ΔlogFC",
+        statistic_name = "logFC CCC",
         file_name = "de_stats.txt",
-        extraction_phrase = "Median magnitude of logFC_difference_magnitude: ",
+        extraction_phrase = "logFC CCC: ",
         baseline_value_seurat_vs_scanpy_default = NA,
-        baseline_value_seurat_vs_scanpy_same_input = 0.974420077815875,
-        ideal_value = 0,
+        baseline_value_seurat_vs_scanpy_same_input = ...,
+        ideal_value = 1,
         seurat_noise_value = 0,
         scanpy_noise_value = 0,
         output_plot_name = "logfc.tiff"
     ),
+    # list(
+    #     statistic_name = "Median magnitude ΔlogFC",
+    #     file_name = "de_stats.txt",
+    #     extraction_phrase = "Median magnitude of logFC_difference_magnitude: ",
+    #     baseline_value_seurat_vs_scanpy_default = NA,
+    #     baseline_value_seurat_vs_scanpy_same_input = 0.974420077815875,
+    #     ideal_value = 0,
+    #     seurat_noise_value = 0,
+    #     scanpy_noise_value = 0,
+    #     output_plot_name = "logfc.tiff"
+    # ),
     list(
         statistic_name = "Fraction of p-value adj that flipped across 0.05 threshold",
         file_name = "de_stats.txt",
@@ -182,19 +193,19 @@ frac_list <- c(0.02, 0.04, 0.08, 0.16, 0.32, 0.64) #***
 type_downsampled <- "read" #***
 margin_correct <- 0.05
 
-variable_sets <- list(
-    list(
-        statistic_name = "Mean ΔPC1-3 loadings",
-        file_name = "pca_knn_clustering_umap_stats.txt",
-        extraction_phrase = "Mean loading difference of PC1-3: ",
-        baseline_value_seurat_vs_scanpy_default = 0.411333932197237,
-        baseline_value_seurat_vs_scanpy_same_input = 0.704549354155186,
-        ideal_value = 0,
-        seurat_noise_value = 0,
-        scanpy_noise_value = 0,
-        output_plot_name = "pca.tiff"
-    )
-)
+# variable_sets <- list(
+#     list(
+#         statistic_name = "Mean ΔPC1-3 loadings",
+#         file_name = "pca_knn_clustering_umap_stats.txt",
+#         extraction_phrase = "Mean loading difference of PC1-3: ",
+#         baseline_value_seurat_vs_scanpy_default = 0.411333932197237,
+#         baseline_value_seurat_vs_scanpy_same_input = 0.704549354155186,
+#         ideal_value = 0,
+#         seurat_noise_value = 0,
+#         scanpy_noise_value = 0,
+#         output_plot_name = "pca.tiff"
+#     )
+# )
 
 if (type_downsampled == "cell") {
     output_path_base <- glue("{project_base_path}/output/{data_name}/aggregate_plots/across_downsampled_cells/input_{data_input}/{matrix_generation}/read_fraction_{read_fraction_downsampled_for_cell_downsample_comparisons}")
@@ -266,6 +277,12 @@ for (set in variable_sets) {
     long_df <- bind_rows(long_df, baseline_rows)
 
     y_axis_max <- max(1, set$baseline_value_seurat_vs_scanpy_default, set$baseline_value_seurat_vs_scanpy_same_input, max(long_df$value, na.rm = TRUE), na.rm = TRUE)
+    
+    if (set$statistic_name == "logFC CCC") {
+        y_axis_min <- -1
+    } else {
+        y_axis_min <- 0
+    }
 
     p <- ggplot(long_df, aes(x = frac, y = value, group = variable, color = variable)) +
         geom_line(linewidth = 1.3) +
@@ -279,9 +296,9 @@ for (set in variable_sets) {
             axis.title = element_text(size = rel(1.45))
         ) +
         scale_y_continuous(
-            limits = c(0, y_axis_max), # Setting y-axis limits from 0 to 1
-            breaks = seq(0, y_axis_max, by = 0.2), # Major ticks every 0.2
-            minor_breaks = seq(0.1, 0.9, by = 0.2)
+            limits = c(y_axis_min, y_axis_max), # Setting y-axis limits from 0 to 1
+            breaks = seq(y_axis_min, y_axis_max, by = 0.2), # Major ticks every 0.2
+            minor_breaks = seq((y_axis_min + 0.1), (y_axis_max - 0.1), by = 0.2)
         ) + # Minor ticks at 0.1, 0.3, 0.5, 0.7, 0.9
         scale_x_continuous(
             breaks = c(frac_list, 1.0) # Set the breaks at specified points
@@ -347,7 +364,7 @@ for (set in variable_sets) {
         }
     }
 
-    if (set$statistic_name %in% c("Mean ΔPC1-3 loadings", "Median log(KNN degree ratio)", "Median magnitude ΔlogFC")) {
+    if (set$ideal_value == 0) {
         margin_adjustment <- 1 + margin_correct
     } else {
         margin_adjustment <- 1 - margin_correct
@@ -361,13 +378,13 @@ for (set in variable_sets) {
 
 
     sink(file = output_stat_filepath, append = TRUE)
-    if (!(set$statistic_name %in% c("Markers Jaccard", "Median magnitude ΔlogFC", "Fraction of p-value adj that flipped across 0.05 threshold"))) {
+    if (!(set$statistic_name %in% c("Markers Jaccard", "logFC CCC", "Fraction of p-value adj that flipped across 0.05 threshold"))) {
         print(glue("{set$statistic_name} - Group 1 (Seurat) fraction intersecting with seu vs scan defaults: {x_intersect_defaults_group1}"))
     }
 
     print(glue("{set$statistic_name} - Group 1 (Seurat) fraction intersecting with seu vs scan same input: {x_intersect_same_input_group1}"))
 
-    if (!(set$statistic_name %in% c("Markers Jaccard", "Median magnitude ΔlogFC", "Fraction of p-value adj that flipped across 0.05 threshold"))) {
+    if (!(set$statistic_name %in% c("Markers Jaccard", "logFC CCC", "Fraction of p-value adj that flipped across 0.05 threshold"))) {
         print(glue("{set$statistic_name} - Group 2 (Scanpy) fraction intersecting with seu vs scan defaults: {x_intersect_defaults_group2}"))
     }
 
@@ -395,12 +412,12 @@ if (margin_correct == 0) {
     aggregate_bar_chart_name <- glue("bar_plot_across_reads_{margin_correct}.tiff")
 }
 
-statistic_names_total <- c("Cells jaccard", "Genes jaccard", "HVGs jaccard", "Mean ΔPC1-3 loadings", "Median log(KNN degree ratio)", "ARI", "Median jaccard of UMAP KNN", "Marker Genes Jaccard", "Markers Jaccard", "Median magnitude ΔlogFC", "Fraction of p-value adj that flipped across 0.05 threshold")
+statistic_names_total <- c("Cells jaccard", "Genes jaccard", "HVGs jaccard", "Mean ΔPC1-3 loadings", "Median magnitude log(SNN degree ratio)", "ARI", "Median jaccard of UMAP KNN", "Marker Genes Jaccard", "Markers Jaccard", "logFC CCC", "Fraction of p-value adj that flipped across 0.05 threshold")
 
 lines <- readLines(output_stat_filepath)
 
 for (statistic in statistic_names_total) {
-    if (statistic %in% c("Markers Jaccard", "Median magnitude ΔlogFC", "Fraction of p-value adj that flipped across 0.05 threshold")) {
+    if (statistic %in% c("Markers Jaccard", "logFC CCC", "Fraction of p-value adj that flipped across 0.05 threshold")) {
         extraction_phrase_ending <- "same input"
     } else {
         extraction_phrase_ending <- "defaults"
