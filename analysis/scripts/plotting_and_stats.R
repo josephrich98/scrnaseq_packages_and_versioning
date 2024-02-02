@@ -1,5 +1,6 @@
 dpi <- 350
-axis_element_size <- 1.45
+axis_text_size <- 1.7
+axis_numbering_size <- 1.4
 
 
 ditto_colors <- c(
@@ -194,8 +195,8 @@ make_umi_scatterplot <- function(res_mat1, res_mat2, UMI_cutoff1 = NULL, UMI_cut
         geom_abline(slope = 1, intercept = 0, show.legend = FALSE, linewidth = 0.3, color = "gray30", linetype = 2) +
         theme(
             legend.position = "none",
-            axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
-            axis.title = element_text(size = rel(axis_element_size)) # Increase axis titles size
+            axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(axis_text_size)) # Increase axis titles size
         ) +
         labs(
             x = glue("UMI Counts in {res_mat1_name}"),
@@ -275,7 +276,7 @@ upset_plot_general <- function(data, group1_name, group2_name, comparison, befor
         y_label <- glue("{comparison} Intersection")
     }
 
-    p <- UpSetR::upset(df[, -1], mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), text.scale = c(2.1, 1.7, 1.7, 1, 1.7, 1.7), empty.intersections = TRUE)
+    p <- UpSetR::upset(df[, -1], mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), text.scale = c(2.4, 2, 1.85, 1, 1.85, 1.95), empty.intersections = TRUE)
 
     if (as_ggplot) {
         p <- as.ggplot(p)
@@ -579,8 +580,8 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
         ) +
         theme(
             plot.title = element_blank(),          # Increase plot title size
-            axis.title = element_text(size = 12),          # Increase axis title size
-            axis.text = element_text(size = 10)            # Increase axis text size
+            axis.text = element_text(size = rel(1.2)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(1.16))         # Increase axis text size
         )
 
     df_inset <- markers2 %>% filter((log_p_val_adj_1 <= 10) & (log_p_val_adj_2 <= 10))
@@ -597,7 +598,7 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
             axis.title.y = element_blank(),
             panel.background = element_rect(fill = "transparent", colour = NA), # Transparent background
             plot.background = element_rect(fill = "transparent", colour = NA), # Transparent plot background
-            axis.text = element_text(size = 5)
+            axis.text = element_text(size = 10)
         ) # Adjust text size for axis labels
 
     # Create a grob from the inset plot
@@ -608,7 +609,7 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$wilcoxon_scatterplot_file_path)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, dpi = dpi, width = 2100, height = 2100, units = "px")
     }
 
     return(p)
@@ -619,68 +620,80 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
     scatterplot_names <- scatterplot_naming(group1_name, group2_name)
     logFC_group1 <- scatterplot_names$logFC_group1
     logFC_group2 <- scatterplot_names$logFC_group2
-
-    lm_model <- lm(as.formula(paste(logFC_group1, "~", logFC_group2)), data = markers2)
-    # equation_x_position <- -5
-    # equation_y_position <- 20
+    
+    data_pca <- data.frame(group1 = markers2[[logFC_group1]], 
+                           group2 = markers2[[logFC_group2]])
+    
+    pca_result <- prcomp(data_pca, center = TRUE, scale. = FALSE)
+    
+    data_mean <- colMeans(data_pca)
+    
+    pc1_direction <- pca_result$rotation[,1]
+    
+    point1 <- data_mean - pc1_direction
+    point2 <- data_mean + pc1_direction
+    
+    m <- (point2[2] - point1[2]) / (point2[1] - point1[1])
+    
+    b <- data_mean[2] - m * data_mean[1]
 
     if (!outliers_excluded) {
         markers2 |>
             filter(abs(.data[[logFC_group1]]) < 15) |>
             filter(abs(.data[[logFC_group2]]) < 15) -> markers2_filtered
 
-        lm_filtered <- lm(as.formula(paste(logFC_group1, "~", logFC_group2)), data = markers2_filtered)
-        r_squared_filtered <- summary(lm_filtered)$r.squared
-        coefficients_filtered <- coef(lm_filtered)
-        m_filtered <- round(coefficients_filtered[2], 2)
-        b_filtered <- round(coefficients_filtered[1], 2)
-    } else {
-        r_squared_filtered <- 0
+        data_pca_filtered <- data.frame(group1 = markers2_filtered[[logFC_group1]], 
+                               group2 = markers2_filtered[[logFC_group2]])
+        
+        pca_result_filtered <- prcomp(data_pca_filtered, center = TRUE, scale. = FALSE)
+        
+        data_mean_filtered <- colMeans(data_pca_filtered)
+        
+        pc1_direction_filtered <- pca_result_filtered$rotation[,1]
+        
+        point1_filtered <- data_mean_filtered - pc1_direction_filtered
+        point2_filtered <- data_mean_filtered + pc1_direction_filtered
+        
+        m_filtered <- (point2_filtered[2] - point1_filtered[2]) / (point2_filtered[1] - point1_filtered[1])
+        
+        b_filtered <- data_mean_filtered[2] - m_filtered * data_mean_filtered[1]
     }
 
     p <- ggplot(markers2, aes(!!sym(logFC_group2), !!sym(logFC_group1))) +
-        labs(x = bquote(log[2](.(group2_name) ~ "fold change")), y = bquote(log[2](.(group1_name) ~ "fold change"))) +
+        labs(x = bquote(log[2](.(group2_name) ~ "Fold Change")), y = bquote(log[2](.(group1_name) ~ "Fold Change"))) +
         theme(
             plot.title = element_blank(),          # Increase plot title size
-            axis.title = element_text(size = 20),          # Increase axis title size
-            axis.text = element_text(size = 15)            # Increase axis text size
+            axis.text = element_text(size = rel(axis_text_size)),
+            axis.title = element_text(size = rel(axis_text_size))
         )
 
-    coefficients <- coef(lm_model)
-    m <- round(coefficients[2], 2)
-    b <- round(coefficients[1], 2)
-    # equation <- glue("m = {m}")
-    # # equation <- glue("y = {m}x + {b}")
-
-    r_squared <- summary(lm_model)$r.squared
-    r_squared <- round(r_squared, 2)
-
-    if (r_squared > 0.25 || r_squared_filtered > 0.25) {
-        if (!outliers_excluded) {
-            baseline_linear_model_filtered <- glue("Linear model excluding outliers: y={m_filtered}x+{b_filtered} (R²={sprintf('%.2f', r_squared_filtered)})")
-        }
-
-        baseline_linear_model <- glue("Baseline linear model: y={m}x+{b} (R²={sprintf('%.2f', r_squared)})")
-
-        if (show_legend) {
+    if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
+        baseline_pca_model_filtered <- glue("PCA fit excluding outliers: y={sprintf('%.2f', m_filtered)}x+{sprintf('%.2f', b_filtered)}")
+    }
+    
+    baseline_pca_model <- glue("PCA fit: y={sprintf('%.2f', m)}x+{sprintf('%.2f', b)}")
+    
+    if (show_legend) {
+        p <- p +
+            geom_abline(linewidth = 0.5, show.legend = TRUE, aes(slope = m, intercept = b, linetype = baseline_pca_model, color = baseline_pca_model)) +
+            geom_abline(aes(slope = 1, intercept = 0, linetype = "y=x", color = "y=x"), show.legend = FALSE, linewidth = 0.5) +
+            theme(legend.text = element_text(size = 14))
+        if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
             p <- p +
-                geom_smooth(method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = TRUE, aes(linetype = baseline_linear_model, color = baseline_linear_model)) +
-                geom_abline(aes(slope = 1, intercept = 0, linetype = "y=x", color = "y=x"), show.legend = FALSE, linewidth = 0.5) +
-                theme(legend.text = element_text(size = 12))
-            if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
-                p <- p +
-                    geom_smooth(data = markers2_filtered, method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = FALSE, aes(linetype = baseline_linear_model_filtered, color = baseline_linear_model_filtered)) +
-                    scale_color_manual(name = "", values = c("black", "black", "gray30")) +
-                    scale_linetype_manual(name = "", values = c(2, 3, 1))
-            } else {
-                p <- p +
-                    scale_color_manual(name = "", values = c("black", "gray30")) +
-                    scale_linetype_manual(name = "", values = c(2, 1))
-            }
+                geom_abline(slope = m_filtered, intercept = b_filtered, linewidth = 0.5, aes(linetype = baseline_pca_model_filtered, color = baseline_pca_model_filtered)) +
+                scale_color_manual(name = "", values = c("black", "gray30", "black")) +
+                scale_linetype_manual(name = "", values = c(1, 1, 2))
         } else {
             p <- p +
-                geom_smooth(method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = FALSE, linetype = 2, color = "black") +
-                geom_abline(slope = 1, intercept = 0, linetype = 1, color = "gray30", show.legend = FALSE, linewidth = 0.5) +
+                scale_color_manual(name = "", values = c("black", "black")) +
+                scale_linetype_manual(name = "", values = c(1, 2))
+        }
+    } else {
+        p <- p +
+            geom_abline(slope = m, intercept = b, linewidth = 0.5, linetype = 1, show.legend = FALSE, color = "black") +
+            geom_abline(slope = 1, intercept = 0, linetype = 2, color = "black", show.legend = FALSE, linewidth = 0.5)
+        if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
+            p <- p +
                 geom_smooth(data = markers2_filtered, method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = FALSE, linetype = 3, color = "black")
         }
     }
@@ -711,7 +724,7 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, dpi = dpi, width = 2300, height = 2100, units = "px")
     }
 
     return(p)
@@ -769,8 +782,10 @@ plot_var_explained <- function(eigs_df, npcs = 20, group_names = waiver(), save 
             legend.box.just = "right",
             legend.margin = margin(-10, -10, -10, -10),
             plot.title = element_text(size = rel(1), hjust = 0.5),
-            axis.title = element_text(size = rel(1)),
-            axis.text = element_text(size = rel(1))
+            axis.title.x = element_text(size = rel(1)),
+            axis.text.x = element_text(size = rel(1)),
+            axis.title.y = element_text(size = rel(1.4)), # X axis label size
+            axis.text.y = element_text(size = rel(1.15)) # Y axis tick number size
         ) +
         guides(
             color = guide_legend(override.aes = list(size = 3)), # Increase legend symbols size for color
@@ -817,8 +832,8 @@ plot_pca_compare <- function(embeddings1, embeddings2,
         ) +
         guides(shape = guide_legend(title = ""), color = guide_legend(title = "", override.aes = list(alpha = 1))) +
         theme(
-            axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
-            axis.title = element_text(size = rel(axis_element_size)), # Increase axis titles size
+            axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(axis_text_size)), # Increase axis titles size
             legend.text = element_text(size = rel(1.5)),
             legend.title = element_text(size = rel(1.5))
         )
@@ -873,7 +888,7 @@ plot_pca_compare <- function(embeddings1, embeddings2,
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$knee_plot)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, width = 2100, height = 2100, dpi = dpi, units = "px")
     }
 
     return(p)
@@ -898,8 +913,10 @@ plot_loading_diffs <- function(df, mean_loadings_diff = NULL, save = FALSE) {
         ) +
         theme(
             plot.title = element_text(size = rel(1.5), hjust = 0.5),
-            axis.title.x = element_text(size = rel(1.74)), # X axis label size
-            axis.text = element_text(size = rel(1)) # Y axis tick number size
+            axis.title.x = element_text(size = rel(axis_text_size)), # X axis label size
+            axis.title.y = element_text(size = rel(1.4)), # X axis label size
+            axis.text.x = element_text(size = rel(axis_numbering_size)), # Y axis tick number size
+            axis.text.y = element_text(size = rel(1.15)) # Y axis tick number size
         ) +
         scale_color_manual(values = ditto_colors) +
         guides(color = FALSE) +
@@ -976,8 +993,8 @@ make_jaccard_plot <- function(jaccards, median_jaccard = NULL, save = FALSE) {
 
     jaccard_plot <- jaccard_plot +
         theme(
-            axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
-            axis.title = element_text(size = rel(axis_element_size)), # Increase axis titles size
+            axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(axis_text_size)), # Increase axis titles size
             plot.margin = margin(5.5, 17, 5.5, 5.5)
         )
 
@@ -1003,8 +1020,8 @@ make_knn_scatterplot <- function(nei_pairs, save = FALSE) {
         coord_equal() +
         labs(x = "Degree (Seurat)", y = "Degree (Scanpy)") +
         theme(
-            axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
-            axis.title = element_text(size = rel(axis_element_size))
+            axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(axis_text_size))
         )
 
     if (save == TRUE || is.character(save)) {
@@ -1056,12 +1073,14 @@ make_snn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
         theme_minimal() +
         stat_function(fun = function(x) 2^x, color = "grey30", linetype = 2, xlim = c(xmin, 0)) +
         stat_function(fun = function(x) 2^(-x), color = "grey30", linetype = 2, xlim = c(0, xmax)) +
-        annotate("text", x = xmin, y = 0.13, label = "y == 2^{x}", parse = TRUE, color = "grey30") +
-        annotate("text", x = xmax, y = 0.13, label = "y == 2^-{x}", parse = TRUE, color = "grey30") +
+        annotate("text", x = xmin, y = 0.13, label = "y == 2^{x}", parse = TRUE, color = "grey30", size = 4) +
+        annotate("text", x = xmax, y = 0.13, label = "y == 2^-{x}", parse = TRUE, color = "grey30", size = 4) +
         theme(
             legend.position = "none",
             panel.grid.major.x = element_line(color = "grey90", linewidth = 0.2),
-            panel.grid.major.y = element_line(color = "grey80", linewidth = 0.2)
+            panel.grid.major.y = element_line(color = "grey80", linewidth = 0.2),
+            axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(axis_text_size)),
         )
     # geom_density_2d()
 
@@ -1106,8 +1125,8 @@ make_umap_jaccard_plot <- function(jaccards_df, facet = NULL, save = FALSE) {
             scale_color_manual(values = ditto_colors) +
             coord_cartesian(xlim = c(0, 1)) +
             theme(
-                axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
-                axis.title = element_text(size = rel(axis_element_size)), # Increase axis titles size
+                axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
+                axis.title = element_text(size = rel(axis_text_size)), # Increase axis titles size
                 plot.margin = margin(5.5, 17, 5.5, 5.5)
             )
 
@@ -1204,7 +1223,7 @@ plot_alluvial <- function(clus_df_gather, group1_name = "Seurat", group2_name = 
         annotate("text", x = 1.023, y = 1, label = num_levels_group1, hjust = 1, vjust = 1.35, size = 5) + # Adjust x, y for Seurat
         annotate("text", x = 1.978, y = 1, label = num_levels_group2, hjust = 0, vjust = 1.35, size = 5) + # Adjust x, y for Scanpy
         theme(
-            legend.text = element_text(size = rel(axis_element_size))
+            legend.text = element_text(size = rel(axis_text_size))
         )
 
     if (save == TRUE || is.character(save)) {
@@ -1230,8 +1249,8 @@ make_umap_plot <- function(dataframe, package, title = "UMAP", overall_min_dim1 
             axis.text.x = element_blank(), # Turn off x-axis numbers
             axis.text.y = element_blank(), # Turn off y-axis numbers
             axis.ticks = element_blank(), # Optionally, turn off axis ticks as well
-            axis.text = element_text(size = rel(axis_element_size)), # Increase axis tick labels size
-            plot.title = element_text(size = rel(axis_element_size), hjust = 0.5) # Center the title
+            axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
+            plot.title = element_text(size = rel(1.9), hjust = 0.5) # Center the title
         ) +
         scale_color_manual(values = ditto_colors, name = "Cluster") +
         guides(color = guide_legend(override.aes = list(size = 3)))

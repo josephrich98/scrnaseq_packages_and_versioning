@@ -1267,6 +1267,7 @@ markers2 <- calculate_de_stats(markers2, group1_name = seu1_name, group2_name = 
 
 Plot scatterplots
 ```{r}
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 markers2[[glue("p_val_adj.{seu1_name}")]][markers2[[glue("p_val_adj.{seu1_name}")]] == 0] <- .Machine$double.xmin
 markers2[[glue("p_val_adj.{seu2_name}")]][markers2[[glue("p_val_adj.{seu2_name}")]] == 0] <- .Machine$double.xmin
 
