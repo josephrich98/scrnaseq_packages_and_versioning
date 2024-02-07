@@ -24,14 +24,12 @@ scan1_matrix_generation_method_version <- "0.28.0"
 scan1_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 scan1_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 scan1_matrix_qc <- "raw" # "raw" or "filtered"
-scan1_used_batch <- FALSE
 
 scan2_matrix_generation_method <- "kb" # str["kb", "cellranger"]
 scan2_matrix_generation_method_version <- "0.28.0"
 scan2_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 scan2_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 scan2_matrix_qc <- "raw" # "raw" or "filtered"
-scan2_used_batch <- FALSE
 
 # Function argument and input settings
 data_input <- "default" # str["default", "scan1", "scan2"]
@@ -64,14 +62,19 @@ clustering_seed2 <- 0
 umap_seed1 <- 0
 umap_seed2 <- 0
 
+# Data path specifications
+scan1_data_path <- NULL  # NULL for default path
+scan2_data_path <- NULL  # NULL for default path
+output_base_path <- NULL   # NULL for default path
+
 # Output path specifications
-project_base_path <- "/workspace/analysis"
-data_name <- "5k_pbmc_v3"
 scan1_name <- "full"
 scan2_name <- "downsampled"
-include_seeds_in_file_paths <- FALSE
 save_data <- FALSE
 dpi <- 350
+project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
+data_name <- "5k_pbmc_v3"  # Only needed if using default input/output paths
+include_seeds_in_file_paths <- FALSE  # Only needed if using default input/output paths
 ```
 
 R Setting up variables
@@ -101,12 +104,20 @@ scanpy_group_names <- list(Scanpy1 = scan1_name, Scanpy2 = scan2_name)
 
 Data paths
 ```{r}
-scan1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan1_matrix_generation_method_full}/frac{scan1_read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
-scan2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan2_matrix_generation_method_full}/frac{scan2_read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
+if (is.null(scan1_data_path)) {
+    scan1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan1_matrix_generation_method_full}/frac{scan1_read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
+}
+
+if (is.null(scan2_data_path)) {
+    scan2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan2_matrix_generation_method_full}/frac{scan2_read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
+}
 ```
 
 File path definitions
 ```{r}
+group1_color <- "#009E73"
+group2_color <- "#CC79A7"
+
 if (scan1_matrix_generation_method == scan2_matrix_generation_method &&
     scan1_matrix_generation_method_version == scan2_matrix_generation_method_version &&
     scan1_included_transcripts == scan2_included_transcripts &&
@@ -118,9 +129,6 @@ if (scan1_matrix_generation_method == scan2_matrix_generation_method &&
     group2_color <- "#6C27CC"
 } else {
     matrix_generation_method_full <- glue::glue("scan1_{scan1_matrix_generation_method_full}_{scan1_included_transcripts}_vs_scan2_{scan2_matrix_generation_method_full}_{scan2_included_transcripts}")
-    # New vs old version
-    group1_color <- "#009E73"
-    group2_color <- "#CC79A7"
 }
 
 read_fraction_after_downsampling <- ifelse(scan1_read_fraction_after_downsampling == scan2_read_fraction_after_downsampling, scan1_read_fraction_after_downsampling,
@@ -136,7 +144,9 @@ if (include_seeds_in_file_paths) {
     cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
 }
 
-output_base_path <- glue::glue("{project_base_path}/output/{data_name}/scanpyv{scanpy_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+if (is.null(output_base_path)) {
+    output_base_path <- glue::glue("{project_base_path}/output/{data_name}/scanpyv{scanpy_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+}
 
 output_data_file_paths <- list(
     markers_scan1 = glue::glue("{output_base_path}/data_files/markers_{scan1_name}.rds"),
@@ -348,19 +358,13 @@ Import adata1
 if r.scan1_matrix_qc == "raw":
     if (scan1_matrix_generation_method=="kb" and r.scan1_matrix_include_unspliced):
         matrix_file = "cells_x_genes.total.mtx"
-        if r.scan1_used_batch:
-            adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
-        else:
-            adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
+        adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
     elif (scan1_matrix_generation_method=="kb" and not r.scan1_matrix_include_unspliced):
         matrix_file = "cells_x_genes.cell.mtx"
         if not os.path.exists(f"{scan1_data_path}/{matrix_file}"):
             # If it doesn't exist, use the alternative .mtx file
             matrix_file = "cells_x_genes.mtx"
-        if r.scan1_used_batch:
-            adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
-        else:
-            adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
+        adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
     elif scan1_matrix_generation_method=="cellranger":
         adata1 = sc.read_10x_mtx(scan1_data_path, var_names='gene_ids')
     
@@ -435,19 +439,13 @@ Import adata2
 if r.scan2_matrix_qc == "raw":
     if (scan2_matrix_generation_method=="kb" and r.scan2_matrix_include_unspliced):
         matrix_file = "cells_x_genes.total.mtx"
-        if r.scan2_used_batch:
-            adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
-        else:
-            adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
+        adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
     elif (scan2_matrix_generation_method=="kb" and not r.scan2_matrix_include_unspliced):
         matrix_file = "cells_x_genes.cell.mtx"
         if not os.path.exists(f"{scan2_data_path}/{matrix_file}"):
             # If it doesn't exist, use the alternative .mtx file
             matrix_file = "cells_x_genes.mtx"
-        if r.scan2_used_batch:
-            adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
-        else:
-            adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
+        adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
     elif scan2_matrix_generation_method=="cellranger":
         adata2 = sc.read_10x_mtx(scan2_data_path, var_names='gene_ids')
     
@@ -913,18 +911,22 @@ all.equal(pca_embeddings1, pca_embeddings2)
 
 Overlay PCA scatterplots
 ```{r}
-pca12_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", group_labels = unlist(scanpy_group_names), save = file_paths$pca_12_overlay_filepath)
+if (!identical(scan1_inds, scan2_inds)) {
+    pca_embeddings1 <- pca_embeddings1[rownames(pca_embeddings1) %in% overlapping_inds, ]
+    pca_embeddings2 <- pca_embeddings2[rownames(pca_embeddings2) %in% overlapping_inds, ]
+}
 
+pca12_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", group_labels = unlist(scanpy_group_names), save = file_paths$pca_12_overlay_filepath)
 pca34_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", group_labels = unlist(scanpy_group_names), pcs = 3:4, save = file_paths$pca_34_overlay_filepath)
 
 pca12_plot
 pca34_plot
 
 #* erase
-pca12_plot_TR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "TR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"))
-pca12_plot_TL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "TL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"))
-pca12_plot_BR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "BR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"))
-pca12_plot_BL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "BL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"))
+pca12_plot_TR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "TR", group_labels = unlist(scanpy_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"))
+pca12_plot_TL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "TL", group_labels = unlist(scanpy_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"))
+pca12_plot_BR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "BR", group_labels = unlist(scanpy_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"))
+pca12_plot_BL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "BL", group_labels = unlist(scanpy_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"))
 ```
 
 ```{r}
@@ -1060,7 +1062,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
 }
 
 print(glue("Median jaccard of SNN: {median_jaccard}"))
-print(glue("Median magnitude of log degree ratio of SNN: {median_logged_degree_ratio}"))
+print(glue("Median magnitude of log degree ratio of SNN: {median_magnitude_logged_degree_ratio}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
@@ -1488,10 +1490,10 @@ Plot scatterplots - if this crashes R, try scanpy_de_plots.R
 # markers2[[glue("p_val_adj.{scan1_name}")]][markers2[[glue("p_val_adj.{scan1_name}")]] == 0] <- .Machine$double.xmin
 # markers2[[glue("p_val_adj.{scan2_name}")]][markers2[[glue("p_val_adj.{scan2_name}")]] == 0] <- .Machine$double.xmin
 #
-# logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
+# logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
 # pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
 #
-# logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
+# logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
 #
 #
 # logFC_scatterplot

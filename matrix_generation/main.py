@@ -14,6 +14,9 @@ from fastq_processor import FastqProcessor
 
 def arg_parser_setup():
     parser = argparse.ArgumentParser()
+    
+    parser.add_argument('-y', '--yaml_path', default='config.yaml', help='Path to the YAML configuration file.')
+    
     parser.add_argument(
         "-p",
         "--project_setup",
@@ -54,7 +57,9 @@ def arg_parser_setup():
 
 
 def main(args):
-    with open('config.yaml', 'r') as file:
+    yaml_file_path = args.yaml_path
+    
+    with open(yaml_file_path, 'r') as file:
         config = yaml.safe_load(file)
     
     fastq_processor = FastqProcessor(**config)

@@ -1,7 +1,5 @@
 # to just make conda environment
 conda env create -f environment.yml
-OR
-conda env create -f environment_no_builds.yml
 
 # change all hyperparameters in config.yaml
 
@@ -84,7 +82,9 @@ cd /home/jrich/Desktop/opt &&
 curl -o cellranger-7.1.0.tar.gz "https://cf.10xgenomics.com/releases/cell-exp/cellranger-7.1.0.tar.gz?Expires=1695707214&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZi4xMHhnZW5vbWljcy5jb20vcmVsZWFzZXMvY2VsbC1leHAvY2VsbHJhbmdlci03LjEuMC50YXIuZ3oiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2OTU3MDcyMTR9fX1dfQ__&Signature=ArH5uCG~D3PL3JkIUrhZXbupvWHKOzcJ0oFW-cIQinJBFlTgZNOA-9zBZQ8vQWw5fbeoQAdtLySEcpAn8Cb0lPDheoXcCexePGHzrRg65bEpv1-A6tB8pJ9Tbyr8l4G4CKtn1zl5ov3X5PGY2~eM1iMplh3EfK4ES6t9Zpju~uxnm0Dybj0m59eZMl15L-nbb1Q2Vy4jKZYb5BMCtNDulVvbabVFbx80UJFbS~W-LsCk3okWKoZ3ESal-TOcRJVvYgbYtPp~Lgii9ZuizSdjla3aL7Tg3LwIfNFvGfzBKywNfrVv~7HkLnjkeDNgOb1x54jgWYl0Gski6S~cmEpfGA__&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA" && tar -xzvf cellranger-7.1.0.tar.gz && export PATH=$PATH:{package_path}/cellranger
 
 conda create python=3.11
-pip install kb-python==0.28.0 gget==0.27.9 pyyaml==6.0.1
+KB28 (kallisto v50): pip install kb-python==0.28.0 gget==0.27.9 pyyaml==6.0.1
+KB24 (kallisto v46): pip install kb-python==0.24.4 gget==0.27.9 pyyaml==6.0.1 ngs-tools==1.8.5
+
 
 - downloads (reference transcriptome/index files, fastq files)
 cd /home/jrich/Desktop/reference_files/cellranger/<date_directory_name> && wget https://cf.10xgenomics.com/supp/cell-exp/refdata-gex-GRCh38-2020-A.tar.gz && tar -xzvf refdata-gex-GRCh38-2020-A.tar.gz && rm refdata-gex-GRCh38-2020-A.tar.gz

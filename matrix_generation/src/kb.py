@@ -40,35 +40,6 @@ def custom_sort(filename):
 
 
 
-
-def find_kb_reference(instance, count = False):
-    kb_reference_path_parent = os.path.join(instance.reference_path, "kb")
-
-    kb_version_parts = instance.kb_version.split('.')
-
-    if instance.reference_selector == "most_recent":
-        if count:
-            directories = [item for item in os.listdir(kb_reference_path_parent) if os.path.isdir(os.path.join(kb_reference_path_parent, item))]
-            filtered_dirs = [dir_name for dir_name in directories if dir_name.endswith(f'_v{kb_version_parts[1]}')]
-            if filtered_dirs:
-                kb_reference_path = max(filtered_dirs, key=lambda x: int(x.split('_')[0]))
-                kb_reference_path = kb_reference_path.split('_')[0]
-            else:
-                kb_reference_path = None
-
-        else:
-            kb_reference_path = os.path.join(kb_reference_path_parent, now.strftime('%y%m'))
-    else:
-        kb_reference_path = os.path.join(kb_reference_path_parent, instance.reference_selector)
-    
-    kb_reference_path_full = os.path.join(kb_reference_path_parent, str(kb_reference_path) + f"_v{kb_version_parts[1]}")
-    
-    if count:
-        if not os.path.exists(kb_reference_path_full):
-            raise Exception(f"{kb_reference_path_full} does not exist. Please run kb ref with this date and version, or check values in config.yaml")
-
-    return kb_reference_path_full
-
 def kb_ref_function(instance):
     ensembl_path = os.path.join(instance.reference_path, "ensembl", str(instance.ensembl_release))
     
@@ -80,7 +51,8 @@ def kb_ref_function(instance):
         print(gget_command)
         subprocess.run(gget_command, shell=True, executable="/bin/bash")
     
-    kb_reference_path = find_kb_reference(instance)
+    kb_reference_path = os.path.join(instance.reference_path, "kb", instance.kb_reference_folder_name)
+
     if not os.path.exists(kb_reference_path):
         os.makedirs(kb_reference_path)
     os.chdir(kb_reference_path)
@@ -90,11 +62,41 @@ def kb_ref_function(instance):
     if instance.kb_workflow == "nac":
         kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/fasta_spliced.fasta -f2 {kb_reference_path}/fasta_unspliced.fasta -c1 {kb_reference_path}/c_spliced.txt -c2 {kb_reference_path}/c_unspliced.txt --workflow=nac {ensembl_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz {ensembl_path}/Homo_sapiens.GRCh38.{instance.ensembl_release}.gtf.gz"
     else:   
-        kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/transcriptome.fa {ensembl_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz {ensembl_path}/Homo_sapiens.GRCh38.{instance.ensembl_release}.gtf.gz"
+        kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/transcriptome.fa --workflow=standard {ensembl_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz {ensembl_path}/Homo_sapiens.GRCh38.{instance.ensembl_release}.gtf.gz"
     
+    if instance.kb_d_list != "":
+        position = command.find("--workflow")
+        kb_ref_command = kb_ref_command[:position] + f"--d-list {instance.kb_d_list} " + kb_ref_command[position:]
+
+    if instance.kallisto_binary_path != "":
+        position = f"{ensembl_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+        kb_ref_command = kb_ref_command[:position] + f"--kallisto {instance.kallisto_binary_path} " + kb_ref_command[position:]
+
+        result = subprocess.run([instance.kallisto_binary_path, "version"], capture_output=True, text=True)
+        kallisto_version_output = result.stdout.strip()
+        kallisto_major_version = kallisto_version_output.split('.')[1]
+    else:
+        kallisto_major_version = "50"
+
+    if instance.bustools_binary_path != "":
+        position = f"{ensembl_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+        kb_ref_command = kb_ref_command[:position] + f"--bustools {instance.bustools_binary_path} " + kb_ref_command[position:]
+
     print(kb_ref_command)
+
+    breakpoint()
+
     subprocess.run(kb_ref_command, shell=True, executable="/bin/bash")
+
+    if int(kallisto_major_version) < 50:
+        if instance.kallisto_binary_path != "":
+            kallisto_binary_path = instance.kallisto_binary_path
+        else:
+            kallisto_binary_path_command = "kb info | grep 'kallisto:' | awk '{print $3}' | sed 's/[()]//g'"
+            kallisto_binary_path = subprocess.run(kallisto_binary_path_command, shell=True, executable="/bin/bash", stdout=subprocess.PIPE, text=True).stdout.strip()
+        subprocess.run(f"{kallisto_binary_path} index -i {kb_reference_path}/index.idx -k 31 {kb_reference_path}/fasta_spliced.fasta", shell=True, executable="/bin/bash")
     
+
         
 def kb_count_function(instance, baseline, threads):
     if baseline:
@@ -111,6 +113,23 @@ def kb_count_function(instance, baseline, threads):
 
     kb_version_major = int(kb_version.split('.')[1])
 
+    kb_reference_path = os.path.join(instance.reference_path, "kb", instance.kb_reference_folder_name)
+
+    if not os.path.exists(kb_reference_path) or not os.listdir(kb_reference_path):
+        raise Exception(f"{kb_reference_path} does not exist or is empty. Run kb ref or check config.yaml.")
+
+    kb_version_str = str(kb_version).replace('.', '_')        
+    out_folder_final = f"kb{kb_version_str}"
+
+    if instance.kallisto_binary_path != "":
+        result = subprocess.run([instance.kallisto_binary_path, "version"], capture_output=True, text=True)
+        kallisto_version_output = result.stdout.strip()
+        kallisto_major_version = kallisto_version_output.split('.')[1]
+            
+        out_folder_final = out_folder_final + f"_{kallisto_major_version}"
+    else:
+        kallisto_major_version = ""
+
     print("about to enter kb count")
     for frac in frac_list:
         for seed in seed_list:
@@ -122,8 +141,11 @@ def kb_count_function(instance, baseline, threads):
                 specific_fastq_directory = os.path.join(instance.downsampled_fastq_directory, f"frac{frac_str}_seed{seed}")
 
             kb_version_str = str(kb_version).replace('.', '_')
+            
+            if instance.matrix_folder_name != "":
+                out_folder_final = instance.matrix_folder_name
 
-            out_dir = os.path.join(instance.output_directory, f"kb{kb_version_str}", f"frac{frac_str}_seed{seed}")
+            out_dir = os.path.join(instance.output_directory, out_folder_final, f"frac{frac_str}_seed{seed}")
             if not os.path.exists(out_dir):
                 os.makedirs(out_dir)
             # else:
@@ -136,13 +158,9 @@ def kb_count_function(instance, baseline, threads):
 
             print(f"Current directory: {specific_fastq_directory}")
             
-            kb_reference_path = find_kb_reference(instance, count = True)
-
             # Build the command
             kb_count_command = [
                 'kb', 'count', 
-                # '--filter',
-                # '--gene-names',
                 '-i', f'{kb_reference_path}/index.idx', 
                 '-g', f'{kb_reference_path}/t2g.txt', 
                 '-x', f'{instance.kb_sequencing_technology}', 
@@ -150,15 +168,23 @@ def kb_count_function(instance, baseline, threads):
                 '-t', str(threads)
             ]
 
-            if instance.kb_count_format == "h5ad":
-                kb_count_command.append("--h5ad")
+            if instance.kb_count_strandedness != "":
+                kb_count_command.append(f"--strand {instance.kb_count_strandedness}")
 
             if instance.kb_workflow == "nac":
-                # kb_count_command.append(f"--workflow=nac -c1 {kb_reference_path}/c_spliced.txt -c2 {kb_reference_path}/c_unspliced.txt --sum=total")
                 new_arguments = ["--workflow=nac", "-c1", f"{kb_reference_path}/c_spliced.txt", "-c2", f"{kb_reference_path}/c_unspliced.txt", "--sum=total"]
                 for argument in new_arguments:
                     kb_count_command.append(argument)
+
+            else:
+       	        kb_count_command.append("--workflow=standard")
+
+            if instance.kallisto_binary_path != "":
+                kb_count_command.append(f"--kallisto {instance.kallisto_binary_path}")
             
+            if instance.bustools_binary_path != "":
+                kb_count_command.append(f"--bustools {instance.bustools_binary_path}")
+
             # Add the fastq files
             fastq_extensions = ('.fq', '.fastq', '.fq.gz', '.fastq.gz')
             fastq_files = [filename for filename in os.listdir(specific_fastq_directory) if filename.endswith(fastq_extensions)]
@@ -185,7 +211,7 @@ def kb_count_function(instance, baseline, threads):
     for frac in frac_list:
         for seed in seed_list:
             frac_str = str(frac).replace('.', '_')
-            organize_output(instance.output_directory, seed, frac_str, matrix_source = "kb", matrix_version = kb_version_str)
+            organize_output(instance.output_directory, seed, frac_str, matrix_source = "kb", matrix_version = kb_version_str, kallisto_major_version = kallisto_major_version)
 
     print("kb count finished")
 

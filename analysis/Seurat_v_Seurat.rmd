@@ -19,22 +19,20 @@ seu1_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsam
 seu2_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
 
 # Matrix generation methods
-seu1_matrix_generation_method <- "cellranger" # str["kb", "cellranger"]
-seu1_matrix_generation_method_version <- "7.2.0"
-seu1_matrix_include_unspliced <- TRUE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
+seu1_matrix_generation_method <- "kb" # str["kb", "cellranger"]
+seu1_matrix_generation_method_version <- "0.28.0"
+seu1_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 seu1_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 seu1_matrix_qc <- "raw" # "raw" or "filtered"
-seu1_used_batch <- FALSE
 
-seu2_matrix_generation_method <- "cellranger" # str["kb", "cellranger"]
-seu2_matrix_generation_method_version <- "3.1.0"
+seu2_matrix_generation_method <- "kb" # str["kb", "cellranger"]
+seu2_matrix_generation_method_version <- "0.24.4"
 seu2_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 seu2_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 seu2_matrix_qc <- "raw" # "raw" or "filtered"
-seu2_used_batch <- FALSE
 
 # Function argument and input settings
-data_input <- "default" # str["default", "seu1", "seu2"]
+data_input <- "seu1" # str["default", "seu1", "seu2"]
 
 # Package version
 seurat_version <- "4.3.0"
@@ -62,14 +60,19 @@ clustering_seed2 <- 0
 umap_seed1 <- 42
 umap_seed2 <- 42
 
+# Data path specifications
+seu1_data_path <- "/workspace/analysis/count_matrix_collection/SC3_v3_NextGem_SI_PBMC_10K/kb28_raw_generated_WITHOUT_dlist/frac1_0_seed0"  # NULL for default path
+seu2_data_path <- NULL  # NULL for default path
+output_base_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0/input_seu1/seu1_kb28_WITHOUT_dlist_vs_kb24/cell_fraction_1_0/read_fraction_1_0"   # NULL for default path
+
 # Output path specifications
-project_base_path <- "/workspace/analysis"
-data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
-seu1_name <- "Cellranger7"
-seu2_name <- "Cellranger3"
-include_seeds_in_file_paths <- FALSE
+seu1_name <- "Kallisto50_no_dlist"
+seu2_name <- "Kallisto46"
 save_data <- TRUE
 dpi <- 350
+project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
+data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
+include_seeds_in_file_paths <- FALSE  # Only needed if using default input/output paths
 ```
 
 R Setting up variables
@@ -99,12 +102,20 @@ seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
 
 Data paths
 ```{r}
-seu1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu1_matrix_generation_method_full}/frac{seu1_read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
-seu2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu2_matrix_generation_method_full}/frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
+if (is.null(seu1_data_path)) {
+    seu1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu1_matrix_generation_method_full}/frac{seu1_read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
+}
+
+if (is.null(seu2_data_path)) {
+    seu2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu2_matrix_generation_method_full}/frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
+}
 ```
 
 File path definitions
 ```{r}
+group1_color <- "#009E73"
+group2_color <- "#CC79A7"
+    
 if (seu1_matrix_generation_method == seu2_matrix_generation_method &&
     seu1_matrix_generation_method_version == seu2_matrix_generation_method_version &&
     seu1_included_transcripts == seu2_included_transcripts &&
@@ -116,9 +127,6 @@ if (seu1_matrix_generation_method == seu2_matrix_generation_method &&
     group2_color <- "#6C27CC"
 } else {
     matrix_generation_method_full <- glue::glue("seu1_{seu1_matrix_generation_method_full}_{seu1_included_transcripts}_vs_seu2_{seu2_matrix_generation_method_full}_{seu2_included_transcripts}")
-    # New vs old version
-    group1_color <- "#009E73"
-    group2_color <- "#CC79A7"
 }
 
 read_fraction_after_downsampling <- ifelse(seu1_read_fraction_after_downsampling == seu2_read_fraction_after_downsampling, seu1_read_fraction_after_downsampling,
@@ -134,7 +142,9 @@ if (include_seeds_in_file_paths) {
     cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
 }
 
-output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+if (is.null(output_base_path)) {
+    output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+}
 
 output_data_file_paths <- list(
     markers_seu1 = glue::glue("{output_base_path}/data_files/markers_{seu1_name}.rds"),
@@ -299,7 +309,7 @@ Read the data into Seurat1 and create knee plot:
 ```{r}
 if (seu1_matrix_qc == "raw") {
     if (seu1_matrix_generation_method == "kb") {
-        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", unspliced = seu1_matrix_include_unspliced, batch = seu1_used_batch, tcc = FALSE)
+        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", unspliced = seu1_matrix_include_unspliced, tcc = FALSE)
     } else if (seu1_matrix_generation_method == "cellranger") {
         res_mat1 <- Read10X(seu1_data_path, gene.column = 1)
     } else {
@@ -355,7 +365,7 @@ Read the data into Seurat2 and create knee plot:
 ```{r}
 if (seu2_matrix_qc == "raw") {
     if (seu2_matrix_generation_method == "kb") {
-        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", unspliced = seu2_matrix_include_unspliced, batch = seu2_used_batch, tcc = FALSE)
+        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", unspliced = seu2_matrix_include_unspliced, tcc = FALSE)
     } else if (seu2_matrix_generation_method == "cellranger") {
         res_mat2 <- Read10X(seu2_data_path, gene.column = 1)
     } else {
@@ -520,7 +530,7 @@ If data_input == "seu1" or "seu2": Apply Cells and Genes to be the same for both
 ```{r}
 if (data_input == "seu1") {
     if (seu2_matrix_generation_method == "kb") {
-        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", unspliced = seu2_matrix_include_unspliced, batch = seu2_used_batch, tcc = FALSE)
+        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", unspliced = seu2_matrix_include_unspliced, tcc = FALSE)
     } else if (seu2_matrix_generation_method == "cellranger") {
         res_mat2 <- Read10X(seu2_data_path, gene.column = 1)
     }
@@ -551,7 +561,7 @@ if (data_input == "seu1") {
 
 if (data_input == "seu2") {
     if (seu1_matrix_generation_method == "kb") {
-        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", unspliced = seu1_matrix_include_unspliced, batch = seu1_used_batch, tcc = FALSE)
+        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", unspliced = seu1_matrix_include_unspliced, tcc = FALSE)
     } else if (seu1_matrix_generation_method == "cellranger") {
         res_mat1 <- Read10X(seu1_data_path, gene.column = 1)
     }
@@ -722,6 +732,14 @@ all.equal(pca_embeddings1, pca_embeddings2)
 
 Overlay PCA scatterplots
 ```{r}
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
+source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
+
+if (!identical(seu1_inds, seu2_inds)) {
+    pca_embeddings1 <- pca_embeddings1[rownames(pca_embeddings1) %in% overlapping_inds, ]
+    pca_embeddings2 <- pca_embeddings2[rownames(pca_embeddings2) %in% overlapping_inds, ]
+}
+
 pca12_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", group_labels = unlist(seurat_group_names), save = file_paths$pca_12_overlay_filepath)
 pca34_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", group_labels = unlist(seurat_group_names), pcs = 3:4, save = file_paths$pca_34_overlay_filepath)
 
@@ -787,12 +805,12 @@ combined_plot
 If data_input == "seu1" or "seu2": Apply PCs to be the same
 ```{r}
 if (data_input == "seu1" && identical(seu1_inds, seu2_inds)) {
-    seu2[["pca"]] <- CreateDimReducObject(embeddings = as.matrix(pca_embeddings1), key = "PC_", assay = DefaultAssay(seu1))
+    seu2[["pca"]] <- CreateDimReducObject(embeddings = as.matrix(Embeddings(seu1, reduction = "pca")), key = "PC_", assay = DefaultAssay(seu1))
     seu2[["pca"]]@feature.loadings <- pca_loadings_seu1
 }
 
 if (data_input == "seu2" && identical(seu1_inds, seu2_inds)) {
-    seu1[["pca"]] <- CreateDimReducObject(embeddings = as.matrix(pca_embeddings2), key = "PC_", assay = DefaultAssay(seu2))
+    seu1[["pca"]] <- CreateDimReducObject(embeddings = as.matrix(Embeddings(seu2, reduction = "pca")), key = "PC_", assay = DefaultAssay(seu2))
     seu1[["pca"]]@feature.loadings <- pca_loadings_seu2
 }
 ```
@@ -852,7 +870,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
 }
 
 print(glue("Median jaccard of SNN: {median_jaccard}"))
-print(glue("Median magnitude of log degree ratio of SNN: {median_logged_degree_ratio}"))
+print(glue("Median magnitude of log degree ratio of SNN: {median_magnitude_logged_degree_ratio}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
@@ -1231,6 +1249,7 @@ if (data_input == "default" || !identical(seu1_inds, seu2_inds)) {
 Compare markers
 ```{r}
 # Select gene and cluster columns
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 seu1_markers_df <- markers_seu1 %>% select(gene = gene, cluster = cluster)
 seu2_markers_df <- markers_seu2 %>% select(gene = gene, cluster = cluster)
 
@@ -1262,19 +1281,18 @@ markers2[[glue("FC.{seu2_name}")]] <- 2^markers2[[glue("avg_log2FC.{seu2_name}")
 
 Calculate mean magnitude of difference in log fold change between the 2 packages
 ```{r}
-markers2 <- calculate_de_stats(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$de_stats_file)
+markers2 <- calculate_de_stats(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$de_stats_file) 
 ```
 
 Plot scatterplots
 ```{r}
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 markers2[[glue("p_val_adj.{seu1_name}")]][markers2[[glue("p_val_adj.{seu1_name}")]] == 0] <- .Machine$double.xmin
 markers2[[glue("p_val_adj.{seu2_name}")]][markers2[[glue("p_val_adj.{seu2_name}")]] == 0] <- .Machine$double.xmin
-
-logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
+logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
 pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
 
-logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
+logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
 
 
 logFC_scatterplot
@@ -1299,30 +1317,3 @@ if (save_data == TRUE) {
 ```{r}
 sessionInfo()
 ```
-
-```{r}
-data_pca <- data.frame(Cellranger7 = markers2$avg_log2FC.Cellranger7, 
-                       Cellranger3 = markers2$avg_log2FC.Cellranger3)
-
-pca_result <- prcomp(data_pca, center = TRUE, scale. = FALSE)
-
-data_mean <- colMeans(data_pca)
-
-pc1_direction <- pca_result$rotation[,1]
-
-point1 <- data_mean - pc1_direction
-point2 <- data_mean + pc1_direction
-
-slope <- (point2[2] - point1[2]) / (point2[1] - point1[1])
-
-intercept <- data_mean[2] - slope * data_mean[1]
-
-p <- ggplot(data_pca, aes(x = Cellranger7, y = Cellranger3)) +
-    geom_point() +
-    labs(x = "Average log2 FC Cellranger 7", y = "Average log2 FC Cellranger 3", title = "PCA Fit Line with PC1") +
-    theme_minimal() + 
-    geom_abline(slope = slope, intercept = intercept, color = "blue")
-
-p
-```
-

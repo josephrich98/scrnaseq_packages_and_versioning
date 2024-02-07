@@ -19,11 +19,12 @@ ensembl_release: 111  # for kb ref
 
 ### kb count
 kb_sequencing_technology: "10xv3"  # find on 10x website
-kb_count_strandedness: "unstranded"
+kb_count_strandedness: ""
 
 ### cellranger count
 cellranger_reference_folder_name: "grch38_2020"
 cellranger_include_introns: ""   # "" for default; true or false
+cellranger_expect_cells: ""  # "" for default; integer
 
 ### Links
 fastq_link: "https://s3-us-west-2.amazonaws.com/10x.files/samples/cell-exp/4.0.0/SC3_v3_NextGem_SI_PBMC_10K/SC3_v3_NextGem_SI_PBMC_10K_fastqs.tar"  # find on 10x website

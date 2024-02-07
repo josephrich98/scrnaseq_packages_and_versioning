@@ -195,6 +195,7 @@ make_umi_scatterplot <- function(res_mat1, res_mat2, UMI_cutoff1 = NULL, UMI_cut
         geom_abline(slope = 1, intercept = 0, show.legend = FALSE, linewidth = 0.3, color = "gray30", linetype = 2) +
         theme(
             legend.position = "none",
+            plot.margin = margin(l = 5, r = 15, t = 4),
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
             axis.title = element_text(size = rel(axis_text_size)) # Increase axis titles size
         ) +
@@ -206,18 +207,18 @@ make_umi_scatterplot <- function(res_mat1, res_mat2, UMI_cutoff1 = NULL, UMI_cut
     if (!is.null(UMI_cutoff1)) {
         p <- p +
             geom_vline(aes(xintercept = UMI_cutoff1), color = "gray30", linetype = 2) +
-            annotate("text", x = UMI_cutoff1 * 1.1, y = max(data_for_plot$UMI_Counts_res_mat2), label = glue("{res_mat1_name} UMI cutoff"), hjust = 0, vjust = 1, color = "gray30", size = 4)
+            annotate("text", x = UMI_cutoff1 * 0.9, y = max(data_for_plot$UMI_Counts_res_mat2), label = glue("{res_mat1_name} UMI cutoff"), hjust = 1, vjust = 0.88, color = "gray30", size = 5)
     }
 
     if (!is.null(UMI_cutoff2)) {
         p <- p +
             geom_hline(aes(yintercept = UMI_cutoff2), linetype = 2) +
-            annotate("text", x = max(data_for_plot$UMI_Counts_res_mat1), y = UMI_cutoff2 * 1.1, label = glue("{res_mat2_name} UMI cutoff"), hjust = 1, vjust = 0, color = "gray30", size = 4)
+            annotate("text", x = 0, y = UMI_cutoff2 * 1.13, label = glue("{res_mat2_name} UMI cutoff"), hjust = -0.05, vjust = 0, color = "gray30", size = 5)
     }
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$umi_scatterplot)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, dpi = dpi, width = 2100, height = 2100, units = "px")
     }
 
     return(p)
@@ -276,7 +277,7 @@ upset_plot_general <- function(data, group1_name, group2_name, comparison, befor
         y_label <- glue("{comparison} Intersection")
     }
 
-    p <- UpSetR::upset(df[, -1], mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), text.scale = c(2.4, 2, 1.85, 1, 1.85, 1.95), empty.intersections = TRUE)
+    p <- UpSetR::upset(df[, -1], mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), text.scale = c(2.4, 1.4, 1.85, 1, 1.85, 1.95), empty.intersections = TRUE)
 
     if (as_ggplot) {
         p <- as.ggplot(p)
@@ -562,9 +563,9 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
     )
 
     if (outliers_excluded) {
-        plot_title <- glue("{group1_name} vs. {group2_name} adjusted p-value (excluding outliers)")
+        plot_title <- glue("{group1_name} vs. {group2_name} Adjusted p-value (excluding outliers)")
     } else {
-        plot_title <- glue("{group1_name} vs. {group2_name} adjusted p-value")
+        plot_title <- glue("{group1_name} vs. {group2_name} Adjusted p-value")
     }
 
     p <- ggplot(markers2, aes(log_p_val_adj_2, log_p_val_adj_1)) +
@@ -574,14 +575,14 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
         theme(plot.title = element_text(hjust = 0.48)) + # Center the title
         coord_fixed(ratio = 1, xlim = c(0, max_log_p), ylim = c(0, max_log_p)) +
         labs(
-            x = bquote(-log[10](.(group2_name) ~ "adjusted p-value")),
-            y = bquote(-log[10](.(group1_name) ~ "adjusted p-value")),
+            x = bquote(-log[10](.(group2_name) ~ "Adjusted p-value")),
+            y = bquote(-log[10](.(group1_name) ~ "Adjusted p-value")),
             title = plot_title
         ) +
         theme(
             plot.title = element_blank(),          # Increase plot title size
-            axis.text = element_text(size = rel(1.2)), # Increase axis tick labels size
-            axis.title = element_text(size = rel(1.16))         # Increase axis text size
+            axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
+            axis.title = element_text(size = rel(axis_text_size))         # Increase axis text size
         )
 
     df_inset <- markers2 %>% filter((log_p_val_adj_1 <= 10) & (log_p_val_adj_2 <= 10))
@@ -616,7 +617,7 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
 }
 
 
-plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALSE, show_legend = FALSE, group1_name = "Seurat", group2_name = "Scanpy", save = FALSE) {
+plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALSE, show_legend = FALSE, group1_name = "Seurat", group2_name = "Scanpy", ccc = NULL, save = FALSE) {
     scatterplot_names <- scatterplot_naming(group1_name, group2_name)
     logFC_group1 <- scatterplot_names$logFC_group1
     logFC_group2 <- scatterplot_names$logFC_group2
@@ -659,14 +660,34 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
         b_filtered <- data_mean_filtered[2] - m_filtered * data_mean_filtered[1]
     }
 
+    if (show_legend) {
+        bottom_margin <- 0
+    } else {
+        bottom_margin <- -40
+    }
+    
     p <- ggplot(markers2, aes(!!sym(logFC_group2), !!sym(logFC_group1))) +
         labs(x = bquote(log[2](.(group2_name) ~ "Fold Change")), y = bquote(log[2](.(group1_name) ~ "Fold Change"))) +
         theme(
             plot.title = element_blank(),          # Increase plot title size
-            axis.text = element_text(size = rel(axis_text_size)),
+            plot.margin = margin(l = 5, r = 11.5, b = bottom_margin),
+            axis.text = element_text(size = rel(axis_numbering_size)),
             axis.title = element_text(size = rel(axis_text_size))
         )
 
+    if (!is.null(ccc)) {
+        p <- p +
+            annotate(
+                "text",
+                x = Inf,  # Places the annotation on the far right
+                y = -Inf, # Places the annotation on the bottom
+                label = glue::glue("CCC = {sprintf('%.2f', ccc)}"),
+                hjust = 1.04, # Align text to the right
+                vjust = -0.28,  # Align text to the bottom
+                size = 5.2
+            )
+    }
+    
     if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
         baseline_pca_model_filtered <- glue("PCA fit excluding outliers: y={sprintf('%.2f', m_filtered)}x+{sprintf('%.2f', b_filtered)}")
     }
@@ -724,7 +745,7 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi, width = 2300, height = 2100, units = "px")
+        ggsave(filepath, plot = p, dpi = dpi, width = 2100, height = 2100, units = "px")
     }
 
     return(p)
@@ -775,7 +796,7 @@ plot_var_explained <- function(eigs_df, npcs = 20, group_names = waiver(), save 
             shape = "Package"
         ) + # Change legend title for shape
         theme(
-            legend.text = element_text(size = rel(1.4)),
+            legend.text = element_text(size = rel(1.5)),
             legend.title = element_blank(),
             legend.position = c(0.97, 0.93), # Adjust coordinates for top right position
             legend.justification = c("right", "top"), # Anchor point of the legend
@@ -857,14 +878,14 @@ plot_pca_compare <- function(embeddings1, embeddings2,
         } else if (legend_position == "BR") {
             p <- p +
                 theme(
-                    legend.position = c(0.96, 0.12),
+                    legend.position = c(0.96, 0.14),
                     legend.justification = c(1, 1),
                     legend.box.just = "right"
                 )
         } else if (legend_position == "BL") {
             p <- p +
                 theme(
-                    legend.position = c(0.025, 0.12),
+                    legend.position = c(0.025, 0.14),
                     legend.justification = c(0, 1),
                     legend.box.just = "left"
                 )
@@ -1073,8 +1094,8 @@ make_snn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
         theme_minimal() +
         stat_function(fun = function(x) 2^x, color = "grey30", linetype = 2, xlim = c(xmin, 0)) +
         stat_function(fun = function(x) 2^(-x), color = "grey30", linetype = 2, xlim = c(0, xmax)) +
-        annotate("text", x = xmin, y = 0.13, label = "y == 2^{x}", parse = TRUE, color = "grey30", size = 4) +
-        annotate("text", x = xmax, y = 0.13, label = "y == 2^-{x}", parse = TRUE, color = "grey30", size = 4) +
+        annotate("text", x = xmin, y = 0.13, label = "y == 2^{x}", parse = TRUE, color = "grey30", size = 4.5) +
+        annotate("text", x = xmax, y = 0.13, label = "y == 2^-{x}", parse = TRUE, color = "grey30", size = 4.5) +
         theme(
             legend.position = "none",
             panel.grid.major.x = element_line(color = "grey90", linewidth = 0.2),
@@ -1111,13 +1132,13 @@ make_umap_jaccard_plot <- function(jaccards_df, facet = NULL, save = FALSE) {
             geom_point(size = 4, color = "black") + # Adjust point size as needed
             xlim(0.9, 1.1) + # Adjust limits to focus on the point
             ylim(0.9, 1.1) +
-            xlab("SNN Jaccard") +
+            xlab("UMAP SNN Jaccard") +
             ylab("Density") +
             theme_minimal()
     } else {
         umap_jaccard_plot <- ggplot(jaccards_df, aes(x = JaccardIndex)) +
             geom_density(fill = NA, color = "black") +
-            labs(y = "Density", x = "SNN Jaccard") +
+            labs(y = "Density", x = "UMAP SNN Jaccard") +
             scale_x_continuous(
                 breaks = seq(0, 1, by = 0.1), # Major breakpoints
                 minor_breaks = seq(0, 1, by = 0.05) # Minor breakpoints
@@ -1139,7 +1160,7 @@ make_umap_jaccard_plot <- function(jaccards_df, facet = NULL, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$umap_jaccard_knn_density)
-        ggsave(filepath, plot = umap_jaccard_plot, dpi = dpi, bg = "white")
+        ggsave(filepath, plot = umap_jaccard_plot, dpi = dpi, bg = "white", width = 2100, height = 2100, units = "px")
     }
 
     return(umap_jaccard_plot)
@@ -1250,7 +1271,7 @@ make_umap_plot <- function(dataframe, package, title = "UMAP", overall_min_dim1 
             axis.text.y = element_blank(), # Turn off y-axis numbers
             axis.ticks = element_blank(), # Optionally, turn off axis ticks as well
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
-            plot.title = element_text(size = rel(1.9), hjust = 0.5) # Center the title
+            plot.title = element_text(size = rel(2.3), hjust = 0.5) # Center the title
         ) +
         scale_color_manual(values = ditto_colors, name = "Cluster") +
         guides(color = guide_legend(override.aes = list(size = 3)))
@@ -1363,6 +1384,8 @@ calculate_de_stats <- function(markers2, group1_name = "Seurat", group2_name = "
     logFC_ccc_results <- CCC(x = markers2[[logFC_group1]], y = markers2[[logFC_group2]])
     logFC_ccc <- logFC_ccc_results$rho.c$est
     print(glue("logFC CCC: {logFC_ccc}"))
+    
+    markers2 <- markers2 %>% mutate(CCC = logFC_ccc)
 
     logFC_difference_magnitude_equation <- abs(markers2[[logFC_group1]] - markers2[[logFC_group2]])
     markers2 <- calculate_individual_de_stats(markers2, column_name = "logFC_difference_magnitude", column_equation = logFC_difference_magnitude_equation)
@@ -1656,27 +1679,32 @@ make_euler_seurat <- function(seu1, seu2, comparison, before_QC = FALSE, group_n
 
 
 make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group2_name = "Group 2", save = FALSE) {
+    max_features <- max(seu1$nFeature_RNA, seu2$nFeature_RNA)
+    
     vln_seu1 <- VlnPlot(seu1, features = "nFeature_RNA", pt.size = 0, cols = group1_color) +
-        coord_cartesian(ylim = c(0, 8250), clip = "off") +
-        scale_y_continuous(breaks = seq(0, 8500, by = 2000)) +
-        annotate("text", x = 1, y = -Inf, label = group1_name, vjust = 2, hjust = 0.5) +
+        coord_cartesian(ylim = c(0, max_features), clip = "off") +
+        scale_y_continuous(breaks = seq(0, max_features, by = 2000)) +
+        annotate("text", x = 1, y = -Inf, label = group1_name, vjust = 1.7, hjust = 0.5, size = 9) +
         theme(
             legend.position = "none",
-            plot.margin = margin(r = 0, b = 20, unit = "pt"),
+            plot.margin = margin(r = 0, b = 35, t = 10, unit = "pt"),
+            plot.title = element_blank(),
             axis.text.x = element_blank(),
+            axis.text.y = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
             axis.title.x = element_blank(),
             axis.title.y = element_blank()
         )
 
     vln_seu2 <- VlnPlot(seu2, features = "nFeature_RNA", pt.size = 0, cols = group2_color) +
-        coord_cartesian(ylim = c(0, 8250), clip = "off") +
-        scale_y_continuous(breaks = seq(0, 8500, by = 2000)) +
-        annotate("text", x = 1, y = -Inf, label = group2_name, vjust = 2, hjust = 0.5) +
+        coord_cartesian(ylim = c(0, max_features), clip = "off") +
+        scale_y_continuous(breaks = seq(0, max_features, by = 2000)) +
+        annotate("text", x = 1, y = -Inf, label = group2_name, vjust = 1.7, hjust = 0.5, size = 9) +
         theme(
             legend.position = "none",
-            plot.margin = margin(l = 0, b = 20, unit = "pt"),
+            plot.margin = margin(l = 0, b = 35, unit = "pt"),
             axis.text.x = element_blank(),
             axis.text.y = element_blank(),
+            plot.title = element_blank(),
             axis.title.x = element_blank(),
             axis.ticks.y = element_blank(),
             axis.title.y = element_blank()
@@ -1684,14 +1712,19 @@ make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group
 
     # Combine the plots
     combined_plot <- vln_seu1 + vln_seu2 + plot_layout(ncol = 2, widths = c(0.3, 0.3))
+    
+    combined_plot <- combined_plot + plot_annotation(title = "Number of genes per cell", 
+                                                     theme = theme(
+                                                         plot.title = element_text(hjust = 0.8, vjust = 0, size = 30)))
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$violin_counts_comparison)
-        ggsave(filepath, plot = combined_plot, dpi = dpi)
+        ggsave(filepath, plot = combined_plot, dpi = dpi, width = 2100, height = 2100, units = "px")
     }
 
     return(combined_plot)
 }
+
 
 
 # From DescTools v0.99.53

@@ -27,7 +27,7 @@ if ((group1_name == "Seurat" && group2_name == "Scanpy") || (group2_name == "Seu
     markers2[[glue("p_val_adj.{group2_name}")]][markers2[[glue("p_val_adj.{group2_name}")]] == 0] <- .Machine$double.xmin
 }
 
-logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = group1_name, group2_name = group2_name, save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
+logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = group1_name, group2_name = group2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
 pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = group1_name, group2_name = group2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
 
-logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = group1_name, group2_name = group2_name, save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
+logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = group1_name, group2_name = group2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)

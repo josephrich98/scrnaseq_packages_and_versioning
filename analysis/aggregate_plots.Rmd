@@ -19,8 +19,6 @@ data_input <- "default" # "default" or "same"
 matrix_generation <- "kb0_28_0_raw_generated_sa"
 read_fraction_downsampled_for_cell_downsample_comparisons <- "1_0"
 cell_fraction_downsampled_for_read_downsample_comparisons <- "1_0"
-
-output_base_path <- glue("{project_base_path}/output/{data_name}/seurat{seurat_version}/input_{data_input}/{matrix_generation}")
 ```
 
 ```{r}
@@ -39,11 +37,13 @@ get_stats_filepath <- function(set, frac_str, package, type_downsampled) {
         downsample_string <- glue("cell_fraction_{package}1_1_0_vs_{package}2_{frac_str}/read_fraction_{read_fraction_downsampled_for_cell_downsample_comparisons}")
     }
 
-    if (set$file_name == "de_stats.txt" && set$statistic_name != "Marker Genes Jaccard") {
-        data_input_for_filepath <- glue("{package}1")
-    } else {
-        data_input_for_filepath <- data_input
-    }
+    # if (set$file_name == "de_stats.txt" && set$statistic_name != "Marker Genes Jaccard") {
+    #     data_input_for_filepath <- glue("{package}1")
+    # } else {
+    #     data_input_for_filepath <- data_input
+    # }
+    
+    data_input_for_filepath <- glue("{package}1")  #!!! I put in this line and commented out the above - is this ok?
 
     return(glue("{project_base_path}/output/{data_name}/{package_full_name}v{package_version}/input_{data_input_for_filepath}/{matrix_generation}/{downsample_string}/stats/{set$file_name}"))
 }

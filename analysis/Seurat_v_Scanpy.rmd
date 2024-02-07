@@ -23,18 +23,16 @@ seu_matrix_generation_method_version <- "0.28.0"
 seu_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 seu_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 seu_matrix_qc <- "raw" # "raw" or "filtered"
-seu_used_batch <- FALSE
 
 scan_matrix_generation_method <- "kb" # str["kb", "cellranger"]
 scan_matrix_generation_method_version <- "0.28.0"
 scan_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 scan_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 scan_matrix_qc <- "raw" # "raw" or "filtered"
-scan_used_batch <- FALSE
 
 # Function argument and input settings
-analysis_methods <- "scanpy_like" # str["default", "seurat_like", "scanpy_like"]
-data_input <- "scanpy" # str["default", "seurat", "scanpy"]
+analysis_methods <- "default" # str["default", "seurat_like", "scanpy_like"]
+data_input <- "default" # str["default", "seurat", "scanpy"]
 
 # Package versions
 seurat_version <- "4.3.0"
@@ -52,12 +50,17 @@ scan_num_pcs <- 50
 umap_knn_k <- 50
 umap_leiden_clustering_resolution <- 0.8
 
+# Data path specifications
+seu_data_path <- NULL  # NULL for default path
+scan_data_path <- NULL  # NULL for default path
+output_base_path <- NULL   # NULL for default path
+
 # Output path specifications
-project_base_path <- "/workspace/analysis"
-data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
-include_seeds_in_file_paths <- FALSE
-save_data <- FALSE
+save_data <- TRUE
 dpi <- 350
+project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
+data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
+include_seeds_in_file_paths <- FALSE  # Only needed if using default input/output paths
 ```
 
 R Setting up variables
@@ -89,8 +92,13 @@ group2_color <- "#56B4E9"
 
 Data paths
 ```{r}
-seu_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu_matrix_generation_method_full}/frac{seu_read_fraction_after_downsampling}_seed{read_downsample_seed}")
-scan_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan_matrix_generation_method_full}/frac{scan_read_fraction_after_downsampling}_seed{read_downsample_seed}")
+if (is.null(seu_data_path)) {
+    seu_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu_matrix_generation_method_full}/frac{seu_read_fraction_after_downsampling}_seed{read_downsample_seed}")
+}
+
+if (is.null(scan_data_path)) {
+    scan_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan_matrix_generation_method_full}/frac{scan_read_fraction_after_downsampling}_seed{read_downsample_seed}")
+}
 ```
 
 File path definitions
@@ -118,7 +126,9 @@ if (include_seeds_in_file_paths) {
     cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
 }
 
-output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}_vs_scanpyv{scanpy_version}/methods_{analysis_methods}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+if (is.null(output_base_path)) {
+    output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}_vs_scanpyv{scanpy_version}/methods_{analysis_methods}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+}
 
 output_data_file_paths <- list(
     markers = glue::glue("{output_base_path}/data_files/markers.rds"),
@@ -374,7 +384,7 @@ Read the data into Seurat and create knee plot:   ##%%%
 ```{r}
 if (seu_matrix_qc == "raw") {
     if (seu_matrix_generation_method == "kb") {
-        res_mat <- read_count_output_modified(seu_data_path, name = "cells_x_genes", unspliced = seu_matrix_include_unspliced, batch = seu_used_batch, tcc = FALSE)
+        res_mat <- read_count_output_modified(seu_data_path, name = "cells_x_genes", unspliced = seu_matrix_include_unspliced, tcc = FALSE)
     } else if (seu_matrix_generation_method == "cellranger") {
         res_mat <- Read10X(seu_data_path, gene.column = 1)
     } else {
@@ -432,19 +442,13 @@ Read the data into Scanpy and apply basic filtering (knee plot)
 if r.scan_matrix_qc == "raw":  
     if (scan_matrix_generation_method=="kb" and r.scan_matrix_include_unspliced):
         matrix_file = "cells_x_genes.total.mtx"
-        if r.scan_used_batch:
-            adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
-        else:
-            adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
+        adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
     elif (scan_matrix_generation_method=="kb" and not r.scan_matrix_include_unspliced):
         matrix_file = "cells_x_genes.cell.mtx"
         if not os.path.exists(f"{scan_data_path}/{matrix_file}"):
             # If it doesn't exist, use the alternative .mtx file
             matrix_file = "cells_x_genes.mtx"
-        if r.scan_used_batch:
-            adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.combined.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
-        else:
-            adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
+        adata = kb_utils.import_matrix_as_anndata(f"{scan_data_path}/{matrix_file}",f"{scan_data_path}/cells_x_genes.barcodes.txt",f"{scan_data_path}/cells_x_genes.genes.txt")
     elif scan_matrix_generation_method=="cellranger":
         adata = sc.read_10x_mtx(scan_data_path, var_names='gene_ids')
     
@@ -612,7 +616,7 @@ If data_input == "scanpy": Apply Cells and Genes from Scanpy to Seurat
 ```{r}
 if (data_input == "scanpy") {
     if (seu_matrix_generation_method == "kb") {
-        res_mat <- read_count_output_modified(seu_data_path, name = "cells_x_genes", unspliced = seu_matrix_include_unspliced, batch = seu_used_batch, tcc = FALSE)
+        res_mat <- read_count_output_modified(seu_data_path, name = "cells_x_genes", unspliced = seu_matrix_include_unspliced, tcc = FALSE)
     } else if (seu_matrix_generation_method == "cellranger") {
         res_mat <- Read10X(seu_data_path, gene.column = 1)
     }
@@ -654,6 +658,7 @@ seu <- NormalizeData(seu, verbose = FALSE)
 ```
 
 ```{python}
+#!!!
 if r.scanpy_hvg_flavor != "seurat_v3":
     sc.pp.normalize_total(adata, target_sum=1e4)
 ```
@@ -705,14 +710,18 @@ upset_hvg <- make_upset_seurat_vs_scanpy(seu, py$adata, comparison = "HVG", save
 ```
 
 ```{python}
-if r.scanpy_hvg_flavor == "seurat_v3":
-    sc.pp.normalize_total(adata, target_sum=1e4)
+#!!!
+# if r.scanpy_hvg_flavor == "seurat_v3":
+#     sc.pp.normalize_total(adata, target_sum=1e4)
 ```
 
 ```{python}
-if r.scanpy_hvg_flavor == "seurat_v3":
-    sc.pp.log1p(adata)
+# if r.scanpy_hvg_flavor == "seurat_v3":
+#     sc.pp.log1p(adata)
 
+
+# sc.pp.normalize_total(adata, target_sum=1e4)   #!!!
+# sc.pp.log1p(adata)   #!!!
 adata.raw = adata
 ```
 
@@ -824,6 +833,11 @@ all.equal(cell_names_py, rownames(pca_embeddings))
 
 Overlay PCA scatterplots
 ```{r}
+if (!identical(seu_inds, scan_inds)) {
+    pca_embeddings <- pca_embeddings[rownames(pca_embeddings) %in% overlapping_inds, ]
+    pca_embeddings_py <- pca_embeddings_py[rownames(pca_embeddings_py) %in% overlapping_inds, ]
+}
+
 pca12_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, save = file_paths$pca_12_overlay_filepath)
 pca34_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, pcs = 3:4, save = file_paths$pca_34_overlay_filepath)
 
@@ -831,10 +845,10 @@ pca12_plot
 pca34_plot
 
 #* erase
-pca12_plot_TR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, legend_position = "TR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"))
-pca12_plot_TL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, legend_position = "TL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"))
-pca12_plot_BR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, legend_position = "BR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"))
-pca12_plot_BL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, legend_position = "BL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"))
+pca12_plot_TR <- plot_pca_compare(pca_embeddings, pca_embeddings_py, legend_position = "TR", save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"))
+pca12_plot_TL <- plot_pca_compare(pca_embeddings, pca_embeddings_py, legend_position = "TL", save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"))
+pca12_plot_BR <- plot_pca_compare(pca_embeddings, pca_embeddings_py, legend_position = "BR", save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"))
+pca12_plot_BL <- plot_pca_compare(pca_embeddings, pca_embeddings_py, legend_position = "BL", save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"))
 ```
 
 Plot PCA eigenvectors (loadings), eigenvalues
@@ -894,6 +908,9 @@ combined_plot
 If data_input == "scanpy": Apply PCs from Scanpy to Seurat
 ```{r}
 if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
+    pca_embeddings_py <- py$adata$obsm["X_pca"]
+    rownames(pca_embeddings_py) <- scan_inds
+    colnames(pca_embeddings_py) <- colnames(pca_embeddings)
     seu[["pca"]] <- CreateDimReducObject(embeddings = as.matrix(pca_embeddings_py), key = "PC_", assay = DefaultAssay(seu))
 }
 ```
@@ -901,7 +918,7 @@ if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
 If data_input == "seurat": Apply PCs from Seurat to Scanpy
 ```{r}
 if (data_input == "seurat" && identical(seu_inds, scan_inds)) {
-    py$adata$obsm["X_pca"] <- pca_embeddings
+    py$adata$obsm["X_pca"] <- Embeddings(seu, reduction = "pca")
 }
 ```
 
@@ -1493,10 +1510,10 @@ Plot scatterplots
 markers2$p_val_adj_r[markers2$p_val_adj_r == 0] <- .Machine$double.xmin
 markers2$p_val_adj_py[markers2$p_val_adj_py == 0] <- .Machine$double.xmin
 
-seurat_vs_scanpy_logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
+seurat_vs_scanpy_logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
 seurat_vs_scanpy_pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
 
-seurat_vs_scanpy_logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
+seurat_vs_scanpy_logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
 
 seurat_vs_scanpy_logFC_scatterplot
 seurat_vs_scanpy_logFC_scatterplot_with_legend

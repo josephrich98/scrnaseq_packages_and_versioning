@@ -50,8 +50,11 @@ if __name__ == "__main__":
     sys.path.append(parent_path) if parent_path not in sys.path else None
     
     from fastq_processor import FastqProcessor
-   
-    with open(f'{parent_path}/config.yaml', 'r') as file:
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-y', '--yaml_path', default='config.yaml', help='Path to the YAML configuration file.')
+    args = parser.parse_args()
+    with open(args.yaml_path, 'r') as file:
         config = yaml.safe_load(file)
         
     fastq_processor = FastqProcessor(**config)

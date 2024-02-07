@@ -8,10 +8,10 @@ cellranger_version: ""  # "" for agnostic
 matrix_folder_name: ""  # "" for default
 
 ### kb ref/count
-kallisto_binary_path: ""  # "" for kallisto version in kb-python
-bustools_binary_path: ""  # "" for bustools version in kb-python
+kallisto_binary_path: "/home/jrich/miniconda3/envs/kb_env_0_24_4/lib/python3.11/site-packages/kb_python/bins/linux/kallisto/kallisto"  # "" for kallisto version in kb-python
+bustools_binary_path: "/home/jrich/miniconda3/envs/kb_env_0_24_4/lib/python3.11/site-packages/kb_python/bins/linux/bustools/bustools"  # "" for bustools version in kb-python
 kb_workflow: "standard"  # kb only: nac for unspliced + spliced (in addition to spliced only) (kb 28+ only), standard for spliced only
-kb_reference_folder_name: "kb28_kallisto50"  # consider including date, kallisto version, and/or kb version in folder name
+kb_reference_folder_name: "kb28_kallisto46"  # consider including date, kallisto version, and/or kb version in folder name
 
 ### kb ref
 kb_d_list: ""   # "" for default (d-list with provided fasta file), None to exclude d-list
@@ -19,11 +19,12 @@ ensembl_release: 111  # for kb ref
 
 ### kb count
 kb_sequencing_technology: "10xv3"  # find on 10x website
-kb_count_strandedness: "unstranded"
+kb_count_strandedness: ""
 
 ### cellranger count
 cellranger_reference_folder_name: "grch38_2020"
 cellranger_include_introns: ""   # "" for default; true or false
+cellranger_expect_cells: ""  # "" for default; integer
 
 ### Links
 fastq_link: "https://s3-us-west-2.amazonaws.com/10x.files/samples/cell-exp/4.0.0/SC3_v3_NextGem_SI_PBMC_10K/SC3_v3_NextGem_SI_PBMC_10K_fastqs.tar"  # find on 10x website

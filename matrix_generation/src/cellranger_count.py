@@ -58,48 +58,15 @@ def ensure_correct_cellranger_version(instance):
     os.environ["PATH"] = updated_path
 
 def cellranger_install_transcriptome_function(instance):
-    cellranger_reference_path = os.path.join(instance.reference_path, "cellranger", date_directory_name)
+    cellranger_reference_path = os.path.join(instance.reference_path, "cellranger", instance.cellranger_reference_folder_name)
     if not os.path.exists(cellranger_reference_path):
         os.makedirs(cellranger_reference_path)
     os.chdir(cellranger_reference_path)
+
     if not os.listdir(cellranger_reference_path):
         subprocess.run(f"wget {instance.cellranger_transcriptome_link}", shell=True, executable="/bin/bash")
         subprocess.run(f"tar -xzvf {instance.cellranger_transcriptome_link.split('/')[-1]}", shell=True, executable="/bin/bash")
         
-
-def find_transcriptome(instance, reference_path):
-    numbers = []
-
-    # 1. Find the most recent transcriptome
-    for file in os.listdir(reference_path):
-        try:
-            num = int(file)
-            numbers.append(num)
-        except ValueError:
-            continue
-
-    # If we found transcriptomes
-    if numbers:
-        if instance.reference_selector == "most_recent":
-            transcriptome_date = max(numbers)
-        else:
-            transcriptome_date = instance.reference_selector
-            
-        grch38_dir = os.path.join(
-            reference_path, str(transcriptome_date), "grch38_transcriptome"
-        )
-        
-        # 2. Look within the grch38_transcriptome of the most recent transcriptome
-        if os.path.exists(grch38_dir):
-            for child_dir in os.listdir(grch38_dir):
-                # 3. Check for directories starting with refdata
-                if child_dir.startswith("refdata"):
-                    return os.path.join(grch38_dir, child_dir)
-
-    # Return None if we didn't find any matching directory
-    return None
-
-
 def cellranger_count_function(instance, baseline):
     if baseline:
         seed_list = (0,)
@@ -112,17 +79,28 @@ def cellranger_count_function(instance, baseline):
         ensure_correct_cellranger_version(instance)
 
     cellranger_version_str = str(instance.cellranger_version).replace('.', '_')
+    
+    if instance.matrix_folder_name != "":
+        out_folder_final = instance.matrix_folder_name
+    else:
+        out_folder_final = f"cellranger{cellranger_version_str}"
 
-    cellranger_output_directory = os.path.join(instance.output_directory, f"cellranger{cellranger_version_str}")
+    cellranger_output_directory = os.path.join(instance.output_directory, out_folder_final)
     os.makedirs(cellranger_output_directory, exist_ok=True)
     os.chdir(cellranger_output_directory)
-    cellranger_reference_path = os.path.join(
-        os.path.dirname(instance.main_directory),
-        "reference_files",
-        "cellranger",
-    )
-    
-    transcriptome_path = find_transcriptome(instance, cellranger_reference_path)
+    cellranger_reference_path = os.path.join(instance.reference_path, "cellranger", instance.cellranger_reference_folder_name)
+
+    transcriptome_path = None
+
+    if os.path.exists(cellranger_reference_path):
+        all_items = os.listdir(cellranger_reference_path)
+        directories_only = [item for item in all_items if os.path.isdir(os.path.join(cellranger_reference_path, item))]
+        for child_dir in directories_only:
+            if child_dir.startswith("refdata"):
+                transcriptome_path = os.path.join(cellranger_reference_path, child_dir)
+
+    if transcriptome_path is None:
+        raise Exception(f"Cellranger transcriptome not found. Please download it or check values in config.yaml")
 
     for frac in frac_list:
         for seed in seed_list:
@@ -136,13 +114,25 @@ def cellranger_count_function(instance, baseline):
             command = [
                 "cellranger",
                 "count",
-                f"--id=frac{frac_str}_seed{seed}",
-                f"--transcriptome={transcriptome_path}",
                 f"--fastqs={specific_fastq_directory}",
                 f"--sample={instance.data_name}",
                 "--localcores=8",
                 "--localmem=64",
+                f"--id=frac{frac_str}_seed{seed}",
+                f"--transcriptome={transcriptome_path}"
             ]  # modify ID to change output folder name
+
+            if instance.cellranger_include_introns == "true":
+                if int(instance.cellranger_version[0]) < 7:
+                    command.insert(2, "--include-introns")
+            elif instance.cellranger_include_introns == "false":
+                if int(instance.cellranger_version[0]) >= 7:
+                    command.insert(2, "--include-introns=false")
+             
+            if instance.cellranger_expect_cells != "":        
+                command.insert(2, f"--expect-cells {int(instance.cellranger_expect_cells)}"
+
+            breakpoint()
 
             subprocess.run(command)
 
@@ -158,13 +148,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--baseline', action='store_true', help='True if using baseline data (will override any seeds and counts accordingly), False if using downsampled fastq data')
     parser.add_argument('-c', '--download_transcriptome', action='store_true', help='Download reference transcriptome before running cellranger count')
+    parser.add_argument('-y', '--yaml_path', default='config.yaml', help='Path to the YAML configuration file.')
     args = parser.parse_args()
    
-    with open(f'{parent_path}/config.yaml', 'r') as file:
+    with open(args.yaml_path, 'r') as file:
         config = yaml.safe_load(file)
         
     fastq_processor = FastqProcessor(**config)
-    
+
     if args.download_transcriptome:
         fastq_processor.cellranger_install_transcriptome()
 
