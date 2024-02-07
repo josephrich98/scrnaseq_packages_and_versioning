@@ -138,7 +138,7 @@ def cellranger_count_function(instance, baseline):
 
             print(f"cellranger count done for seed {seed} and frac {frac}")
             
-            organize_output(instance.output_directory, seed, frac_str, matrix_source="cellranger", matrix_version = cellranger_version_str)
+            organize_output(instance.output_directory, seed, frac_str, matrix_source="cellranger", matrix_version = cellranger_version_str, matrix_folder_name = out_folder_final)
 
     print(f"cellranger count done!")
 
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--baseline', action='store_true', help='True if using baseline data (will override any seeds and counts accordingly), False if using downsampled fastq data')
     parser.add_argument('-c', '--download_transcriptome', action='store_true', help='Download reference transcriptome before running cellranger count')
-    parser.add_argument('-y', '--yaml_path', default='config.yaml', help='Path to the YAML configuration file.')
+    parser.add_argument('-y', '--yaml_path', default=f'{parent_path}/config.yaml', help='Path to the YAML configuration file.')
     args = parser.parse_args()
    
     with open(args.yaml_path, 'r') as file:

@@ -115,20 +115,15 @@ def kb_count_function(instance, baseline, threads):
 
     kb_reference_path = os.path.join(instance.reference_path, "kb", instance.kb_reference_folder_name)
 
-    if not os.path.exists(kb_reference_path) or not os.listdir(kb_reference_path):
-        raise Exception(f"{kb_reference_path} does not exist or is empty. Run kb ref or check config.yaml.")
+    #!!! if not os.path.exists(kb_reference_path) or (os.path.isdir(kb_reference_path) and not os.listdir(kb_reference_path)):
+    #!!!     raise Exception(f"{kb_reference_path} does not exist or is empty. Run kb ref or check config.yaml.")
 
     kb_version_str = str(kb_version).replace('.', '_')        
-    out_folder_final = f"kb{kb_version_str}"
-
-    if instance.kallisto_binary_path != "":
-        result = subprocess.run([instance.kallisto_binary_path, "version"], capture_output=True, text=True)
-        kallisto_version_output = result.stdout.strip()
-        kallisto_major_version = kallisto_version_output.split('.')[1]
-            
-        out_folder_final = out_folder_final + f"_{kallisto_major_version}"
+    
+    if instance.matrix_folder_name != "":
+        out_folder_final = instance.matrix_folder_name
     else:
-        kallisto_major_version = ""
+        out_folder_final = f"kb{kb_version_str}"
 
     print("about to enter kb count")
     for frac in frac_list:
@@ -141,9 +136,6 @@ def kb_count_function(instance, baseline, threads):
                 specific_fastq_directory = os.path.join(instance.downsampled_fastq_directory, f"frac{frac_str}_seed{seed}")
 
             kb_version_str = str(kb_version).replace('.', '_')
-            
-            if instance.matrix_folder_name != "":
-                out_folder_final = instance.matrix_folder_name
 
             out_dir = os.path.join(instance.output_directory, out_folder_final, f"frac{frac_str}_seed{seed}")
             if not os.path.exists(out_dir):
@@ -200,18 +192,20 @@ def kb_count_function(instance, baseline, threads):
             print(' '.join(kb_count_command))
 
             kb_count_command = ' '.join(kb_count_command)
+            
+            breakpoint()
 
             # Run the command
             subprocess.run(kb_count_command, shell=True, executable="/bin/bash")
 
-            # organize_output(instance.output_directory, seed, frac_str, matrix_source = "kb")
+            # organize_output(instance.output_directory, seed, frac_str, matrix_source = "kb", matrix_version = kb_version_str, matrix_folder_name = out_folder_final)
             
             print(f"kb count finished for seed {seed} and frac {frac_str}")
     
     for frac in frac_list:
         for seed in seed_list:
             frac_str = str(frac).replace('.', '_')
-            organize_output(instance.output_directory, seed, frac_str, matrix_source = "kb", matrix_version = kb_version_str, kallisto_major_version = kallisto_major_version)
+            organize_output(instance.output_directory, seed, frac_str, matrix_source = "kb", matrix_version = kb_version_str, matrix_folder_name = out_folder_final)
 
     print("kb count finished")
 
@@ -226,9 +220,10 @@ if __name__ == "__main__":
     parser.add_argument('-b', '--baseline', action='store_true', help='True if using baseline data (will override any seeds and counts accordingly), False if using downsampled fastq data')
     parser.add_argument('-t', '--threads', default='8', help='Number of threads for kb count')
     parser.add_argument('-r', '--run_ref', action='store_true', help='Run kb ref in addition to kb count')
+    parser.add_argument('-y', '--yaml_path', default=f'{parent_path}/config.yaml', help='Path to the YAML configuration file.')
     args = parser.parse_args()
    
-    with open(f'{parent_path}/config.yaml', 'r') as file:
+    with open(args.yaml_path, 'r') as file:
         config = yaml.safe_load(file)
         
     fastq_processor = FastqProcessor(**config)

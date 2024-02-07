@@ -5,7 +5,7 @@ frac_list: [1.0]
 count_matrix_generation_method: "cellranger"  # "kb" or "cellranger" or "both"; only used by main.py
 kb_version: ""  # "" for agnostic
 cellranger_version: "7.2.0"  # "" for agnostic
-matrix_folder_name: ""  # "" for default
+matrix_folder_name: "cellranger7_WITHOUT_introns"  # "" for default
 
 ### kb ref/count
 kallisto_binary_path: ""  # "" for kallisto version in kb-python
@@ -23,7 +23,7 @@ kb_count_strandedness: ""
 
 ### cellranger count
 cellranger_reference_folder_name: "grch38_2020"
-cellranger_include_introns: ""   # "" for default; true or false
+cellranger_include_introns: "false"   # "" for default; true or false
 cellranger_expect_cells: 10000  # "" for default; integer
 
 ### Links

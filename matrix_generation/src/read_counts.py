@@ -97,7 +97,7 @@ if __name__ == "__main__":
     from fastq_processor import FastqProcessor
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('-y', '--yaml_path', default='config.yaml', help='Path to the YAML configuration file.')
+    parser.add_argument('-y', '--yaml_path', default=f'{parent_path}/config.yaml', help='Path to the YAML configuration file.')
     args = parser.parse_args()
     
     with open(args.yaml_path, 'r') as file:
