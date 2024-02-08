@@ -68,8 +68,8 @@ scan2_data_path <- NULL  # NULL for default path
 output_base_path <- NULL   # NULL for default path
 
 # Output path specifications
-scan1_name <- "full"
-scan2_name <- "downsampled"
+scan1_name <- "full"  # Must have no spaces
+scan2_name <- "downsampled"  # Must have no spaces
 save_data <- FALSE
 dpi <- 350
 project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
@@ -1466,7 +1466,7 @@ upset_markers_all <- make_upset_scanpy(vectorized_scan1_markers, vectorized_scan
 Combine all DE data in one dataframe markers2
 ```{r}
 markers2 <- result1 |>
-    inner_join(result2, by = c("cluster", "gene"), suffix = c(glue(".{scan1_name}"), glue(".{scan2_name}"))) # ? originally left join
+    inner_join(result2, by = c("cluster", "gene"), suffix = c(glue(".{scan1_name}"), glue(".{scan2_name}")))
 
 markers2 <- markers2 |>
     mutate(cluster = factor(cluster, levels = as.character(seq_len(length(unique(cluster))) - 1)))

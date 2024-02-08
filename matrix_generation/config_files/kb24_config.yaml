@@ -9,7 +9,7 @@ matrix_folder_name: "kallisto46"  # "" for default
 
 ### kb ref/count
 kallisto_binary_path: "/home/jrich/miniconda3/envs/kb_env_0_24_4/lib/python3.11/site-packages/kb_python/bins/linux/kallisto/kallisto"  # "" for kallisto version in kb-python
-bustools_binary_path: "/home/jrich/miniconda3/envs/kb_env_0_24_4/lib/python3.11/site-packages/kb_python/bins/linux/bustools/bustools"  # "" for bustools version in kb-python
+bustools_binary_path: "/home/jrich/miniconda3/envs/kb28_final/lib/python3.11/site-packages/kb_python/bins/linux/bustools/bustools"  # "" for bustools version in kb-python
 kb_workflow: "standard"  # kb only: nac for unspliced + spliced (in addition to spliced only) (kb 28+ only), standard for spliced only
 kb_reference_folder_name: "kallisto46"  # consider including date, kallisto version, and/or kb version in folder name
 

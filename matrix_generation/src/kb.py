@@ -65,11 +65,13 @@ def kb_ref_function(instance):
         kb_ref_command = f"kb ref -i {kb_reference_path}/index.idx -g {kb_reference_path}/t2g.txt -f1 {kb_reference_path}/transcriptome.fa --workflow=standard {ensembl_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz {ensembl_path}/Homo_sapiens.GRCh38.{instance.ensembl_release}.gtf.gz"
     
     if instance.kb_d_list != "":
-        position = command.find("--workflow")
+        position = "--workflow"
+        position = kb_ref_command.find(position)
         kb_ref_command = kb_ref_command[:position] + f"--d-list {instance.kb_d_list} " + kb_ref_command[position:]
 
     if instance.kallisto_binary_path != "":
         position = f"{ensembl_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+        position = kb_ref_command.find(position)
         kb_ref_command = kb_ref_command[:position] + f"--kallisto {instance.kallisto_binary_path} " + kb_ref_command[position:]
 
         result = subprocess.run([instance.kallisto_binary_path, "version"], capture_output=True, text=True)
@@ -80,11 +82,10 @@ def kb_ref_function(instance):
 
     if instance.bustools_binary_path != "":
         position = f"{ensembl_path}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+        position = kb_ref_command.find(position)
         kb_ref_command = kb_ref_command[:position] + f"--bustools {instance.bustools_binary_path} " + kb_ref_command[position:]
 
     print(kb_ref_command)
-
-    breakpoint()
 
     subprocess.run(kb_ref_command, shell=True, executable="/bin/bash")
 
@@ -94,7 +95,7 @@ def kb_ref_function(instance):
         else:
             kallisto_binary_path_command = "kb info | grep 'kallisto:' | awk '{print $3}' | sed 's/[()]//g'"
             kallisto_binary_path = subprocess.run(kallisto_binary_path_command, shell=True, executable="/bin/bash", stdout=subprocess.PIPE, text=True).stdout.strip()
-        subprocess.run(f"{kallisto_binary_path} index -i {kb_reference_path}/index.idx -k 31 {kb_reference_path}/fasta_spliced.fasta", shell=True, executable="/bin/bash")
+        subprocess.run(f"{kallisto_binary_path} index -i {kb_reference_path}/index.idx -k 31 {kb_reference_path}/transcriptome.fa", shell=True, executable="/bin/bash")
     
 
         
@@ -115,8 +116,8 @@ def kb_count_function(instance, baseline, threads):
 
     kb_reference_path = os.path.join(instance.reference_path, "kb", instance.kb_reference_folder_name)
 
-    #!!! if not os.path.exists(kb_reference_path) or (os.path.isdir(kb_reference_path) and not os.listdir(kb_reference_path)):
-    #!!!     raise Exception(f"{kb_reference_path} does not exist or is empty. Run kb ref or check config.yaml.")
+    if not os.path.exists(kb_reference_path) or (os.path.isdir(kb_reference_path) and not os.listdir(kb_reference_path)):
+        raise Exception(f"{kb_reference_path} does not exist or is empty. Run kb ref or check config.yaml.")
 
     kb_version_str = str(kb_version).replace('.', '_')        
     
@@ -193,8 +194,6 @@ def kb_count_function(instance, baseline, threads):
 
             kb_count_command = ' '.join(kb_count_command)
             
-            breakpoint()
-
             # Run the command
             subprocess.run(kb_count_command, shell=True, executable="/bin/bash")
 

@@ -130,9 +130,7 @@ def cellranger_count_function(instance, baseline):
                     command.insert(2, "--include-introns=false")
              
             if instance.cellranger_expect_cells != "":        
-                command.insert(2, f"--expect-cells {int(instance.cellranger_expect_cells)}"
-
-            breakpoint()
+                command.insert(2, f"--expect-cells={int(instance.cellranger_expect_cells)}")
 
             subprocess.run(command)
 

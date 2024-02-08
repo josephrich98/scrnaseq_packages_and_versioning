@@ -26,13 +26,13 @@ seu1_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downlo
 seu1_matrix_qc <- "raw" # "raw" or "filtered"
 
 seu2_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-seu2_matrix_generation_method_version <- "0.24.4"
+seu2_matrix_generation_method_version <- "0.28.0"
 seu2_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 seu2_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 seu2_matrix_qc <- "raw" # "raw" or "filtered"
 
 # Function argument and input settings
-data_input <- "seu1" # str["default", "seu1", "seu2"]
+data_input <- "default" # str["default", "seu1", "seu2"]
 
 # Package version
 seurat_version <- "4.3.0"
@@ -61,14 +61,14 @@ umap_seed1 <- 42
 umap_seed2 <- 42
 
 # Data path specifications
-seu1_data_path <- "/workspace/analysis/count_matrix_collection/SC3_v3_NextGem_SI_PBMC_10K/kb28_raw_generated_WITHOUT_dlist/frac1_0_seed0"  # NULL for default path
-seu2_data_path <- NULL  # NULL for default path
-output_base_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0/input_seu1/seu1_kb28_WITHOUT_dlist_vs_kb24/cell_fraction_1_0/read_fraction_1_0"   # NULL for default path
+seu1_data_path <- "/workspace/analysis/count_matrix_collection/SC3_v3_NextGem_SI_PBMC_10K/kallisto50_raw_feature_bc_matrix_collection/frac1_0_seed0"  # "/workspace/analysis/count_matrix_collection/SC3_v3_NextGem_SI_PBMC_10K/kallisto50_raw_feature_bc_matrix_collection/frac1_0_seed0"  # NULL for default path
+seu2_data_path <- "/workspace/analysis/count_matrix_collection/SC3_v3_NextGem_SI_PBMC_10K/kallisto50_2_raw_feature_bc_matrix_collection/frac1_0_seed0"  # NULL for default path
+output_base_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0/input_seu1/seu1_cellranger7_2_0_WITHOUT_introns_vs_seu2_cellranger6_1_2_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0" # "/workspace"   # NULL for default path
 
 # Output path specifications
-seu1_name <- "Kallisto50_no_dlist"
-seu2_name <- "Kallisto46"
-save_data <- TRUE
+seu1_name <- "Kallisto50_1"  # Must have no spaces
+seu2_name <- "Kallisto50_2"  # Must have no spaces
+save_data <- FALSE
 dpi <- 350
 project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
@@ -747,10 +747,15 @@ pca12_plot
 pca34_plot
 
 #* erase
-pca12_plot_TR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "TR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"))
-pca12_plot_TL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "TL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"))
-pca12_plot_BR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "BR", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"))
-pca12_plot_BL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "BL", group_labels = unlist(seurat_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"))
+save_path_TR <- ifelse(save_data, glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"), FALSE)
+save_path_TL <- ifelse(save_data, glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"), FALSE)
+save_path_BR <- ifelse(save_data, glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"), FALSE)
+save_path_BL <- ifelse(save_data, glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"), FALSE)
+
+pca12_plot_TR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "TR", group_labels = unlist(seurat_group_names), save = save_path_TR)
+pca12_plot_TL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "TL", group_labels = unlist(seurat_group_names), save = save_path_TL)
+pca12_plot_BR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "BR", group_labels = unlist(seurat_group_names), save = save_path_BR)
+pca12_plot_BL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "BL", group_labels = unlist(seurat_group_names), save = save_path_BL)
 ```
 
 Plot PCA eigenvectors (loadings), eigenvalues
@@ -1265,7 +1270,7 @@ upset_markers_all <- make_upset_seurat(vectorized_seu1_markers, vectorized_seu2_
 Combine all DE data in one dataframe markers2
 ```{r}
 markers2 <- markers_seu1 |>
-    inner_join(markers_seu2, by = c("cluster", "gene"), suffix = c(glue(".{seu1_name}"), glue(".{seu2_name}"))) # ? originally left join
+    inner_join(markers_seu2, by = c("cluster", "gene"), suffix = c(glue(".{seu1_name}"), glue(".{seu2_name}")))
 
 markers2 <- markers2 |>
     mutate(cluster = factor(cluster, levels = as.character(seq_len(length(unique(cluster))) - 1)))

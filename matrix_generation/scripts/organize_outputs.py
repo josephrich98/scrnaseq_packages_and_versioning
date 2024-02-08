@@ -4,7 +4,7 @@ import shutil
 import argparse
 
 def organize_output(src_dir, seed, frac_str, matrix_source, matrix_version = "", matrix_folder_name = ""):
-    if matrix_folder_name = "":
+    if matrix_folder_name == "":
         matrix_folder_name = f"{matrix_source}{matrix_version}"
     if matrix_source == "cellranger":
         full_src_dir = os.path.join(src_dir, matrix_folder_name, f"frac{frac_str}_seed{seed}", "outs", "raw_feature_bc_matrix")

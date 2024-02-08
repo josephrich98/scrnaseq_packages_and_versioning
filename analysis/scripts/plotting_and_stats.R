@@ -617,13 +617,13 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
 }
 
 
-plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALSE, show_legend = FALSE, group1_name = "Seurat", group2_name = "Scanpy", ccc = NULL, save = FALSE) {
+plot_scatterplot_de_logfc <- function(markers2, outliers_excluded = FALSE, show_legend = FALSE, group1_name = "Seurat", group2_name = "Scanpy", ccc = NULL, save = FALSE) {
     scatterplot_names <- scatterplot_naming(group1_name, group2_name)
     logFC_group1 <- scatterplot_names$logFC_group1
     logFC_group2 <- scatterplot_names$logFC_group2
     
-    data_pca <- data.frame(group1 = markers2[[logFC_group1]], 
-                           group2 = markers2[[logFC_group2]])
+    data_pca <- data.frame(x = markers2[[logFC_group2]], 
+                           y = markers2[[logFC_group1]])
     
     pca_result <- prcomp(data_pca, center = TRUE, scale. = FALSE)
     
@@ -643,8 +643,8 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
             filter(abs(.data[[logFC_group1]]) < 15) |>
             filter(abs(.data[[logFC_group2]]) < 15) -> markers2_filtered
 
-        data_pca_filtered <- data.frame(group1 = markers2_filtered[[logFC_group1]], 
-                               group2 = markers2_filtered[[logFC_group2]])
+        data_pca_filtered <- data.frame(x = markers2_filtered[[logFC_group2]], 
+                               y = markers2_filtered[[logFC_group1]])
         
         pca_result_filtered <- prcomp(data_pca_filtered, center = TRUE, scale. = FALSE)
         
@@ -660,20 +660,43 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
         b_filtered <- data_mean_filtered[2] - m_filtered * data_mean_filtered[1]
     }
 
-    if (show_legend) {
-        bottom_margin <- 0
-    } else {
-        bottom_margin <- -40
-    }
+    bottom_margin <- 0
+    top_margin <- 5
+    
+    # if (show_legend) {
+    #     bottom_margin <- 0
+    #     top_margin <- 0
+    # } else {
+    #     bottom_margin <- 0  # -40
+    #     top_margin <- 5
+    # }
+    
+    max_value <- max(max(abs(markers2[[logFC_group1]])), max(abs(markers2[[logFC_group2]])))
     
     p <- ggplot(markers2, aes(!!sym(logFC_group2), !!sym(logFC_group1))) +
         labs(x = bquote(log[2](.(group2_name) ~ "Fold Change")), y = bquote(log[2](.(group1_name) ~ "Fold Change"))) +
+        coord_cartesian(xlim = c(-max_value, max_value), ylim = c(-max_value, max_value)) +
         theme(
             plot.title = element_blank(),          # Increase plot title size
-            plot.margin = margin(l = 5, r = 11.5, b = bottom_margin),
+            plot.margin = margin(l = 5, r = 11.5, b = bottom_margin, t = top_margin),
             axis.text = element_text(size = rel(axis_numbering_size)),
             axis.title = element_text(size = rel(axis_text_size))
         )
+    
+    if (max_value > 20) {
+        rounded_max_value <- round(max_value / 5) * 5
+        p <- p + 
+            scale_x_continuous(
+                limits = c(-rounded_max_value, rounded_max_value), # Set limits based on max_value
+                breaks = seq(-rounded_max_value, rounded_max_value, by = 5), # Major breaks every 5 units
+                minor_breaks = setdiff(seq(-rounded_max_value, rounded_max_value, by = 2.5), seq(-rounded_max_value, rounded_max_value, by = 5)) # Minor breaks every 2.5, excluding major breaks
+            ) +
+            scale_y_continuous(
+                limits = c(-rounded_max_value, rounded_max_value), # Set limits based on max_value
+                breaks = seq(-rounded_max_value, rounded_max_value, by = 5), # Major breaks every 5 units
+                minor_breaks = setdiff(seq(-rounded_max_value, rounded_max_value, by = 2.5), seq(-rounded_max_value, rounded_max_value, by = 5)) # Minor breaks every 2.5, excluding major breaks
+            )
+    }
 
     if (!is.null(ccc)) {
         p <- p +
@@ -701,9 +724,9 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
             theme(legend.text = element_text(size = 14))
         if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
             p <- p +
-                geom_abline(slope = m_filtered, intercept = b_filtered, linewidth = 0.5, aes(linetype = baseline_pca_model_filtered, color = baseline_pca_model_filtered)) +
-                scale_color_manual(name = "", values = c("black", "gray30", "black")) +
-                scale_linetype_manual(name = "", values = c(1, 1, 2))
+                geom_abline(linewidth = 0.5, show.legend = FALSE, aes(slope = m_filtered, intercept = b_filtered, linetype = baseline_pca_model_filtered, color = baseline_pca_model_filtered)) +
+                scale_color_manual(name = "", values = c("gray30", "black", "black")) +
+                scale_linetype_manual(name = "", values = c(3, 1, 2))
         } else {
             p <- p +
                 scale_color_manual(name = "", values = c("black", "black")) +
@@ -715,7 +738,7 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
             geom_abline(slope = 1, intercept = 0, linetype = 2, color = "black", show.legend = FALSE, linewidth = 0.5)
         if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
             p <- p +
-                geom_smooth(data = markers2_filtered, method = "lm", se = FALSE, fullrange = TRUE, linewidth = 0.5, show.legend = FALSE, linetype = 3, color = "black")
+                geom_abline(slope = m_filtered, intercept = b_filtered, linewidth = 0.5, color = "gray30", linetype = 3)
         }
     }
     
@@ -730,8 +753,8 @@ plot_scatterplot_de_logfc <- function(markers2, metric, outliers_excluded = FALS
             scico::scale_color_scico(palette = "grayC", direction = -1, end = 0.8)
     }
     
-    p <- p +
-        coord_equal()
+    # p <- p +
+        # coord_equal()
         # theme(plot.title = element_text(hjust = 0.48)) # Center the title
 
     if (!outliers_excluded) {
