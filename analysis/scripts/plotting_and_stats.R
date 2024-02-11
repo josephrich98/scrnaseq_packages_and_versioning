@@ -712,33 +712,34 @@ plot_scatterplot_de_logfc <- function(markers2, outliers_excluded = FALSE, show_
     }
     
     if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
-        baseline_pca_model_filtered <- glue("PCA fit excluding outliers: y={sprintf('%.2f', m_filtered)}x+{sprintf('%.2f', b_filtered)}")
+        baseline_pca_model_filtered <- glue("PCA fit (excluding outliers): y={sprintf('%.2f', m_filtered)}x+{sprintf('%.2f', b_filtered)}")
     }
     
     baseline_pca_model <- glue("PCA fit: y={sprintf('%.2f', m)}x+{sprintf('%.2f', b)}")
     
     if (show_legend) {
         p <- p +
-            geom_abline(linewidth = 0.5, show.legend = TRUE, aes(slope = m, intercept = b, linetype = baseline_pca_model, color = baseline_pca_model)) +
             geom_abline(aes(slope = 1, intercept = 0, linetype = "y=x", color = "y=x"), show.legend = FALSE, linewidth = 0.5) +
             theme(legend.text = element_text(size = 14))
         if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
             p <- p +
-                geom_abline(linewidth = 0.5, show.legend = FALSE, aes(slope = m_filtered, intercept = b_filtered, linetype = baseline_pca_model_filtered, color = baseline_pca_model_filtered)) +
-                scale_color_manual(name = "", values = c("gray30", "black", "black")) +
-                scale_linetype_manual(name = "", values = c(3, 1, 2))
+                geom_abline(linewidth = 0.5, show.legend = TRUE, aes(slope = m_filtered, intercept = b_filtered, linetype = baseline_pca_model_filtered, color = baseline_pca_model_filtered))
         } else {
             p <- p +
-                scale_color_manual(name = "", values = c("black", "black")) +
-                scale_linetype_manual(name = "", values = c(1, 2))
+                geom_abline(linewidth = 0.5, show.legend = TRUE, aes(slope = m, intercept = b, linetype = baseline_pca_model, color = baseline_pca_model))
         }
+        p <- p +
+            scale_color_manual(name = "", values = c("black", "black")) +
+            scale_linetype_manual(name = "", values = c(1, 2))
     } else {
         p <- p +
-            geom_abline(slope = m, intercept = b, linewidth = 0.5, linetype = 1, show.legend = FALSE, color = "black") +
             geom_abline(slope = 1, intercept = 0, linetype = 2, color = "black", show.legend = FALSE, linewidth = 0.5)
         if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
             p <- p +
-                geom_abline(slope = m_filtered, intercept = b_filtered, linewidth = 0.5, color = "gray30", linetype = 3)
+                geom_abline(slope = m_filtered, intercept = b_filtered, linewidth = 0.5, color = "black", linetype = 1)
+        } else {
+            p <- p +
+                geom_abline(slope = m, intercept = b, linewidth = 0.5, linetype = 1, show.legend = FALSE, color = "black")
         }
     }
     
@@ -1062,7 +1063,7 @@ make_knn_scatterplot <- function(nei_pairs, save = FALSE) {
         geom_point(size = 0.5, alpha = 0.3, color = seurat_v_scanpy_baseline_color) +
         geom_abline(slope = 1, intercept = 0, color = "gray30") +
         coord_equal() +
-        labs(x = "Degree (Seurat)", y = "Degree (Scanpy)") +
+        labs(x = "Degree (Group 1)", y = "Degree (Group 2)") +
         theme(
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
             axis.title = element_text(size = rel(axis_text_size))
@@ -1404,7 +1405,9 @@ calculate_de_stats <- function(markers2, group1_name = "Seurat", group2_name = "
         sink(filepath, split = TRUE, append = TRUE)
     }
     
-    logFC_ccc_results <- CCC(x = markers2[[logFC_group1]], y = markers2[[logFC_group2]])
+    filtered_markers2 <- markers2[abs(markers2[[logFC_group1]]) <= 20 & abs(markers2[[logFC_group2]]) <= 20, ]
+    
+    logFC_ccc_results <- CCC(x = filtered_markers2[[logFC_group1]], y = filtered_markers2[[logFC_group2]])
     logFC_ccc <- logFC_ccc_results$rho.c$est
     print(glue("logFC CCC: {logFC_ccc}"))
     
@@ -1724,7 +1727,7 @@ make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group
         annotate("text", x = 1, y = -Inf, label = group2_name, vjust = 1.7, hjust = 0.5, size = 9) +
         theme(
             legend.position = "none",
-            plot.margin = margin(l = 0, b = 35, unit = "pt"),
+            plot.margin = margin(l = 0, b = 35, r = 30, unit = "pt"),
             axis.text.x = element_blank(),
             axis.text.y = element_blank(),
             plot.title = element_blank(),

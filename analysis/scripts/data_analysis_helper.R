@@ -125,13 +125,39 @@ rm_bl_panel <- function(p, ncol = 2) {
     grob
 }
 
+calculate_angle <- function(v1, v2) {
+    dot_product <- sum(v1 * v2)
+    
+    magnitude_vector1 <- sqrt(sum(v1^2))
+    magnitude_vector2 <- sqrt(sum(v2^2))
+    
+    cos_theta <- dot_product / (magnitude_vector1 * magnitude_vector2)
+    
+    if (isTRUE(all.equal(cos_theta, 1))) {
+        angle_radians <- 0
+    } else if (isTRUE(all.equal(cos_theta, -1))) {
+        angle_radians <- pi
+    } else {
+        angle_radians <- acos(cos_theta)
+    }
+    
+    return (angle_radians)
+}
+
 flip_pcs <- function(v1, v2, pcs) {
     for (i in pcs) {
-        v <- c(
-            max(v1[, i] - v2[, i]),
-            max(v1[, i] + v2[, i])
-        )
-        if (which.min(v) == 2L) { # do flip
+        # v <- c(
+        #     max(v1[, i] - v2[, i]),
+        #     max(v1[, i] + v2[, i])
+        # )
+        # if (which.min(v) == 2L) { # do flip
+        #     v2[, i] <- -v2[, i]
+        # }
+        
+        theta1_2 <- calculate_angle(v1[, i], v2[, i])
+        theta1_neg2 <- calculate_angle(v1[, i], -v2[, i])
+        
+        if (theta1_neg2 < theta1_2) {
             v2[, i] <- -v2[, i]
         }
     }

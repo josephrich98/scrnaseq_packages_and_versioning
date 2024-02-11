@@ -9,18 +9,32 @@ project_base_path <- "/workspace/analysis"
 seurat1_version <- "4.3.0"
 seurat2_version <- "5.0.1"
 
-data_input <- "default"
-
-data_name <- "5k_pbmc_v3"
+data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
 save_data <- TRUE
 
-seu1_name <- "seu_v4"
-seu2_name <- "seu_v5"
+data_input <- "default"
+
+# Don't have either name say "Seurat" or "Scanpy" or else helper functions will get confused
+seu1_name <- "Seuratv4"
+seu2_name <- "Seuratv5"
+
+scanpy_unfiltered <- 0
 
 seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
+
+seu1_markers_data_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_default/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers.rds"   # "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratvPLEASE_WORK_OLD_ARGUMENTS/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_seuv5.rds"
+seu2_markers_data_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratvPLEASE_WORK_OLD_ARGUMENTS/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_seuv5.rds"   # "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_default/input_seurat/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/results_scan.rds"
+
+output_base_path <- glue::glue("{project_base_path}/seurat5 vs seurat4")
+
+
+# seu1_data_path <- ""
+# seu1_markers_data_path <- ""
+# seu2_data_path <- ""
+# seu2_markers_data_path <- ""
 ```
 
-R Imports
+R Imports #!
 ```{r}
 conda_env <- "analysis_env"
 Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
@@ -32,16 +46,15 @@ library(tidyverse)
 library(patchwork)
 library(eulerr)
 library(scattermore)
-# library(Voyager)
-# library(BUSpaRse)
 library(DropletUtils)
 library(glue)
 library(bluster)
 library(ggforce)
 library(ggplotify)
+library(grid)
+library(gtable)
+library(ggalluvial)
 theme_set(theme_bw())
-
-output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat1_version}_vs_seuratv{seurat2_version}/input_{data_input}/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0")
 
 source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
@@ -62,15 +75,16 @@ seu_umap_method <- "uwot"
 seu_umap_metric <- "correlation"
 ```
 
-Load data
+Load data  #!
 ```{r}
-seu1 <- readRDS(glue("{project_base_path}/output/{data_name}/seuratv{seurat1_version}/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/seu1.rds"))
-markers_seu1 <- readRDS(glue("{project_base_path}/output/{data_name}/seuratv{seurat1_version}/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_full.rds"))
+# seu1 <- readRDS(seu1_data_path)
+markers_seu1 <- readRDS(seu1_markers_data_path)
 
-seu2 <- readRDS(glue("{project_base_path}/output/{data_name}/seuratv{seurat2_version}/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/seu1.rds"))
-markers_seu2 <- readRDS(glue("{project_base_path}/output/{data_name}/seuratv{seurat2_version}/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_full.rds"))
+# seu2 <- readRDS(seu2_data_path)
+markers_seu2 <- readRDS(seu2_markers_data_path)
 ```
 
+#!
 ```{r}
 output_data_file_paths <- list(
     markers_seu1 = glue::glue("{output_base_path}/data_files/markers_{seurat1_version}.rds"),
@@ -263,7 +277,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
 }
 
 
-jaccard_degree_scatterplot <- make_knn_jaccard_degree_scatterplot(jaccards, save = file_paths$jaccard_degree_scatterplot)
+jaccard_degree_scatterplot <- make_snn_jaccard_degree_scatterplot(jaccards, save = file_paths$jaccard_degree_scatterplot)
 jaccard_degree_scatterplot
 
 seu1_clusters <- Idents(seu1)
@@ -319,8 +333,8 @@ seu2_umap
 seu1_umap_data <- seu1_umap_info$umap@cell.embeddings
 seu2_umap_data <- seu2_umap_info$umap@cell.embeddings
 
-seu1_umap_knn <- dbscan::kNN(seu1_umap_data, k = umap_knn_k)
-seu2_umap_knn <- dbscan::kNN(seu2_umap_data, k = umap_knn_k)
+seu1_umap_knn <- dbscan::kNN(seu1_umap_data, k = 50)
+seu2_umap_knn <- dbscan::kNN(seu2_umap_data, k = 50)
 
 jaccards_all_cells <- calculate_knn_jaccards(seu1_umap_knn$id, seu2_umap_knn$id)
 
@@ -336,6 +350,11 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
 }
 
+overlapping_inds <- intersect(seu1_inds, seu2_inds)
+
+seu1_cluster_data_filtered <- Idents(seu1)[overlapping_inds]
+seu2_cluster_data_filtered <- Idents(seu2)[overlapping_inds]
+
 jaccards_df <- data.frame(Cells = overlapping_inds, JaccardIndex = jaccards_all_cells, seu1_clusters = seu1_cluster_data_filtered, seu2_clusters = seu2_cluster_data_filtered)
 
 umap_jaccard_plot <- make_umap_jaccard_plot(jaccards_df, save = file_paths$umap_jaccard_knn_density)
@@ -343,8 +362,40 @@ umap_jaccard_plot <- make_umap_jaccard_plot(jaccards_df, save = file_paths$umap_
 umap_jaccard_plot
 ```
 
-FROM THIS POINT ON, MAKE SURE I AM USING MARKERS DATAFRAMES WITH THE SAME CLUSTER INFO (if that comes from defaults then great, otherwise do a seu1 input run as well)
+From this point on, make sure to use markers dataframes with aligned cluster info
 ```{r}
+if (as.integer(scanpy_unfiltered) == 1) {
+    markers_seu1_unfiltered <- markers_seu1
+
+    markers_seu1 <- markers_seu1 %>%
+        filter(!(pts < 0.1 & pts_rest < 0.1)) %>%   # 0.01 in Seu5
+        filter(!(abs(log_fc) < 0.25)) %>%  # 0.1 in Seu5
+        filter(p_value < 0.01)
+} else if (as.integer(scanpy_unfiltered) == 2) {
+    markers_seu2_unfiltered <- markers_seu2
+
+    markers_seu2 <- markers_seu2 %>%
+        filter(!(pts < 0.1 & pts_rest < 0.1)) %>%   # 0.01 in Seu5
+        filter(!(abs(log_fc) < 0.25)) %>%  # 0.1 in Seu5
+        filter(p_value < 0.01)
+}
+
+if ("log_fc" %in% names(markers_seu1)) {
+    markers_seu1 <- markers_seu1 |> dplyr::rename(avg_log2FC = log_fc)
+}
+
+if ("p_value_adj" %in% names(markers_seu1)) {
+    markers_seu1 <- markers_seu1 |> dplyr::rename(p_val_adj = p_value_adj)
+}
+
+if ("log_fc" %in% names(markers_seu2)) {
+    markers_seu2 <- markers_seu2 |> dplyr::rename(avg_log2FC = log_fc)
+}
+
+if ("p_value_adj" %in% names(markers_seu2)) {
+    markers_seu2 <- markers_seu2 |> dplyr::rename(p_val_adj = p_value_adj)
+}
+
 seu1_filtered_markers <- markers_seu1 %>% filter(p_val_adj < 0.05)
 seu2_filtered_markers <- markers_seu2 %>% filter(p_val_adj < 0.05)
 
@@ -356,7 +407,7 @@ vectorized_seu2_filtered_markers <- unique(seu2_filtered_markers$gene)
 markers_euler_genes_only <- make_euler_seurat(vectorized_seu1_filtered_markers, vectorized_seu2_filtered_markers, comparison = "Marker Gene", group_names = seurat_group_names, save_plot = FALSE, save_stats = FALSE)
 markers_euler_genes_only
 
-upset_marker_gene_only <- make_upset_seurat(vectorized_seu1_filtered_markers, vectorized_seu2_filtered_markers, comparison = "Marker Gene", group_names = seurat_group_names, save = "4.tiff")
+upset_marker_gene_only <- make_upset_seurat(vectorized_seu1_filtered_markers, vectorized_seu2_filtered_markers, comparison = "Marker Gene", group_names = seurat_group_names, save = file_paths$upset_markers_genes_only)
 
 seu1_markers_df <- markers_seu1 %>% select(gene = gene, cluster = cluster)
 seu2_markers_df <- markers_seu2 %>% select(gene = gene, cluster = cluster)
@@ -367,10 +418,32 @@ vectorized_seu2_markers <- paste(seu2_markers_df$gene, seu2_markers_df$cluster, 
 markers_euler <- make_euler_seurat(vectorized_seu1_markers, vectorized_seu2_markers, comparison = "Marker", group_names = seurat_group_names, save_plot = FALSE, save_stats = FALSE)
 markers_euler
 
-upset_markers_all <- make_upset_seurat(vectorized_seu1_markers, vectorized_seu2_markers, comparison = "Marker", group_names = seurat_group_names, save = "3.tiff")
+upset_markers_all <- make_upset_seurat(vectorized_seu1_markers, vectorized_seu2_markers, comparison = "Marker", group_names = seurat_group_names, save = file_paths$upset_markers)
+
+if (as.integer(scanpy_unfiltered) == 1) {
+    markers_seu1 <- markers_seu1_unfiltered
+} else if (as.integer(scanpy_unfiltered) == 2) {
+    markers_seu2 <- markers_seu2_unfiltered
+}
+
+if ("log_fc" %in% names(markers_seu1)) {
+    markers_seu1 <- markers_seu1 |> dplyr::rename(avg_log2FC = log_fc)
+}
+
+if ("p_value_adj" %in% names(markers_seu1)) {
+    markers_seu1 <- markers_seu1 |> dplyr::rename(p_val_adj = p_value_adj)
+}
+
+if ("log_fc" %in% names(markers_seu2)) {
+    markers_seu2 <- markers_seu2 |> dplyr::rename(avg_log2FC = log_fc)
+}
+
+if ("p_value_adj" %in% names(markers_seu2)) {
+    markers_seu2 <- markers_seu2 |> dplyr::rename(p_val_adj = p_value_adj)
+}
 
 markers2 <- markers_seu1 |>
-    inner_join(markers_seu2, by = c("cluster", "gene"), suffix = c(glue(".{seu1_name}"), glue(".{seu2_name}"))) # ? originally left join
+    inner_join(markers_seu2, by = c("cluster", "gene"), suffix = c(glue(".{seu1_name}"), glue(".{seu2_name}")))
 
 markers2 <- markers2 |>
     mutate(cluster = factor(cluster, levels = as.character(seq_len(length(unique(cluster))) - 1)))
@@ -380,24 +453,26 @@ markers2 <- markers2 |>
     mutate(rank_r = seq_along(gene))
 
 
-markers2[[glue("FC.{seu1_name}")]] <- 2^markers2[[glue("avg_log2FC.{seu1_name}")]]
-markers2[[glue("FC.{seu2_name}")]] <- 2^markers2[[glue("avg_log2FC.{seu2_name}")]]
-
 markers2 <- calculate_de_stats(markers2, group1_name = seu1_name, group2_name = seu2_name, save = FALSE)
 
 source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 markers2[[glue("p_val_adj.{seu1_name}")]][markers2[[glue("p_val_adj.{seu1_name}")]] == 0] <- .Machine$double.xmin
 markers2[[glue("p_val_adj.{seu2_name}")]][markers2[[glue("p_val_adj.{seu2_name}")]] == 0] <- .Machine$double.xmin
 
-logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, save = "1.tiff", outliers_excluded = FALSE)
-pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = seu1_name, group2_name = seu2_name, save = FALSE, outliers_excluded = FALSE)
+logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
+pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
 
-logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, save = "2.tiff", outliers_excluded = FALSE, show_legend = TRUE)
+logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
 
 
-logFC_scatterplot
-logFC_scatterplot_with_legend
-
-pvaladj_scatterplot
+# logFC_scatterplot
+# logFC_scatterplot_with_legend
+# 
+# pvaladj_scatterplot
 ```
+
+```{r}
+saveRDS(markers2, file = output_data_file_paths$markers2)
+```
+
 

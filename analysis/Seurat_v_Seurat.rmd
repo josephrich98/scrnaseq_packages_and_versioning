@@ -8,12 +8,12 @@ HYPERPARAMETERS
 ```{r}
 # Random seeds
 seu1_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-seu2_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
+seu2_read_downsample_seed <- "100" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
 R_random_seed <- 100 # including for cell downsampling
 
 # Downsample fractions
 seu1_read_fraction_after_downsampling <- "1.0" # fraction of reads after downsampling - any number from (0,1.0]
-seu2_read_fraction_after_downsampling <- "1.0" # fraction of reads after downsampling - any number from (0,1.0]
+seu2_read_fraction_after_downsampling <- "0.04" # fraction of reads after downsampling - any number from (0,1.0]
 
 seu1_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
 seu2_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
@@ -44,8 +44,8 @@ seu2_inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic selec
 seu1_min_cells <- 3
 seu1_min_features <- 200
 
-seu2_min_cells <- 3
-seu2_min_features <- 200
+seu2_min_cells <- 1
+seu2_min_features <- 150
 
 max_pct_mct <- 20 # default 5
 seu1_num_pcs <- 50 # number 1-50; or NULL to select after elbow plot visualization
@@ -61,14 +61,14 @@ umap_seed1 <- 42
 umap_seed2 <- 42
 
 # Data path specifications
-seu1_data_path <- "/workspace/analysis/count_matrix_collection/SC3_v3_NextGem_SI_PBMC_10K/kallisto50_raw_feature_bc_matrix_collection/frac1_0_seed0"  # "/workspace/analysis/count_matrix_collection/SC3_v3_NextGem_SI_PBMC_10K/kallisto50_raw_feature_bc_matrix_collection/frac1_0_seed0"  # NULL for default path
-seu2_data_path <- "/workspace/analysis/count_matrix_collection/SC3_v3_NextGem_SI_PBMC_10K/kallisto50_2_raw_feature_bc_matrix_collection/frac1_0_seed0"  # NULL for default path
-output_base_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0/input_seu1/seu1_cellranger7_2_0_WITHOUT_introns_vs_seu2_cellranger6_1_2_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0" # "/workspace"   # NULL for default path
+seu1_data_path <- NULL  # NULL for default path
+seu2_data_path <- NULL  # NULL for default path
+output_base_path <- "/workspace/reads_downsampled_04_SEU"  # NULL for default path
 
 # Output path specifications
-seu1_name <- "Kallisto50_1"  # Must have no spaces
-seu2_name <- "Kallisto50_2"  # Must have no spaces
-save_data <- FALSE
+seu1_name <- "Full"  # Must have no spaces
+seu2_name <- "Downsampled_reads"  # Must have no spaces
+save_data <- TRUE
 dpi <- 350
 project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
@@ -441,15 +441,14 @@ pre_filtering_upset_cell <- make_upset_seurat(group1 = res_mat1, group2 = res_ma
 pre_filtering_upset_gene <- make_upset_seurat(group1 = res_mat1, group2 = res_mat2, comparison = "Gene", group_names = seurat_group_names, before_filtering = TRUE, as_ggplot = FALSE, save = file_paths$pre_filtering_upset_gene)
 ```
 
-Euler plots of cell, gene overlap before QC  #*
+Euler plots of cell, gene overlap before QC
 ```{r}
 # make_euler_seurat(seu1, seu2, comparison = "Gene", group_names = seurat_group_names, save_plot = file_paths$euler_after_qc_gene_file_path, save_stats = file_paths$euler_stats_before_QC_file, before_QC = TRUE)
 # make_euler_seurat(seu1, seu2, comparison = "Cell", group_names = seurat_group_names, save_plot = file_paths$euler_after_qc_gene_file_path,  save_stats = file_paths$euler_stats_before_QC_file, before_QC = TRUE)
 ```
 
-UMI scatterplot between the two groups
+UMI scatterplot between the two groups  #*
 ```{r}
-#*
 # umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = seurat_group_names$Seurat1, res_mat2_name = seurat_group_names$Seurat2, point_density = FALSE, color_points = FALSE, save = file_paths$umi_scatterplot) # set point_density = TRUE for finer-grained point density
 # umi_scatterplot
 ```
@@ -457,22 +456,22 @@ UMI scatterplot between the two groups
 Find list of mitochondrial Ensembl gene names
 ```{r}
 # # ensembl <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")  # Service may be down on this mirror
-# ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")  #*
-# mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)  #*
+ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")
+mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)
 
-mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
+# mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
 ```
 
-QC Seurat1, Violin plots
+QC Seurat1, Violin plots  #*
 ```{r}
-assay_gene_names1 <- rownames(seu1[["RNA"]])
-assay_gene_names_trimmed1 <- gsub("\\..*", "", assay_gene_names1)
-common_genes1 <- intersect(mt_genes$ensembl_gene_id, assay_gene_names_trimmed1)
-common_genes_with_version1 <- assay_gene_names1[match(common_genes1, assay_gene_names_trimmed1)]
-seu1[["pct_mt"]] <- PercentageFeatureSet(seu1, features = common_genes_with_version1)
-
-violin_plot1 <- make_violin_plot(seu1, show_points = FALSE, color = group1_color, save = file_paths$seu1_violin_file_path)
-violin_plot1
+# assay_gene_names1 <- rownames(seu1[["RNA"]])
+# assay_gene_names_trimmed1 <- gsub("\\..*", "", assay_gene_names1)
+# common_genes1 <- intersect(mt_genes$ensembl_gene_id, assay_gene_names_trimmed1)
+# common_genes_with_version1 <- assay_gene_names1[match(common_genes1, assay_gene_names_trimmed1)]
+# seu1[["pct_mt"]] <- PercentageFeatureSet(seu1, features = common_genes_with_version1)
+# 
+# violin_plot1 <- make_violin_plot(seu1, show_points = FALSE, color = group1_color, save = file_paths$seu1_violin_file_path)
+# violin_plot1
 ```
 
 QC Seurat2, Violin plots
@@ -489,6 +488,7 @@ violin_plot2
 
 Compare violin plots
 ```{r}
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 violin_features <- make_violin_nfeatures_seu(seu1, seu2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$violin_counts_comparison)
 violin_features
 ```
@@ -548,7 +548,7 @@ if (data_input == "seu1") {
         common_genes_with_version2 <- assay_gene_names2[match(common_genes2, assay_gene_names_trimmed2)]
         seu2[["pct_mt"]] <- PercentageFeatureSet(seu2, features = common_genes_with_version2)
     } else {
-        res_mat2 <- res_mat2[, tot_counts2 > UMI_cutoff2] # uncomment if wanting faster execution
+        # res_mat2 <- res_mat2[, tot_counts2 > UMI_cutoff2] # uncomment if wanting faster execution
         seu2 <- CreateSeuratObject(counts = res_mat2)
         seu2 <- subset(seu2, cells = seu1_inds, features = seu1_genes)
         seu2[["pct_mt"]] <- seu1[["pct_mt"]]
@@ -738,6 +738,8 @@ source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 if (!identical(seu1_inds, seu2_inds)) {
     pca_embeddings1 <- pca_embeddings1[rownames(pca_embeddings1) %in% overlapping_inds, ]
     pca_embeddings2 <- pca_embeddings2[rownames(pca_embeddings2) %in% overlapping_inds, ]
+    
+    pca_embeddings2 <- pca_embeddings2[match(rownames(pca_embeddings1), rownames(pca_embeddings2)), ]
 }
 
 pca12_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", group_labels = unlist(seurat_group_names), save = file_paths$pca_12_overlay_filepath)
@@ -745,17 +747,6 @@ pca34_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "
 
 pca12_plot
 pca34_plot
-
-#* erase
-save_path_TR <- ifelse(save_data, glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"), FALSE)
-save_path_TL <- ifelse(save_data, glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"), FALSE)
-save_path_BR <- ifelse(save_data, glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"), FALSE)
-save_path_BL <- ifelse(save_data, glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"), FALSE)
-
-pca12_plot_TR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "TR", group_labels = unlist(seurat_group_names), save = save_path_TR)
-pca12_plot_TL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "TL", group_labels = unlist(seurat_group_names), save = save_path_TL)
-pca12_plot_BR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "BR", group_labels = unlist(seurat_group_names), save = save_path_BR)
-pca12_plot_BL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", legend_position = "BL", group_labels = unlist(seurat_group_names), save = save_path_BL)
 ```
 
 Plot PCA eigenvectors (loadings), eigenvalues
@@ -865,6 +856,9 @@ knn_scatterplot
 
 jaccards$degree_ratio <- nei_pairs$value1 / nei_pairs$value2
 jaccards$logged_degree_ratio <- log(jaccards$degree_ratio, base = 2)
+
+jaccards$logged_degree_ratio[jaccards$logged_degree_ratio == -Inf] <- -10
+jaccards$logged_degree_ratio[jaccards$logged_degree_ratio == Inf] <- 10
 
 jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
@@ -1139,7 +1133,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
-print(glue("Adjusted Rand index between clusters: {ari_value_umap}"))
+print(glue("Adjusted Rand index between UMAP clusters: {ari_value_umap}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
@@ -1199,7 +1193,7 @@ seu2_umap
 Find markers Seu1
 ```{r}
 if (!file.exists(output_data_file_paths$markers_seu1)) {
-    markers_seu1 <- FindAllMarkers(seu1)
+    markers_seu1 <- FindAllMarkers(seu1, logfc.threshold = 0.1, min.pct = 0.01)
 } else {
     markers_seu1 <- readRDS(output_data_file_paths$markers_seu1)
 }
@@ -1209,18 +1203,10 @@ Find markers Seu2
 ```{r}
 if (!file.exists(output_data_file_paths$markers_seu2)) {
     markers_seu2 <- FindAllMarkers(seu2)
-    saveRDS(markers_seu2, file = output_data_file_paths$markers_seu2)  #!!!
 } else {
     markers_seu2 <- readRDS(output_data_file_paths$markers_seu2)
 }
 ```
-
-#* erase
-```{r}
-# markers_seu1 <- readRDS(output_data_file_paths$markers_seu1)
-# markers_seu2 <- readRDS(output_data_file_paths$markers_seu2)
-```
-
 
 Compare marker genes
 ```{r}

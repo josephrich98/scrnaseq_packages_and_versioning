@@ -8,15 +8,15 @@ HYPERPARAMETERS
 ```{r}
 # Random seeds
 scan1_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-scan2_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
+scan2_read_downsample_seed <- "100" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
 R_random_seed <- 100 # including for cell downsampling
 
 # Downsample fractions
 scan1_read_fraction_after_downsampling <- "1.0" # fraction of reads after downsampling - any number from (0,1.0]
-scan2_read_fraction_after_downsampling <- "1.0" # fraction of reads after downsampling - any number from (0,1.0]
+scan2_read_fraction_after_downsampling <- "0.04" # fraction of reads after downsampling - any number from (0,1.0]
 
 scan1_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
-scan2_cell_fraction_after_downsampling <- "0.64" # fraction of cells after downsampling - any number from (0,1.0]
+scan2_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
 
 # Matrix generation methods
 scan1_matrix_generation_method <- "kb" # str["kb", "cellranger"]
@@ -32,7 +32,7 @@ scan2_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downl
 scan2_matrix_qc <- "raw" # "raw" or "filtered"
 
 # Function argument and input settings
-data_input <- "default" # str["default", "scan1", "scan2"]
+data_input <- "scan1" # str["default", "scan1", "scan2"]
 
 # Package version
 scanpy_version <- "1.9.5"
@@ -44,8 +44,8 @@ scan2_inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic sele
 scan1_min_cells <- 3
 scan1_min_features <- 200
 
-scan2_min_cells <- 3
-scan2_min_features <- 200
+scan2_min_cells <- 1
+scan2_min_features <- 150
 
 max_pct_mct <- 20 # default 5
 scan1_max_n_genes_by_counts_scanpy <- 12000 # default 2500
@@ -68,12 +68,12 @@ scan2_data_path <- NULL  # NULL for default path
 output_base_path <- NULL   # NULL for default path
 
 # Output path specifications
-scan1_name <- "full"  # Must have no spaces
-scan2_name <- "downsampled"  # Must have no spaces
-save_data <- FALSE
+scan1_name <- "Full"  # Must have no spaces
+scan2_name <- "Downsampled_reads"  # Must have no spaces
+save_data <- TRUE
 dpi <- 350
 project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
-data_name <- "5k_pbmc_v3"  # Only needed if using default input/output paths
+data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
 include_seeds_in_file_paths <- FALSE  # Only needed if using default input/output paths
 ```
 
@@ -535,30 +535,29 @@ if (is.character(file_paths$filter_arguments)) {
 
 Upset plots before filtering by cells, genes, MT genes
 ```{r}
-pre_filtering_upset_cell <- make_upset_scanpy(group1 = res_mat1, group2 = res_mat2, comparison = "Cell", group_names = scanpy_group_names, before_filtering = TRUE, as_ggplot = FALSE, save = file_paths$pre_filtering_upset_cell)
-pre_filtering_upset_gene <- make_upset_scanpy(group1 = res_mat1, group2 = res_mat2, comparison = "Gene", group_names = scanpy_group_names, before_filtering = TRUE, as_ggplot = FALSE, save = file_paths$pre_filtering_upset_gene)
+# pre_filtering_upset_cell <- make_upset_scanpy(adata1 = res_mat1, adata2 = res_mat2, comparison = "Cell", group_names = scanpy_group_names, before_filtering = TRUE, as_ggplot = FALSE, save = file_paths$pre_filtering_upset_cell)
+# pre_filtering_upset_gene <- make_upset_scanpy(adata1 = res_mat1, adata2 = res_mat2, comparison = "Gene", group_names = scanpy_group_names, before_filtering = TRUE, as_ggplot = FALSE, save = file_paths$pre_filtering_upset_gene)
 ```
 
-Euler plots of cell, gene overlap before QC  #*
+Euler plots of cell, gene overlap before QC
 ```{r}
 # make_euler_scanpy(py$adata1, py$adata2, comparison = "Gene", group_names = scanpy_group_names, save_plot = file_paths$euler_after_qc_gene_file_path, save_stats = file_paths$euler_stats_before_QC_file, before_QC = TRUE)
 # make_euler_scanpy(py$adata1, py$adata2, comparison = "Cell", group_names = scanpy_group_names, save_plot = file_paths$euler_after_qc_gene_file_path,  save_stats = file_paths$euler_stats_before_QC_file, before_QC = TRUE)
 ```
 
-UMI scatterplot between the two groups  #*
+UMI scatterplot between the two groups
 ```{r}
-#*
-# umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = scanpy_group_names$Scanpy1, res_mat2_name = scanpy_group_names$Scanpy2, point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)
-# umi_scatterplot
+umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = scanpy_group_names$Scanpy1, res_mat2_name = scanpy_group_names$Scanpy2, point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)
+umi_scatterplot
 ```
 
 Find list of mitochondrial Ensembl gene names
 ```{r}
-# # ensembl <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")  # Service may be down on this mirror
-# ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")  #*
-# mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)  #*
+# ensembl <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")  # Service may be down on this mirror
+ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")
+mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)
 
-mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
+# mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
 ```
 
 QC and filter high mito cells out of Scanpy1, Violin plots
@@ -829,12 +828,14 @@ adata2.raw = adata2
 If data_input == "scan1" or "scan2": Apply HVGs from to be the same
 ```{python}
 if data_input == "scan2":
-    adata1.var = adata1.var.assign(highly_variable = scanpy_highly_variable_genes_list2)
+    is_highly_variable = adata1.var_names.isin(scanpy_highly_variable_genes_list2)
+    adata1.var = adata1.var.assign(highly_variable = is_highly_variable)
     scanpy_highly_variable_genes1 = adata1.var.index[adata1.var['highly_variable']]
     scanpy_highly_variable_genes_list1 = adata1.var[adata1.var['highly_variable']].index.tolist()
 
 if data_input == "scan1":
-    adata2.var = adata2.var.assign(highly_variable = scanpy_highly_variable_genes_list1)
+    is_highly_variable = adata2.var_names.isin(scanpy_highly_variable_genes_list1)
+    adata2.var = adata2.var.assign(highly_variable = is_highly_variable)
     scanpy_highly_variable_genes2 = adata2.var.index[adata2.var['highly_variable']]
     scanpy_highly_variable_genes_list2 = adata2.var[adata2.var['highly_variable']].index.tolist()
 ```
@@ -914,19 +915,18 @@ Overlay PCA scatterplots
 if (!identical(scan1_inds, scan2_inds)) {
     pca_embeddings1 <- pca_embeddings1[rownames(pca_embeddings1) %in% overlapping_inds, ]
     pca_embeddings2 <- pca_embeddings2[rownames(pca_embeddings2) %in% overlapping_inds, ]
+    
+    pca_embeddings2 <- pca_embeddings2[match(rownames(pca_embeddings1), rownames(pca_embeddings2)), ]
 }
+
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
+source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 
 pca12_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", group_labels = unlist(scanpy_group_names), save = file_paths$pca_12_overlay_filepath)
 pca34_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", group_labels = unlist(scanpy_group_names), pcs = 3:4, save = file_paths$pca_34_overlay_filepath)
 
 pca12_plot
 pca34_plot
-
-#* erase
-pca12_plot_TR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "TR", group_labels = unlist(scanpy_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"))
-pca12_plot_TL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "TL", group_labels = unlist(scanpy_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"))
-pca12_plot_BR <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "BR", group_labels = unlist(scanpy_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"))
-pca12_plot_BL <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Scanpy1", group2_name = "Scanpy2", legend_position = "BL", group_labels = unlist(scanpy_group_names), save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"))
 ```
 
 ```{r}
@@ -1053,6 +1053,9 @@ knn_scatterplot
 jaccards$degree_ratio <- nei_pairs$value1 / nei_pairs$value2
 jaccards$logged_degree_ratio <- log(jaccards$degree_ratio, base = 2)
 
+jaccards$logged_degree_ratio[jaccards$logged_degree_ratio == -Inf] <- -10
+jaccards$logged_degree_ratio[jaccards$logged_degree_ratio == Inf] <- 10
+
 jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
 median_magnitude_logged_degree_ratio <- median(abs(jaccards$logged_degree_ratio))
@@ -1077,13 +1080,13 @@ jaccard_degree_scatterplot
 
 If data_input == "scan1" or "scan2": Apply KNN and SNN to be the same
 ```{python}
-if data_input == "scan1" and (scan1_inds == scan2_inds):
+if data_input == "scan1" and (r.scan1_inds == r.scan2_inds):
     adata2.obsp['connectivities'] = adata1.obsp['connectivities']
     adata2.obsp['distances'] = adata1.obsp['distances']
     snn_graph_scan2 = adata2.obsp['connectivities']
     knn_graph_scan2 = adata2.obsp['distances']
     
-if data_input == "scan2" and (scan1_inds == scan2_inds):
+if data_input == "scan2" and (r.scan1_inds == r.scan2_inds):
     adata1.obsp['connectivities'] = adata2.obsp['connectivities']
     adata1.obsp['distances'] = adata2.obsp['distances']
     snn_graph_scan1 = adata1.obsp['connectivities']
@@ -1210,7 +1213,7 @@ unique_mapping <- clus_df_gather %>%
     distinct() %>%
     arrange(group2_column_original_clusters)
 
-scanpy_clusters_df <- data.frame(cell_id = names(scan2_clusters), group2_cluster = as.numeric(as.character(scan2_clusters)))
+scanpy_clusters_df <- data.frame(cell_id = scan2_inds, group2_cluster = as.numeric(as.character(py$adata2$obs[[scanpy_clustering_algorithm]])))
 
 mapped_data <- scanpy_clusters_df %>% left_join(unique_mapping, by = c("group2_cluster" = "group2_column_original_clusters"))
 
@@ -1228,10 +1231,10 @@ scan2_cluster_data_original <- py$adata2$obs[[scanpy_clustering_algorithm]]
 
 If data_input == "scan1" or "scan2: Apply cluster data to be the same
 ```{python}
-if data_input == "scan1" and (scan1_inds == scan2_inds):
+if data_input == "scan1" and (r.scan1_inds == r.scan2_inds):
     adata2.obs[r.scanpy_clustering_algorithm] = r.scan1_clusters
 
-if data_input == "scan2" and (scan1_inds == scan2_inds):
+if data_input == "scan2" and (r.scan1_inds == r.scan2_inds):
     adata1.obs[r.scanpy_clustering_algorithm] = r.scan2_clusters
 ```
 
@@ -1345,7 +1348,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
-print(glue("Adjusted Rand index between clusters: {ari_value_umap}"))
+print(glue("Adjusted Rand index between UMAP clusters: {ari_value_umap}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
@@ -1487,19 +1490,21 @@ markers2 <- calculate_de_stats(markers2, group1_name = scan1_name, group2_name =
 
 Plot scatterplots - if this crashes R, try scanpy_de_plots.R
 ```{r}
-# markers2[[glue("p_val_adj.{scan1_name}")]][markers2[[glue("p_val_adj.{scan1_name}")]] == 0] <- .Machine$double.xmin
-# markers2[[glue("p_val_adj.{scan2_name}")]][markers2[[glue("p_val_adj.{scan2_name}")]] == 0] <- .Machine$double.xmin
-#
-# logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
-# pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
-#
-# logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
-#
-#
-# logFC_scatterplot
-# logFC_scatterplot_with_legend
-#
-# pvaladj_scatterplot
+markers2[[glue("p_val_adj.{scan1_name}")]][markers2[[glue("p_val_adj.{scan1_name}")]] == 0] <- .Machine$double.xmin
+markers2[[glue("p_val_adj.{scan2_name}")]][markers2[[glue("p_val_adj.{scan2_name}")]] == 0] <- .Machine$double.xmin
+```
+
+```{r}
+logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
+pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
+
+logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
+
+
+logFC_scatterplot
+logFC_scatterplot_with_legend
+
+pvaladj_scatterplot
 ```
 
 Save markers df

@@ -31,8 +31,8 @@ scan_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downlo
 scan_matrix_qc <- "raw" # "raw" or "filtered"
 
 # Function argument and input settings
-analysis_methods <- "default" # str["default", "seurat_like", "scanpy_like"]
-data_input <- "seurat" # str["default", "seurat", "scanpy"]
+analysis_methods <- "scanpy_like" # str["default", "seurat_like", "scanpy_like"]
+data_input <- "scanpy" # str["default", "seurat", "scanpy"]
 
 # Package versions
 seurat_version <- "4.3.0"
@@ -659,13 +659,13 @@ seu <- NormalizeData(seu, verbose = FALSE)
 
 ```{python}
 #!!!
-# if r.scanpy_hvg_flavor != "seurat_v3":
-#     sc.pp.normalize_total(adata, target_sum=1e4)
+if r.scanpy_hvg_flavor != "seurat_v3":
+    sc.pp.normalize_total(adata, target_sum=1e4)
 ```
 
 ```{python}
-# if r.scanpy_hvg_flavor != "seurat_v3":
-#     sc.pp.log1p(adata)
+if r.scanpy_hvg_flavor != "seurat_v3":
+    sc.pp.log1p(adata)
 ```
 
 Check equivalency of normalization methods (assuming identical input)
@@ -711,17 +711,17 @@ upset_hvg <- make_upset_seurat_vs_scanpy(seu, py$adata, comparison = "HVG", save
 
 ```{python}
 #!!!
-# if r.scanpy_hvg_flavor == "seurat_v3":
-#     sc.pp.normalize_total(adata, target_sum=1e4)
+if r.scanpy_hvg_flavor == "seurat_v3":
+    sc.pp.normalize_total(adata, target_sum=1e4)
 ```
 
 ```{python}
-# if r.scanpy_hvg_flavor == "seurat_v3":
-#     sc.pp.log1p(adata)
+if r.scanpy_hvg_flavor == "seurat_v3":
+    sc.pp.log1p(adata)
 
 
-sc.pp.normalize_total(adata, target_sum=1e4)   #!!!
-sc.pp.log1p(adata)   #!!!
+# sc.pp.normalize_total(adata, target_sum=1e4)   #!!!
+# sc.pp.log1p(adata)   #!!!
 adata.raw = adata
 ```
 
@@ -836,6 +836,8 @@ Overlay PCA scatterplots
 if (!identical(seu_inds, scan_inds)) {
     pca_embeddings <- pca_embeddings[rownames(pca_embeddings) %in% overlapping_inds, ]
     pca_embeddings_py <- pca_embeddings_py[rownames(pca_embeddings_py) %in% overlapping_inds, ]
+    
+    pca_embeddings_py <- pca_embeddings_py[match(rownames(pca_embeddings), rownames(pca_embeddings_py)), ]
 }
 
 pca12_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, save = file_paths$pca_12_overlay_filepath)
@@ -843,12 +845,6 @@ pca34_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, pcs = 3:4, sav
 
 pca12_plot
 pca34_plot
-
-#* erase
-pca12_plot_TR <- plot_pca_compare(pca_embeddings, pca_embeddings_py, legend_position = "TR", save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TR.tiff"))
-pca12_plot_TL <- plot_pca_compare(pca_embeddings, pca_embeddings_py, legend_position = "TL", save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_TL.tiff"))
-pca12_plot_BR <- plot_pca_compare(pca_embeddings, pca_embeddings_py, legend_position = "BR", save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BR.tiff"))
-pca12_plot_BL <- plot_pca_compare(pca_embeddings, pca_embeddings_py, legend_position = "BL", save = glue::glue("{output_base_path}/plots/pca_scatterplot_12_BL.tiff"))
 ```
 
 Plot PCA eigenvectors (loadings), eigenvalues
@@ -969,6 +965,9 @@ knn_scatterplot
 
 jaccards$degree_ratio <- nei_pairs$value1 / nei_pairs$value2
 jaccards$logged_degree_ratio <- log(jaccards$degree_ratio, base = 2)
+
+jaccards$logged_degree_ratio[jaccards$logged_degree_ratio == -Inf] <- -10
+jaccards$logged_degree_ratio[jaccards$logged_degree_ratio == Inf] <- 10
 
 jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
@@ -1158,6 +1157,7 @@ unique_mapping <- clus_df_gather %>%
     arrange(group2_column_original_clusters)
 
 scanpy_clusters_df <- data.frame(cell_id = names(scan_clusters), group2_cluster = as.numeric(as.character(scan_clusters)))
+# scanpy_clusters_df <- data.frame(cell_id = scan2_inds, group2_cluster = as.numeric(as.character(py$adata2$obs[[scanpy_clustering_algorithm]])))
 
 mapped_data <- scanpy_clusters_df %>% left_join(unique_mapping, by = c("group2_cluster" = "group2_column_original_clusters"))
 
@@ -1299,7 +1299,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
 }
 
-print(glue("Adjusted Rand index between clusters: {ari_value_umap}"))
+print(glue("Adjusted Rand index between UMAP clusters: {ari_value_umap}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
