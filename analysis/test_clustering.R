@@ -15,14 +15,12 @@ seu_matrix_generation_method_version <- "0.28.0"
 seu_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 seu_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 seu_matrix_qc <- "raw" # "raw" or "filtered"
-seu_used_batch <- FALSE
 
 scan_matrix_generation_method <- "kb" # str["kb", "cellranger"]
 scan_matrix_generation_method_version <- "0.28.0"
 scan_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
 scan_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
 scan_matrix_qc <- "raw" # "raw" or "filtered"
-scan_used_batch <- FALSE
 
 # Function argument and input settings
 analysis_methods <- "scanpy_like" # str["default", "seurat_like", "scanpy_like"]
@@ -44,12 +42,18 @@ scan_num_pcs <- 50
 umap_knn_k <- 50
 umap_leiden_clustering_resolution <- 0.8
 
+# Data path specifications
+seu_data_path <- NULL  # NULL for default path
+scan_data_path <- NULL  # NULL for default path
+output_base_path <- "/workspace/analysis/SEU_SCAN_PLEASE"   # NULL for default path
+
 # Output path specifications
-project_base_path <- "/workspace/analysis"
-data_name <- "5k_pbmc_v3"   #!!!
-include_seeds_in_file_paths <- FALSE
-save_data <- FALSE
-dpi <- 350
+save_data <- TRUE
+dpi_bw <- 300
+dpi_color <- 500
+project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
+data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
+include_seeds_in_file_paths <- FALSE  # Only needed if using default input/output paths
 
 
 
@@ -308,10 +312,10 @@ if (analysis_methods == "default" || analysis_methods == "seurat_like") {
 
 
 
-seu <- readRDS(output_data_file_paths$seu_object)
+seu <- readRDS("/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_scanpy_like/input_scanpy/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/seu.rds")
 
 
 seu <- FindClusters(seu, verbose = FALSE, algorithm = 4, resolution = seu_resolution)
 
 
-saveRDS(seu, file = output_data_file_paths$seu_object)
+saveRDS(seu, file = "/workspace/analysis/SEU_SCAN_PLEASE/seu.rds")

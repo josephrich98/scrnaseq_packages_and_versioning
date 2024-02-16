@@ -31,8 +31,8 @@ scan_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downlo
 scan_matrix_qc <- "raw" # "raw" or "filtered"
 
 # Function argument and input settings
-analysis_methods <- "scanpy_like" # str["default", "seurat_like", "scanpy_like"]
-data_input <- "scanpy" # str["default", "seurat", "scanpy"]
+analysis_methods <- "default" # str["default", "seurat_like", "scanpy_like"]
+data_input <- "default" # str["default", "seurat", "scanpy"]
 
 # Package versions
 seurat_version <- "4.3.0"
@@ -53,11 +53,12 @@ umap_leiden_clustering_resolution <- 0.8
 # Data path specifications
 seu_data_path <- NULL  # NULL for default path
 scan_data_path <- NULL  # NULL for default path
-output_base_path <- NULL   # NULL for default path
+output_base_path <- "/workspace/test1"   # NULL for default path
 
 # Output path specifications
 save_data <- TRUE
-dpi <- 350
+dpi_bw <- 300
+dpi_color <- 500
 project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
 include_seeds_in_file_paths <- FALSE  # Only needed if using default input/output paths
@@ -122,7 +123,11 @@ cell_fraction_after_downsampling <- ifelse(seu_cell_fraction_after_downsampling 
 )
 
 if (include_seeds_in_file_paths) {
-    read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{read_downsample_seed}")
+    if (seu_read_fraction_after_downsampling == scan_read_fraction_after_downsampling) {
+        read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{seu_read_fraction_after_downsampling}")
+    } else {
+        read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seu1_seed{seu_read_fraction_after_downsampling}_seu2_seed{scan_read_fraction_after_downsampling}")
+    }
     cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
 }
 
@@ -268,7 +273,7 @@ library(ggplotify)
 library(grid)
 library(gtable)
 library(ggalluvial)
-theme_set(theme_bw())
+theme_set(theme_bw(base_family = "Arial"))
 
 source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
@@ -575,8 +580,9 @@ euler_gene_afterqc
 
 Upset plots of cell, gene overlap after QC
 ```{r}
-upset_cell <- make_upset_seurat_vs_scanpy(seu, py$adata, comparison = "Cell", save = file_paths$upset_cells)
-upset_gene <- make_upset_seurat_vs_scanpy(seu, py$adata, comparison = "Gene", save = file_paths$upset_genes)
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
+upset_cell <- make_upset_seurat_vs_scanpy(seu, py$adata, comparison = "Cell", save = "/workspace/my_upset.tiff")
+upset_gene <- make_upset_seurat_vs_scanpy(seu, py$adata, comparison = "Gene", save = "/workspace/my_upset2.tiff")  # file_paths$upset_genes
 ```
 
 Create cell and gene lists
@@ -1038,6 +1044,12 @@ if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
 }
 ```
 
+#!!! erase (just here for clustering)
+```{r}
+# saveRDS(seu, file = output_data_file_paths$seu_object)
+# py$adata$write_h5ad(output_data_file_paths$scan_adata, compression = py$hdf5plugin$FILTERS$zstd)
+```
+
 Clustering
 ```{r}
 if (seurat_clustering_algorithm == "louvain") {
@@ -1046,7 +1058,9 @@ if (seurat_clustering_algorithm == "louvain") {
     seurat_clustering_algorithm <- 4
 }
 
-seu <- FindClusters(seu, verbose = FALSE, algorithm = seurat_clustering_algorithm, resolution = seu_resolution)
+seu <- FindClusters(seu, verbose = FALSE, algorithm = seurat_clustering_algorithm, resolution = seu_resolution)  #!!! uncomment
+
+# seu <- readRDS(output_data_file_paths$seu_object)  #!!! erase
 
 seu_clusters <- Idents(seu)
 ```
@@ -1064,7 +1078,7 @@ new_cluster_pca <- DimPlot(seu, label = TRUE, group.by = "seurat_clusters", labe
 new_cluster_pca
 
 if (file_paths$pca_cluster_filepath_seu != FALSE) {
-    ggsave(file_paths$pca_cluster_filepath_seu, plot = new_cluster_pca, dpi = dpi)
+    ggsave(file_paths$pca_cluster_filepath_seu, plot = new_cluster_pca, dpi = dpi_color)
 }
 ```
 
@@ -1126,6 +1140,8 @@ cluster_heatmap
 
 Alluvial plot of clusters
 ```{r}
+source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
+
 df <- tibble(
     Seurat = seu_clusters,
     Scanpy = scan_clusters
@@ -1200,6 +1216,8 @@ sc.tl.umap(adata, min_dist = r.scanpy_umap_min_dist)
 
 Plot UMAP
 ```{r}
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
+
 umap_plots <- plot_umap(group1_umap_info = seu_umap_info$umap@cell.embeddings, group1_clusters = seu$seurat_clusters, group2_umap_info = py$adata$obsm["X_umap"], group2_clusters = scanpy_clusters_renumbered, save = c(file_paths$umap_seu, file_paths$umap_scan))
 seu_umap <- umap_plots[[1]]
 scan_umap <- umap_plots[[2]]
@@ -1208,12 +1226,12 @@ seu_umap
 scan_umap
 
 
-umap_plots_swapped_clusters <- plot_umap(group1_umap_info = seu_umap_info$umap@cell.embeddings, group1_clusters = scanpy_clusters_renumbered, group2_umap_info = py$adata$obsm["X_umap"], group2_clusters = seu$seurat_clusters, group1_title = "Seurat UMAP with Scanpy clusters", group2_title = "Scanpy UMAP with Seurat clusters", save = c(file_paths$umap_seu_clusters_scan, file_paths$umap_scan_clusters_seu))
-seu_umap_scan_clusters <- umap_plots_swapped_clusters[[1]]
-scan_umap_seu_clusters <- umap_plots_swapped_clusters[[2]]
-
-seu_umap_scan_clusters
-scan_umap_seu_clusters
+# umap_plots_swapped_clusters <- plot_umap(group1_umap_info = seu_umap_info$umap@cell.embeddings, group1_clusters = scanpy_clusters_renumbered, group2_umap_info = py$adata$obsm["X_umap"], group2_clusters = seu$seurat_clusters, group1_title = "Seurat UMAP with Scanpy clusters", group2_title = "Scanpy UMAP with Seurat clusters", save = c(file_paths$umap_seu_clusters_scan, file_paths$umap_scan_clusters_seu))
+# seu_umap_scan_clusters <- umap_plots_swapped_clusters[[1]]
+# scan_umap_seu_clusters <- umap_plots_swapped_clusters[[2]]
+# 
+# seu_umap_scan_clusters
+# scan_umap_seu_clusters
 ```
 
 Compute KNN graph of UMAP space
@@ -1508,8 +1526,6 @@ Plot scatterplots
 markers2$p_val_adj_r[markers2$p_val_adj_r == 0] <- .Machine$double.xmin
 markers2$p_val_adj_py[markers2$p_val_adj_py == 0] <- .Machine$double.xmin
 
-source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
-
 seurat_vs_scanpy_logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
 seurat_vs_scanpy_pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
 
@@ -1537,3 +1553,10 @@ if (save_data == TRUE) {
 ```{r}
 sessionInfo()
 ```
+
+
+
+```{r}
+
+```
+

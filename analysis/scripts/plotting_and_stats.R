@@ -1,4 +1,5 @@
-dpi <- 350
+# dpi_bw <- 300
+# dpi_color <- 500
 axis_text_size <- 1.7
 axis_numbering_size <- 1.4
 
@@ -119,7 +120,7 @@ make_knee_plot <- function(bc_rank, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$knee_plot)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, dpi = dpi_bw)
     }
 
     return(p)
@@ -194,6 +195,7 @@ make_umi_scatterplot <- function(res_mat1, res_mat2, UMI_cutoff1 = NULL, UMI_cut
         annotation_logticks() +
         geom_abline(slope = 1, intercept = 0, show.legend = FALSE, linewidth = 0.3, color = "gray30", linetype = 2) +
         theme(
+            text = element_text(family = "Arial"),
             legend.position = "none",
             plot.margin = margin(l = 5, r = 15, t = 4),
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
@@ -218,7 +220,7 @@ make_umi_scatterplot <- function(res_mat1, res_mat2, UMI_cutoff1 = NULL, UMI_cut
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$umi_scatterplot)
-        ggsave(filepath, plot = p, dpi = dpi, width = 2100, height = 2100, units = "px")
+        ggsave(filepath, plot = p, dpi = dpi_bw, width = 2100, height = 2100, units = "px")
     }
 
     return(p)
@@ -230,24 +232,24 @@ make_violin_plot <- function(seu, show_points = FALSE, color = NULL, save = FALS
     p1 <- VlnPlot(seu, features = "nFeature_RNA", group.by = "orig.ident", pt.size = pt.size, cols = color) +
         coord_cartesian(ylim = c(0, 8250)) +
         scale_y_continuous(breaks = seq(0, 8500, by = 2000)) +
-        theme(legend.position = "none", axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
+        theme(text = element_text(family = "Arial"), legend.position = "none", axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
 
     p2 <- VlnPlot(seu, features = "nCount_RNA", group.by = "orig.ident", pt.size = pt.size, cols = color) +
         coord_cartesian(ylim = c(0, 64000)) +
         scale_y_continuous(breaks = seq(0, 60000, by = 20000)) +
-        theme(legend.position = "none", axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
+        theme(text = element_text(family = "Arial"), legend.position = "none", axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
 
     p3 <- VlnPlot(seu, features = "pct_mt", group.by = "orig.ident", pt.size = pt.size, cols = color) +
         coord_cartesian(ylim = c(0, 80)) +
         scale_y_continuous(breaks = seq(0, 80, by = 10)) +
-        theme(legend.position = "none", axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
+        theme(text = element_text(family = "Arial"), legend.position = "none", axis.text.x = element_blank(), axis.title.x = element_blank(), axis.title.y = element_blank())
 
     # Arrange the plots into one plot with 3 columns
     combined_plot <- (p1 | p2 | p3) + plot_layout(ncol = 3)
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$violin_file_path)
-        ggsave(filepath, plot = combined_plot, dpi = dpi)
+        ggsave(filepath, plot = combined_plot, dpi = dpi_color)
     }
 
     return(combined_plot)
@@ -277,18 +279,18 @@ upset_plot_general <- function(data, group1_name, group2_name, comparison, befor
         y_label <- glue("{comparison} Intersection")
     }
 
-    p <- UpSetR::upset(df[, -1], mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), text.scale = c(2.4, 1.4, 1.85, 1, 1.85, 1.95), empty.intersections = TRUE)
+    p <- UpSetR::upset(df[, -1], set_size.show = TRUE, set_size.scale_max = 1.4 * length(df$element), set_size.numbers_size = 11, mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), text.scale = c(2.4, 1.4, 1.85, 1, 1.85, 1.95), empty.intersections = TRUE)
 
     if (as_ggplot) {
         p <- as.ggplot(p)
         if (save == TRUE || is.character(save)) {
             filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-            ggsave(filepath, plot = p, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
+            ggsave(filepath, plot = p, dpi = dpi_bw, bg = "white", width = 2300, height = 2100, units = "px")
         }
     } else {
         if (save == TRUE || is.character(save)) {
             filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-            tiff(filepath, width = 2300, height = 2100, res = dpi, bg = "white", units = "px")
+            tiff(filepath, width = 2300, height = 2100, res = dpi_bw, bg = "white", units = "px")
             print(p)
             dev.off()
         }
@@ -403,7 +405,7 @@ make_euler_seurat_vs_scanpy <- function(seu, adata, comparison, before_QC = FALS
 
     if (save_plot == TRUE || is.character(save_plot)) {
         filepath <- make_save_path(filepath = save_plot, default_filepath = default_plotpath)
-        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
+        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi_color, bg = "white", width = 2300, height = 2100, units = "px")
     }
 
     return(euler_plot_ggplot_compatible)
@@ -476,7 +478,7 @@ plot_differences_histogram_seurat_vs_scanpy <- function(df, column, title, media
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, dpi = dpi_bw)
     }
 
     return(p)
@@ -494,7 +496,7 @@ plot_differences_boxplot_seurat_vs_scanpy <- function(df, column, title, x_label
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, dpi = dpi_bw)
     }
 
     if (column == "logFC_difference_magnitude") {
@@ -511,7 +513,7 @@ plot_differences_boxplot_seurat_vs_scanpy <- function(df, column, title, x_label
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, dpi = dpi_bw)
     }
 
     return(p)
@@ -572,7 +574,6 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
         ggpointdensity::geom_pointdensity(size = 0.3, alpha = 1, adjust = 0.2, show.legend = FALSE) +
         scico::scale_color_scico(palette = "grayC", direction = -1, end = 0.8) +
         coord_equal() +
-        theme(plot.title = element_text(hjust = 0.48)) + # Center the title
         coord_fixed(ratio = 1, xlim = c(0, max_log_p), ylim = c(0, max_log_p)) +
         labs(
             x = bquote(-log[10](.(group2_name) ~ "Adjusted p-value")),
@@ -580,6 +581,7 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
             title = plot_title
         ) +
         theme(
+            text = element_text(family = "Arial"), 
             plot.title = element_blank(),          # Increase plot title size
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
             axis.title = element_text(size = rel(axis_text_size))         # Increase axis text size
@@ -595,6 +597,7 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
         geom_hline(yintercept = -log(0.05, base = 10), linetype = "dashed", color = "black") + # Horizontal line at y = 0.05
         geom_vline(xintercept = -log(0.05, base = 10), linetype = "dashed", color = "black") +
         theme(
+            text = element_text(family = "Arial"), 
             axis.title.x = element_blank(), # Remove x-axis label
             axis.title.y = element_blank(),
             panel.background = element_rect(fill = "transparent", colour = NA), # Transparent background
@@ -610,7 +613,7 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$wilcoxon_scatterplot_file_path)
-        ggsave(filepath, plot = p, dpi = dpi, width = 2100, height = 2100, units = "px")
+        ggsave(filepath, plot = p, dpi = dpi_bw, width = 2100, height = 2100, units = "px")
     }
 
     return(p)
@@ -677,6 +680,7 @@ plot_scatterplot_de_logfc <- function(markers2, outliers_excluded = FALSE, show_
         labs(x = bquote(log[2](.(group2_name) ~ "Fold Change")), y = bquote(log[2](.(group1_name) ~ "Fold Change"))) +
         coord_cartesian(xlim = c(-max_value, max_value), ylim = c(-max_value, max_value)) +
         theme(
+            text = element_text(family = "Arial"), 
             plot.title = element_blank(),          # Increase plot title size
             plot.margin = margin(l = 5, r = 11.5, b = bottom_margin, t = top_margin),
             axis.text = element_text(size = rel(axis_numbering_size)),
@@ -720,7 +724,7 @@ plot_scatterplot_de_logfc <- function(markers2, outliers_excluded = FALSE, show_
     if (show_legend) {
         p <- p +
             geom_abline(aes(slope = 1, intercept = 0, linetype = "y=x", color = "y=x"), show.legend = FALSE, linewidth = 0.5) +
-            theme(legend.text = element_text(size = 14))
+            theme(text = element_text(family = "Arial"), legend.text = element_text(size = 14))
         if (!outliers_excluded && ((m / m_filtered < 0.95 || m / m_filtered > 1.05) || (b / b_filtered < 0.95 || b / b_filtered > 1.05))) {
             p <- p +
                 geom_abline(linewidth = 0.5, show.legend = TRUE, aes(slope = m_filtered, intercept = b_filtered, linetype = baseline_pca_model_filtered, color = baseline_pca_model_filtered))
@@ -746,7 +750,7 @@ plot_scatterplot_de_logfc <- function(markers2, outliers_excluded = FALSE, show_
     if (show_legend) {
         p <- p +
             geom_point(alpha = 0.2, size = 0.3, color = "gray60") +
-            theme(legend.position = "bottom", legend.direction = "vertical", legend.background = element_blank(), legend.box.spacing = grid::unit(-0.8, "lines"), ) +
+            theme(text = element_text(family = "Arial"), legend.position = "bottom", legend.direction = "vertical", legend.background = element_blank(), legend.box.spacing = grid::unit(-0.8, "lines"), ) +
             guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1)))
     } else {
         p <- p +
@@ -769,7 +773,7 @@ plot_scatterplot_de_logfc <- function(markers2, outliers_excluded = FALSE, show_
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi, width = 2100, height = 2100, units = "px")
+        ggsave(filepath, plot = p, dpi = dpi_bw, width = 2100, height = 2100, units = "px")
     }
 
     return(p)
@@ -781,13 +785,13 @@ make_bar_plot <- function(df, metric, save = FALSE, filename = NULL) {
         geom_bar(stat = "identity", aes(fill = !!sym("Categories"))) +
         scale_fill_manual(values = ditto_colors) +
         labs(y = metric, x = "Category", title = metric) +
-        theme_minimal() +
-        theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
+        theme_minimal(base_family = "Arial") +
+        theme(text = element_text(family = "Arial"), legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
 
     print(p)
 
     if (save) {
-        ggsave(filename, plot = p, dpi = dpi)
+        ggsave(filename, plot = p, dpi = dpi_color)
     }
 
     return(p)
@@ -820,6 +824,7 @@ plot_var_explained <- function(eigs_df, npcs = 20, group_names = waiver(), save 
             shape = "Package"
         ) + # Change legend title for shape
         theme(
+            text = element_text(family = "Arial"), 
             legend.text = element_text(size = rel(1.5)),
             legend.title = element_blank(),
             legend.position = c(0.97, 0.93), # Adjust coordinates for top right position
@@ -839,7 +844,7 @@ plot_var_explained <- function(eigs_df, npcs = 20, group_names = waiver(), save 
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_elbow_filepath_combined)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, dpi = dpi_color)
     }
 
     return(p)
@@ -877,6 +882,7 @@ plot_pca_compare <- function(embeddings1, embeddings2,
         ) +
         guides(shape = guide_legend(title = ""), color = guide_legend(title = "", override.aes = list(alpha = 1))) +
         theme(
+            text = element_text(family = "Arial"), 
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
             axis.title = element_text(size = rel(axis_text_size)), # Increase axis titles size
             legend.text = element_text(size = rel(1.5)),
@@ -886,6 +892,7 @@ plot_pca_compare <- function(embeddings1, embeddings2,
     if (is.character(legend_position) && legend_position != "outside") {
         p <- p +
             theme(
+                text = element_text(family = "Arial"), 
                 legend.margin = margin(-10, -10, -10, -10),  # Optional: Adjust margin to move closer to or further from the edges
                 legend.box.margin = margin(0, 0, 0, 0),  # Optional: Adjust box margin
                 legend.background = element_blank(),  # Optional: Remove background
@@ -895,6 +902,7 @@ plot_pca_compare <- function(embeddings1, embeddings2,
         if (legend_position == "TL") {
             p <- p +
                 theme(
+                    text = element_text(family = "Arial"), 
                     legend.position = c(0.025, 1.02),
                     legend.justification = c(0, 1),
                     legend.box.just = "left"
@@ -902,6 +910,7 @@ plot_pca_compare <- function(embeddings1, embeddings2,
         } else if (legend_position == "BR") {
             p <- p +
                 theme(
+                    text = element_text(family = "Arial"), 
                     legend.position = c(0.96, 0.14),
                     legend.justification = c(1, 1),
                     legend.box.just = "right"
@@ -909,6 +918,7 @@ plot_pca_compare <- function(embeddings1, embeddings2,
         } else if (legend_position == "BL") {
             p <- p +
                 theme(
+                    text = element_text(family = "Arial"), 
                     legend.position = c(0.025, 0.14),
                     legend.justification = c(0, 1),
                     legend.box.just = "left"
@@ -916,6 +926,7 @@ plot_pca_compare <- function(embeddings1, embeddings2,
         } else {  # put it in the top-right
             p <- p +
                 theme(
+                    text = element_text(family = "Arial"), 
                     legend.position = c(0.96, 1.02),  # Top-right corner
                     legend.justification = c(1, 1),  # Anchor the legend at the top-right
                     legend.box.just = "right"  # Justify the legend box at the right
@@ -933,7 +944,7 @@ plot_pca_compare <- function(embeddings1, embeddings2,
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$knee_plot)
-        ggsave(filepath, plot = p, width = 2100, height = 2100, dpi = dpi, units = "px")
+        ggsave(filepath, plot = p, width = 2100, height = 2100, dpi = dpi_color, units = "px")
     }
 
     return(p)
@@ -957,6 +968,7 @@ plot_loading_diffs <- function(df, mean_loadings_diff = NULL, save = FALSE) {
             y = "Sine of PCA Eigenvectors θ"
         ) +
         theme(
+            text = element_text(family = "Arial"), 
             plot.title = element_text(size = rel(1.5), hjust = 0.5),
             axis.title.x = element_text(size = rel(axis_text_size)), # X axis label size
             axis.title.y = element_text(size = rel(1.4)), # X axis label size
@@ -977,7 +989,7 @@ plot_loading_diffs <- function(df, mean_loadings_diff = NULL, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_loading_diffs)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, dpi = dpi_bw)
     }
 
     return(p)
@@ -998,7 +1010,7 @@ plot_eigs_diffs <- function(df, save = FALSE) {
             # title = "Proportion of variance explained",
             y = "Absolute differences",
         ) +
-        theme(plot.title = element_text(size = rel(1.5), hjust = 0.5)) +
+        theme(text = element_text(family = "Arial"), plot.title = element_text(size = rel(1.5), hjust = 0.5)) +
         guides(color = FALSE)
 
     if (!all(df$value == 0)) {
@@ -1007,7 +1019,7 @@ plot_eigs_diffs <- function(df, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_eigs_diff)
-        ggsave(filepath, plot = p, dpi = dpi)
+        ggsave(filepath, plot = p, dpi = dpi_color)
     }
 
     return(p)
@@ -1028,7 +1040,7 @@ make_jaccard_plot <- function(jaccards, median_jaccard = NULL, save = FALSE) {
             ylim(0.9, 1.1) +
             xlab("Jaccard") +
             ylab("Fraction of Data Points") +
-            theme_minimal()
+            theme_minimal(base_family = "Arial")
     } else {
         jaccard_plot <- ggplot(jaccards, aes(Jaccard)) +
             geom_density(fill = NA, color = seurat_v_scanpy_baseline_color) +
@@ -1038,6 +1050,7 @@ make_jaccard_plot <- function(jaccards, median_jaccard = NULL, save = FALSE) {
 
     jaccard_plot <- jaccard_plot +
         theme(
+            text = element_text(family = "Arial"), 
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
             axis.title = element_text(size = rel(axis_text_size)), # Increase axis titles size
             plot.margin = margin(5.5, 17, 5.5, 5.5)
@@ -1051,7 +1064,7 @@ make_jaccard_plot <- function(jaccards, median_jaccard = NULL, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_eigs_diff)
-        ggsave(filepath, plot = jaccard_plot, dpi = dpi)
+        ggsave(filepath, plot = jaccard_plot, dpi = dpi_bw)
     }
 
     return(jaccard_plot)
@@ -1065,13 +1078,14 @@ make_knn_scatterplot <- function(nei_pairs, save = FALSE) {
         coord_equal() +
         labs(x = "Degree (Group 1)", y = "Degree (Group 2)") +
         theme(
+            text = element_text(family = "Arial"), 
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
             axis.title = element_text(size = rel(axis_text_size))
         )
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$knn_scatterplot)
-        ggsave(filepath, plot = knn_scatterplot, dpi = dpi)
+        ggsave(filepath, plot = knn_scatterplot, dpi = dpi_bw)
     }
 
     return(knn_scatterplot)
@@ -1090,7 +1104,7 @@ make_combined_pc_variance_loadings_plot <- function(combined_pc_variance, loadin
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$combined_pc_variance_loadings_plot)
-        ggsave(filepath, plot = combined_plot, dpi = dpi)
+        ggsave(filepath, plot = combined_plot, dpi = dpi_color)
     }
 
     return(combined_plot)
@@ -1115,12 +1129,13 @@ make_snn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
             xlim = c(xmin, xmax),
             ylim = c(0, 1)
         ) +
-        theme_minimal() +
+        theme_minimal(base_family = "Arial") +
         stat_function(fun = function(x) 2^x, color = "grey30", linetype = 2, xlim = c(xmin, 0)) +
         stat_function(fun = function(x) 2^(-x), color = "grey30", linetype = 2, xlim = c(0, xmax)) +
         annotate("text", x = xmin, y = 0.13, label = "y == 2^{x}", parse = TRUE, color = "grey30", size = 4.5) +
         annotate("text", x = xmax, y = 0.13, label = "y == 2^-{x}", parse = TRUE, color = "grey30", size = 4.5) +
         theme(
+            text = element_text(family = "Arial"), 
             legend.position = "none",
             panel.grid.major.x = element_line(color = "grey90", linewidth = 0.2),
             panel.grid.major.y = element_line(color = "grey80", linewidth = 0.2),
@@ -1139,7 +1154,7 @@ make_snn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$jaccard_degree_scatterplot)
-        ggsave(filepath, plot = p, dpi = dpi, bg = "white")
+        ggsave(filepath, plot = p, dpi = dpi_bw, bg = "white")
     }
 
     return(p)
@@ -1156,13 +1171,13 @@ make_umap_jaccard_plot <- function(jaccards_df, facet = NULL, save = FALSE) {
             geom_point(size = 4, color = "black") + # Adjust point size as needed
             xlim(0.9, 1.1) + # Adjust limits to focus on the point
             ylim(0.9, 1.1) +
-            xlab("UMAP SNN Jaccard") +
+            xlab("UMAP KNN Jaccard") +
             ylab("Density") +
-            theme_minimal()
+            theme_minimal(base_family = "Arial")
     } else {
         umap_jaccard_plot <- ggplot(jaccards_df, aes(x = JaccardIndex)) +
             geom_density(fill = NA, color = "black") +
-            labs(y = "Density", x = "UMAP SNN Jaccard") +
+            labs(y = "Density", x = "UMAP KNN Jaccard") +
             scale_x_continuous(
                 breaks = seq(0, 1, by = 0.1), # Major breakpoints
                 minor_breaks = seq(0, 1, by = 0.05) # Minor breakpoints
@@ -1170,6 +1185,7 @@ make_umap_jaccard_plot <- function(jaccards_df, facet = NULL, save = FALSE) {
             scale_color_manual(values = ditto_colors) +
             coord_cartesian(xlim = c(0, 1)) +
             theme(
+                text = element_text(family = "Arial"), 
                 axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
                 axis.title = element_text(size = rel(axis_text_size)), # Increase axis titles size
                 plot.margin = margin(5.5, 17, 5.5, 5.5)
@@ -1178,13 +1194,13 @@ make_umap_jaccard_plot <- function(jaccards_df, facet = NULL, save = FALSE) {
         if (!is.null(facet)) {
             umap_jaccard_plot <- umap_jaccard_plot +
                 facet_wrap(~ .data[[facet]]) +
-                theme(axis.text = element_text(size = 5.5))
+                theme(text = element_text(family = "Arial"), axis.text = element_text(size = 5.5))
         }
     }
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$umap_jaccard_knn_density)
-        ggsave(filepath, plot = umap_jaccard_plot, dpi = dpi, bg = "white", width = 2100, height = 2100, units = "px")
+        ggsave(filepath, plot = umap_jaccard_plot, dpi = dpi_color, bg = "white", width = 2100, height = 2100, units = "px")
     }
 
     return(umap_jaccard_plot)
@@ -1217,7 +1233,7 @@ plot_heatmap <- function(jacc_seu_sc3, ari_value = NULL, show_axis_titles = FALS
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pheatmap)
-        ggsave(filepath, plot = cluster_pheatmap, dpi = dpi, bg = "white")
+        ggsave(filepath, plot = cluster_pheatmap, dpi = dpi_color, bg = "white")
     }
     return(cluster_pheatmap)
 }
@@ -1268,12 +1284,13 @@ plot_alluvial <- function(clus_df_gather, group1_name = "Seurat", group2_name = 
         annotate("text", x = 1.023, y = 1, label = num_levels_group1, hjust = 1, vjust = 1.35, size = 5) + # Adjust x, y for Seurat
         annotate("text", x = 1.978, y = 1, label = num_levels_group2, hjust = 0, vjust = 1.35, size = 5) + # Adjust x, y for Scanpy
         theme(
+            text = element_text(family = "Arial"), 
             legend.text = element_text(size = rel(axis_text_size))
         )
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$alluvial)
-        ggsave(filepath, plot = p, dpi = dpi, bg = "white")
+        ggsave(filepath, plot = p, dpi = dpi_color, bg = "white")
     }
 
     return(p)
@@ -1281,28 +1298,42 @@ plot_alluvial <- function(clus_df_gather, group1_name = "Seurat", group2_name = 
 
 
 make_umap_plot <- function(dataframe, package, title = "UMAP", overall_min_dim1 = 0, overall_max_dim1 = 20, overall_min_dim2 = 0, overall_max_dim2 = 20, show_legend = FALSE) {
+    centroids <- dataframe %>%
+        group_by(cluster) %>%
+        summarise(
+            UMAP_1 = mean(UMAP_1),
+            UMAP_2 = mean(UMAP_2)
+        )
+    
     p <- ggplot(dataframe, aes(x = UMAP_1, y = UMAP_2, color = as.factor(cluster))) +
         geom_point(size = 0.1) +
         xlim(overall_min_dim1, overall_max_dim1) +
         ylim(overall_min_dim2, overall_max_dim2) +
+        ggrepel::geom_text_repel(data = centroids, aes(x = UMAP_1, y = UMAP_2, label = cluster), alpha = 0.6, 
+                         vjust = "center", hjust = "center", color = "black", size = 4.5, force = 1e-3) +
+        # ggrepel::geom_label_repel(data = centroids, aes(x = UMAP_1, y = UMAP_2, label = cluster, fill = cluster), alpha = 0.6, 
+                   # vjust = "center", hjust = "center", color = "black", size = 4) +
+        # scale_fill_manual(values = ditto_colors, name = "Cluster") +
         labs(
             x = "", # Remove x-axis title
             y = "", # Remove y-axis title
             title = title
         ) +
         theme(
+            # text = element_text(family = "Arial"), 
             axis.text.x = element_blank(), # Turn off x-axis numbers
             axis.text.y = element_blank(), # Turn off y-axis numbers
             axis.ticks = element_blank(), # Optionally, turn off axis ticks as well
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
-            plot.title = element_text(size = rel(2.3), hjust = 0.5) # Center the title
+            plot.title = element_text(size = rel(1.5), hjust = 0.5) # Center the title
         ) +
         scale_color_manual(values = ditto_colors, name = "Cluster") +
         guides(color = guide_legend(override.aes = list(size = 3)))
 
     if (!show_legend) {
         p <- p +
-            theme(legend.position = "none")
+            theme(text = element_text(family = "Arial"), 
+                  legend.position = "none")
     }
 
     return(p)
@@ -1362,12 +1393,12 @@ plot_umap <- function(group1_umap_info, group1_clusters, group2_umap_info, group
 
     if (save_1 == TRUE || (is.character(save_1)) && !is.na(save_1)) {
         filepath_1 <- make_save_path(filepath = save_1, default_filepath = file_paths_default$umap_seu)
-        ggsave(filepath_1, plot = p1, dpi = dpi, bg = "white", width = 2100, height = 2100, units = "px")
+        ggsave(filepath_1, plot = p1, dpi = dpi_color, bg = "white", width = 2100, height = 2100, units = "px")
     }
 
     if (save_2 == TRUE || (is.character(save_2)) && !is.na(save_2)) {
         filepath_2 <- make_save_path(filepath = save_2, default_filepath = file_paths_default$umap_scan)
-        ggsave(filepath_2, plot = p2, dpi = dpi, bg = "white", width = 2100, height = 2100, units = "px")
+        ggsave(filepath_2, plot = p2, dpi = dpi_color, bg = "white", width = 2100, height = 2100, units = "px")
     }
 
     return(list(p1, p2))
@@ -1619,7 +1650,7 @@ make_euler_scanpy <- function(adata1, adata2, comparison, before_QC = FALSE, gro
 
     if (save_plot == TRUE || is.character(save_plot)) {
         filepath <- make_save_path(filepath = save_plot, default_filepath = default_plotpath)
-        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
+        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi_color, bg = "white", width = 2300, height = 2100, units = "px")
     }
 
     return(euler_plot_ggplot_compatible)
@@ -1697,7 +1728,7 @@ make_euler_seurat <- function(seu1, seu2, comparison, before_QC = FALSE, group_n
 
     if (save_plot == TRUE || is.character(save_plot)) {
         filepath <- make_save_path(filepath = save_plot, default_filepath = default_plotpath)
-        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
+        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi_color, bg = "white", width = 2300, height = 2100, units = "px")
     }
 
     return(euler_plot_ggplot_compatible)
@@ -1712,6 +1743,7 @@ make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group
         scale_y_continuous(breaks = seq(0, max_features, by = 2000)) +
         annotate("text", x = 1, y = -Inf, label = group1_name, vjust = 1.7, hjust = 0.5, size = 9) +
         theme(
+            text = element_text(family = "Arial"), 
             legend.position = "none",
             plot.margin = margin(r = 0, b = 35, t = 10, unit = "pt"),
             plot.title = element_blank(),
@@ -1726,6 +1758,7 @@ make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group
         scale_y_continuous(breaks = seq(0, max_features, by = 2000)) +
         annotate("text", x = 1, y = -Inf, label = group2_name, vjust = 1.7, hjust = 0.5, size = 9) +
         theme(
+            text = element_text(family = "Arial"), 
             legend.position = "none",
             plot.margin = margin(l = 0, b = 35, r = 30, unit = "pt"),
             axis.text.x = element_blank(),
@@ -1741,11 +1774,11 @@ make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group
     
     combined_plot <- combined_plot + plot_annotation(title = "Number of genes per cell", 
                                                      theme = theme(
-                                                         plot.title = element_text(hjust = 0.8, vjust = 0, size = 30)))
+                                                         text = element_text(family = "Arial"), plot.title = element_text(hjust = 0.8, vjust = 0, size = 30)))
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$violin_counts_comparison)
-        ggsave(filepath, plot = combined_plot, dpi = dpi, width = 2100, height = 2100, units = "px")
+        ggsave(filepath, plot = combined_plot, dpi = dpi_color, width = 2100, height = 2100, units = "px")
     }
 
     return(combined_plot)

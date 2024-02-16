@@ -71,7 +71,8 @@ output_base_path <- NULL   # NULL for default path
 scan1_name <- "Full"  # Must have no spaces
 scan2_name <- "Downsampled_reads"  # Must have no spaces
 save_data <- TRUE
-dpi <- 350
+dpi_bw <- 300
+dpi_color <- 500
 project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
 include_seeds_in_file_paths <- FALSE  # Only needed if using default input/output paths
@@ -140,7 +141,11 @@ cell_fraction_after_downsampling <- ifelse(scan1_cell_fraction_after_downsamplin
 )
 
 if (include_seeds_in_file_paths) {
-    read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_scan1_seed{scan1_read_downsample_seed}_scan2_seed{scan2_read_downsample_seed}")
+    if (scan1_read_downsample_seed == scan2_read_downsample_seed) {
+        read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
+    } else {
+        read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_scan1_seed{scan1_read_downsample_seed}_scan2_seed{scan2_read_downsample_seed}")
+    }
     cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
 }
 
@@ -289,7 +294,7 @@ library(ggplotify)
 library(grid)
 library(gtable)
 library(ggalluvial)
-theme_set(theme_bw())
+theme_set(theme_bw(base_family = "Arial"))
 
 source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 source(glue("{project_base_path}/scripts/plotting_and_stats.R"))

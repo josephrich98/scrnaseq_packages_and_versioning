@@ -221,7 +221,7 @@ calculate_knn_jaccards <- function(knn1_ids, knn2_ids) {
         intersection <- length(intersect(row1, row2))
         union <- length(union(row1, row2))
         jaccard <- intersection / union
-        jaccards_all_cells <- c(jaccards_all_cells, jaccard) # Append mean of jaccard values
+        jaccards_all_cells <- c(jaccards_all_cells, jaccard) # Append jaccard value
     }
     return(jaccards_all_cells)
 }
@@ -342,82 +342,84 @@ increment_if_zeros <- function(clus_df_gather, column) {
 
 
 sort_clusters_by_agreement <- function(clus_df_gather, stable_column = "Seurat", reordered_column = "Scanpy") {
-    reordered_column_original_clusters_name <- paste0(reordered_column, "_original_clusters")
-
-    clus_df_gather <- increment_if_zeros(clus_df_gather, stable_column)
-    clus_df_gather <- increment_if_zeros(clus_df_gather, reordered_column)
-    clus_df_gather <- increment_if_zeros(clus_df_gather, "y")
-
-    # Initialize variables
-    half_rows <- nrow(clus_df_gather) / 2
-
-    subset_data <- clus_df_gather %>%
-        ungroup() %>%
-        dplyr::slice((half_rows + 1):nrow(clus_df_gather))
-
-    subset_data <- subset_data %>% mutate(
-        !!reordered_column_original_clusters_name := as.numeric(as.character(.data[[reordered_column]])),
-        !!reordered_column := -as.numeric(as.character(.data[[reordered_column]])),
-        y := -as.numeric(as.character(y)),
-        best_cluster_agreement := .data[[reordered_column]]
-    )
-
-    # Loop over each unique cluster number in Cellrangerv3
-    for (cluster_number in sort(unique(subset_data[[reordered_column_original_clusters_name]]))) {
-        # Subset the data for the current cluster number
-        subset_data2 <- subset_data[subset_data[[reordered_column_original_clusters_name]] == cluster_number, ]
-
-        # Find the row with the largest overlap (value)
-        largest_overlap_row <- subset_data2[which.max(subset_data2$value), ]
-
-        # Check if the corresponding Cellrangerv7 number is available
-        new_cluster_number <- as.numeric(as.character(largest_overlap_row[[stable_column]]))
-
-        best_cluster_number <- new_cluster_number
-
-        subset_data$best_cluster_agreement[subset_data[[reordered_column_original_clusters_name]] == cluster_number] <- best_cluster_number
-
-        any(subset_data[[reordered_column]] == best_cluster_number)
-
-        while (any(subset_data[[reordered_column]] == new_cluster_number)) {
-            new_cluster_number <- new_cluster_number + 1
-            if (!any(subset_data$best_cluster_agreement[subset_data[[reordered_column]] == new_cluster_number] <= best_cluster_number)) {
-                subset_data[[reordered_column]] <- ifelse(subset_data[[reordered_column]] >= new_cluster_number, subset_data[[reordered_column]] + 1, subset_data[[reordered_column]])
-                subset_data$y <- ifelse(subset_data$y >= new_cluster_number, subset_data$y + 1, subset_data$y)
-                break
+    for(n in 1:2) {
+        reordered_column_original_clusters_name <- paste0(reordered_column, "_original_clusters")
+        
+        clus_df_gather <- increment_if_zeros(clus_df_gather, stable_column)
+        clus_df_gather <- increment_if_zeros(clus_df_gather, reordered_column)
+        clus_df_gather <- increment_if_zeros(clus_df_gather, "y")
+        
+        # Initialize variables
+        half_rows <- nrow(clus_df_gather) / 2
+        
+        subset_data <- clus_df_gather %>%
+            ungroup() %>%
+            dplyr::slice((half_rows + 1):nrow(clus_df_gather))
+        
+        subset_data <- subset_data %>% mutate(
+            !!reordered_column_original_clusters_name := as.numeric(as.character(.data[[reordered_column]])),
+            !!reordered_column := -as.numeric(as.character(.data[[reordered_column]])),
+            y := -as.numeric(as.character(y)),
+            best_cluster_agreement := .data[[reordered_column]]
+        )
+        
+        # Loop over each unique cluster number in Cellrangerv3
+        for (cluster_number in sort(unique(subset_data[[reordered_column_original_clusters_name]]))) {
+            # Subset the data for the current cluster number
+            subset_data2 <- subset_data[subset_data[[reordered_column_original_clusters_name]] == cluster_number, ]
+            
+            # Find the row with the largest overlap (value)
+            largest_overlap_row <- subset_data2[which.max(subset_data2$value), ]
+            
+            # Check if the corresponding Cellrangerv7 number is available
+            new_cluster_number <- as.numeric(as.character(largest_overlap_row[[stable_column]]))
+            
+            best_cluster_number <- new_cluster_number
+            
+            subset_data$best_cluster_agreement[subset_data[[reordered_column_original_clusters_name]] == cluster_number] <- best_cluster_number
+            
+            any(subset_data[[reordered_column]] == best_cluster_number)
+            
+            while (any(subset_data[[reordered_column]] == new_cluster_number)) {
+                new_cluster_number <- new_cluster_number + 1
+                if (!any(subset_data$best_cluster_agreement[subset_data[[reordered_column]] == new_cluster_number] <= best_cluster_number)) {
+                    subset_data[[reordered_column]] <- ifelse(subset_data[[reordered_column]] >= new_cluster_number, subset_data[[reordered_column]] + 1, subset_data[[reordered_column]])
+                    subset_data$y <- ifelse(subset_data$y >= new_cluster_number, subset_data$y + 1, subset_data$y)
+                    break
+                }
+            }
+            
+            # Assign the new cluster number
+            subset_data[[reordered_column]][subset_data[[reordered_column_original_clusters_name]] == cluster_number] <- new_cluster_number
+            
+            for (i in (new_cluster_number + 1):(max(as.numeric(as.character(clus_df_gather$y))))) {
+                if (!any(subset_data[[reordered_column]] == new_cluster_number)) {
+                    subset_data[[reordered_column]] <- ifelse(subset_data[[reordered_column]] > i, subset_data[[reordered_column]] - 1, subset_data[[reordered_column]])
+                    subset_data$y <- ifelse(subset_data$y > i, subset_data$y - 1, subset_data$y)
+                    break
+                }
             }
         }
-
-        # Assign the new cluster number
-        subset_data[[reordered_column]][subset_data[[reordered_column_original_clusters_name]] == cluster_number] <- new_cluster_number
-
-        for (i in (new_cluster_number + 1):(max(as.numeric(as.character(clus_df_gather$y))))) {
-            if (!any(subset_data[[reordered_column]] == new_cluster_number)) {
-                subset_data[[reordered_column]] <- ifelse(subset_data[[reordered_column]] > i, subset_data[[reordered_column]] - 1, subset_data[[reordered_column]])
-                subset_data$y <- ifelse(subset_data$y > i, subset_data$y - 1, subset_data$y)
-                break
-            }
-        }
+        
+        mapping <- setNames(
+            seq_along(sort(unique(subset_data[[reordered_column]]))),
+            sort(unique(subset_data[[reordered_column]]))
+        )
+        
+        subset_data <- subset_data %>% mutate(!!reordered_column := mapping[as.character(.data[[reordered_column]])])
+        
+        clus_df_gather[[reordered_column]][(1:half_rows)] <- subset_data[[reordered_column]]
+        clus_df_gather[[reordered_column]][((half_rows + 1):nrow(clus_df_gather))] <- subset_data[[reordered_column]]
+        clus_df_gather$y[((half_rows + 1):nrow(clus_df_gather))] <- subset_data[[reordered_column]]
+        
+        sorted_levels <- sort(as.numeric(levels(clus_df_gather[[reordered_column]])))
+        sorted_levels <- as.character(sorted_levels)
+        clus_df_gather[[reordered_column]] <- factor(clus_df_gather[[reordered_column]], levels = sorted_levels)
+        
+        sorted_levels <- sort(as.numeric(levels(clus_df_gather$y)))
+        sorted_levels <- as.character(sorted_levels)
+        clus_df_gather$y <- factor(clus_df_gather$y, levels = sorted_levels)
     }
-
-    mapping <- setNames(
-        seq_along(sort(unique(subset_data[[reordered_column]]))),
-        sort(unique(subset_data[[reordered_column]]))
-    )
-
-    subset_data <- subset_data %>% mutate(!!reordered_column := mapping[as.character(.data[[reordered_column]])])
-
-    clus_df_gather[[reordered_column]][(1:half_rows)] <- subset_data[[reordered_column]]
-    clus_df_gather[[reordered_column]][((half_rows + 1):nrow(clus_df_gather))] <- subset_data[[reordered_column]]
-    clus_df_gather$y[((half_rows + 1):nrow(clus_df_gather))] <- subset_data[[reordered_column]]
-
-    sorted_levels <- sort(as.numeric(levels(clus_df_gather[[reordered_column]])))
-    sorted_levels <- as.character(sorted_levels)
-    clus_df_gather[[reordered_column]] <- factor(clus_df_gather[[reordered_column]], levels = sorted_levels)
-
-    sorted_levels <- sort(as.numeric(levels(clus_df_gather$y)))
-    sorted_levels <- as.character(sorted_levels)
-    clus_df_gather$y <- factor(clus_df_gather$y, levels = sorted_levels)
-
+    
     return(clus_df_gather)
 }

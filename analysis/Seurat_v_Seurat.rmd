@@ -69,7 +69,8 @@ output_base_path <- "/workspace/reads_downsampled_04_SEU"  # NULL for default pa
 seu1_name <- "Full"  # Must have no spaces
 seu2_name <- "Downsampled_reads"  # Must have no spaces
 save_data <- TRUE
-dpi <- 350
+dpi_bw <- 300
+dpi_color <- 500
 project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
 include_seeds_in_file_paths <- FALSE  # Only needed if using default input/output paths
@@ -138,7 +139,11 @@ cell_fraction_after_downsampling <- ifelse(seu1_cell_fraction_after_downsampling
 )
 
 if (include_seeds_in_file_paths) {
-    read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seu1_seed{seu1_read_downsample_seed}_seu2_seed{seu2_read_downsample_seed}")
+    if (seu1_read_downsample_seed == seu2_read_downsample_seed) {
+        read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
+    } else {
+        read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seu1_seed{seu1_read_downsample_seed}_seu2_seed{seu2_read_downsample_seed}")
+    }
     cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
 }
 
@@ -283,7 +288,7 @@ library(ggplotify)
 library(grid)
 library(gtable)
 library(ggalluvial)
-theme_set(theme_bw())
+theme_set(theme_bw(base_family = "Arial"))
 
 source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
@@ -923,11 +928,11 @@ new_cluster_pca2 <- DimPlot(seu2, label = TRUE, group.by = "seurat_clusters", la
 new_cluster_pca2
 
 if (file_paths$pca_cluster_filepath_seu1 != FALSE) {
-    ggsave(file_paths$pca_cluster_filepath_seu1, plot = new_cluster_pca1, dpi = dpi)
+    ggsave(file_paths$pca_cluster_filepath_seu1, plot = new_cluster_pca1, dpi = dpi_color)
 }
 
 if (file_paths$pca_cluster_filepath_seu2 != FALSE) {
-    ggsave(file_paths$pca_cluster_filepath_seu2, plot = new_cluster_pca2, dpi = dpi)
+    ggsave(file_paths$pca_cluster_filepath_seu2, plot = new_cluster_pca2, dpi = dpi_color)
 }
 ```
 

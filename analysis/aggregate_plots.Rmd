@@ -12,6 +12,7 @@ theme_set(theme_bw())
 
 ```{r}
 frac_list <- c(0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64) #***
+downsampled_seeds_list <- c(100)
 type_downsampled <- "cell" # "read" or "cell"
 margin_correct <- 0.05
 ```
@@ -19,6 +20,7 @@ margin_correct <- 0.05
 ```{r}
 project_base_path <- "/workspace/analysis"
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
+include_seeds_in_file_paths <- FALSE
 seurat_version <- "4.3.0"
 scanpy_version <- "1.9.5"
 matrix_generation <- "kb0_28_0_raw_generated_sa"
@@ -111,7 +113,7 @@ variable_sets <- list(
         output_plot_name = "knn.tiff"
     ),
     list(
-        statistic_name = "ARI",
+        statistic_name = "Clustering ARI",
         file_name = "pca_knn_clustering_umap_stats.txt",
         extraction_phrase = "Adjusted Rand index between clusters: ",
         baseline_value_seurat_vs_scanpy_default = 0.706349552155871,
@@ -349,7 +351,7 @@ for (set in variable_sets) {
 
     dir.create(dirname(output_plot_filepath), recursive = TRUE, showWarnings = FALSE)
 
-    ggsave(output_plot_filepath, plot = p, dpi = 350, bg = "white", width = 2100, height = 2100, units = "px")
+    ggsave(output_plot_filepath, plot = p, dpi = 500, bg = "white", width = 2100, height = 2100, units = "px")
 
     group1_df <- filter(long_df, variable == "value_group1")
     group2_df <- filter(long_df, variable == "value_group2")
@@ -419,7 +421,7 @@ if (margin_correct == 0) {
     aggregate_bar_chart_name <- glue("bar_plot_across_reads_{margin_correct}.tiff")
 }
 
-statistic_names_total <- c("Cells jaccard", "Genes jaccard", "HVGs jaccard", "Mean ΔPC1-3 loadings", "Median log SNN degree ratio", "ARI", "Median jaccard of UMAP KNN", "Marker Genes Jaccard", "Markers Jaccard", "logFC CCC", "Adj p-value flip rate")
+statistic_names_total <- c("Cells jaccard", "Genes jaccard", "HVGs jaccard", "Mean ΔPC1-3 loadings", "Median log SNN degree ratio", "Clustering ARI", "Median jaccard of UMAP KNN", "Marker Genes Jaccard", "Markers Jaccard", "logFC CCC", "Adj p-value flip rate")
 
 if (type_downsampled == "cell") {
     statistic_names_total <- statistic_names_total[2:8]
@@ -494,7 +496,7 @@ print(aggregate_bar_chart)
 aggregate_plot_filepath <- glue("{output_path_base}/{aggregate_bar_chart_name}")
 dir.create(dirname(aggregate_plot_filepath), recursive = TRUE, showWarnings = FALSE)
 
-ggsave(aggregate_plot_filepath, plot = aggregate_bar_chart, dpi = 350, bg = "white")
+ggsave(aggregate_plot_filepath, plot = aggregate_bar_chart, dpi = 500, bg = "white")
 ```
 
 Create the legend for all plots with dummy data
@@ -503,7 +505,7 @@ x <- 1:10
 df <- data.frame(
     x = rep(x, 3),
     y = c(x * 1.2, x * 0.8, x * 1.1),
-    group = factor(rep(c("Seurat", "Scanpy", "Seurat vs. Scanpy"), each = 10), levels = c("Seurat", "Scanpy", "Seurat vs. Scanpy")),
+    group = factor(rep(c("Seurat Downsampled", "Scanpy Downsampled", "Seurat vs. Scanpy"), each = 10), levels = c("Seurat Downsampled", "Scanpy Downsampled", "Seurat vs. Scanpy")),
     color = rep(c("#D55E00", "#56B4E9", NA), each = 10),
     linetype = rep(c("solid", "solid", "dashed"), each = 10)
 )
@@ -511,8 +513,8 @@ df <- data.frame(
 # Plot
 custom_legend <- ggplot(df, aes(x, y, group = group, color = group, linetype = group)) +
     geom_line(linewidth = 0.5) +
-    scale_color_manual(values = c("Seurat" = "#D55E00", "Scanpy" = "#56B4E9", "Seurat vs. Scanpy" = "black")) +
-    scale_linetype_manual(values = c("Seurat" = "solid", "Scanpy" = "solid", "Seurat vs. Scanpy (defaults)" = "dashed")) +
+    scale_color_manual(values = c("Seurat Downsampled" = "#D55E00", "Scanpy Downsampled" = "#56B4E9", "Seurat vs. Scanpy" = "black")) +
+    scale_linetype_manual(values = c("Seurat Downsampled" = "solid", "Scanpy Downsampled" = "solid", "Seurat vs. Scanpy (defaults)" = "dashed")) +
     theme(
         legend.title = element_blank(),
         legend.text = element_text(size = 12)
@@ -523,5 +525,47 @@ custom_legend
 
 custom_legend_filepath <- glue("{output_path_base}/line_plot_legend.tiff")
 
-ggsave(custom_legend_filepath, plot = custom_legend, dpi = 350, bg = "white")
+ggsave(custom_legend_filepath, plot = custom_legend, dpi = 500, bg = "white")
 ```
+
+```{r}
+# Generate sample data
+set.seed(123)  # For reproducibility
+x_values <- rep(1:5, times=3)
+conditions <- rep(c("Condition A", "Condition B", "Condition C"), each=5)
+y_values <- rnorm(15, mean=50, sd=10)  # Random y values around 50
+
+# Create DataFrame
+df <- data.frame(X=x_values, Y=y_values, Condition=conditions)
+
+# Calculate means and standard deviations for each X within each Condition
+summary_df <- df %>%
+  group_by(X, Condition) %>%
+  summarise(Mean=mean(Y), SD=sd(Y), .groups='drop')
+
+# Plot
+ggplot() +
+  geom_line(data=summary_df, aes(x=X, y=Mean, color=Condition), size=1) +
+  geom_ribbon(data=summary_df, aes(x=X, ymin=Mean-SD, ymax=Mean+SD, fill=Condition), alpha=0.2) +
+  scale_color_manual(values=c("red", "red", "red")) +
+  scale_fill_manual(values=c("red", "red", "red")) +
+  theme_minimal() +
+  labs(title="Average Y Value by Condition", x="X Value", y="Average Y Value") +
+  theme(legend.title=element_blank())
+
+# Calculate means and standard deviations for each X within each Condition
+overall_summary_df <- df %>%
+  group_by(X) %>%
+  summarise(Mean=mean(Y), SD=sd(Y), .groups='drop')
+
+# Plot with a single red line for the average and a shaded area for the range
+ggplot(overall_summary_df, aes(x=X)) +
+  geom_line(aes(y=Mean), color="red", size=1) +
+  geom_ribbon(aes(ymin=Mean-SD, ymax=Mean+SD), fill="red", alpha=0.2) +
+  theme_minimal() +
+  labs(title="Average Y Value Across Conditions", x="X Value", y="Average Y Value") +
+  theme(legend.title=element_blank())
+```
+
+
+
