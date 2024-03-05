@@ -4,38 +4,46 @@ output: html_document
 date: "2024-01-01"
 ---
 
-HYPERPARAMETERS
+Analysis settings
 ```{r}
-# Random seeds
-seu1_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-seu2_read_downsample_seed <- "100" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-R_random_seed <- 100 # including for cell downsampling
-
-# Downsample fractions
-seu1_read_fraction_after_downsampling <- "1.0" # fraction of reads after downsampling - any number from (0,1.0]
-seu2_read_fraction_after_downsampling <- "0.04" # fraction of reads after downsampling - any number from (0,1.0]
-
-seu1_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
-seu2_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
-
-# Matrix generation methods
-seu1_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-seu1_matrix_generation_method_version <- "0.28.0"
-seu1_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
-seu1_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
-seu1_matrix_qc <- "raw" # "raw" or "filtered"
-
-seu2_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-seu2_matrix_generation_method_version <- "0.28.0"
-seu2_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
-seu2_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
-seu2_matrix_qc <- "raw" # "raw" or "filtered"
-
-# Function argument and input settings
 data_input <- "default" # str["default", "seu1", "seu2"]
+save_data <- TRUE
 
-# Package version
-seurat_version <- "4.3.0"
+seu1_name <- "Full"  # Must have no spaces
+seu2_name <- "Downsampled_reads"  # Must have no spaces
+
+# Input and output path specifications
+project_base_path <- getwd()  # also used for locating script files
+data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # str
+seurat_version <- "5_0_2"  # str (with _ in place of .)
+conda_env <- "analysis_env"
+R_random_seed <- 100 # including for cell downsampling  # also used for global R session seed and python seed
+
+seu1_matrix_generation_method <- "kb" # str["kb", "cellranger"]  # also used for loading data
+seu1_matrix_generation_method_version <- "0_28_0"  # str (with _ in place of .)
+
+seu1_cell_fraction_after_downsampling <- "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
+seu1_read_fraction_after_downsampling <- "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
+seu1_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
+
+
+seu2_matrix_generation_method <- "kb" # str["kb", "cellranger"]  # also used for loading data
+seu2_matrix_generation_method_version <- "0_28_0"  # str (with _ in place of .)
+
+seu2_cell_fraction_after_downsampling <- "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
+seu2_read_fraction_after_downsampling <- "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
+seu2_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
+
+seu1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}/frac{seu1_read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
+seu2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu2_matrix_generation_method}{seu2_matrix_generation_method_version}/frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
+
+
+# Specifications for downloading data
+doi <- "AAAAA"  # FILL IN
+data_path_root <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}")
+seu1_data_name_from_download <- glue::glue("{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}_frac{seu1_read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
+seu2_data_name_from_download <- glue::glue("{seu2_matrix_generation_method}{seu2_matrix_generation_method_version}_frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
+
 
 # Custom parameters
 seu1_inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
@@ -44,8 +52,8 @@ seu2_inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic selec
 seu1_min_cells <- 3
 seu1_min_features <- 200
 
-seu2_min_cells <- 1
-seu2_min_features <- 150
+seu2_min_cells <- 3
+seu2_min_features <- 200
 
 max_pct_mct <- 20 # default 5
 seu1_num_pcs <- 50 # number 1-50; or NULL to select after elbow plot visualization
@@ -60,97 +68,55 @@ clustering_seed2 <- 0
 umap_seed1 <- 42
 umap_seed2 <- 42
 
-# Data path specifications
-seu1_data_path <- NULL  # NULL for default path
-seu2_data_path <- NULL  # NULL for default path
-output_base_path <- "/workspace/reads_downsampled_04_SEU"  # NULL for default path
-
-# Output path specifications
-seu1_name <- "Full"  # Must have no spaces
-seu2_name <- "Downsampled_reads"  # Must have no spaces
-save_data <- TRUE
 dpi_bw <- 300
 dpi_color <- 500
-project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
-data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
-include_seeds_in_file_paths <- FALSE  # Only needed if using default input/output paths
-```
 
-R Setting up variables
-```{r}
-set.seed(R_random_seed)
-options(max.print = 130)
 
-seu1_read_fraction_after_downsampling <- gsub("\\.", "_", as.character(seu1_read_fraction_after_downsampling)) # fraction of reads after downsampling, as string representation and using underscores in place of decimal
-seu2_read_fraction_after_downsampling <- gsub("\\.", "_", as.character(seu2_read_fraction_after_downsampling))
-seu1_cell_fraction_after_downsampling <- gsub("\\.", "_", as.character(seu1_cell_fraction_after_downsampling))
-seu2_cell_fraction_after_downsampling <- gsub("\\.", "_", as.character(seu2_cell_fraction_after_downsampling))
-
-seu1_matrix_generation_method_version <- gsub("\\.", "_", seu1_matrix_generation_method_version)
-seu2_matrix_generation_method_version <- gsub("\\.", "_", seu2_matrix_generation_method_version)
-
-seu1_included_transcripts <- ifelse(seu1_matrix_include_unspliced == TRUE, "sua", "sa")
-seu2_included_transcripts <- ifelse(seu2_matrix_include_unspliced == TRUE, "sua", "sa")
-
-seu1_matrix_generation_method_full <- glue::glue("{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}_{seu1_matrix_qc}_{seu1_matrix_source}")
-seu2_matrix_generation_method_full <- glue::glue("{seu2_matrix_generation_method}{seu2_matrix_generation_method_version}_{seu2_matrix_qc}_{seu2_matrix_source}")
-
-seu1_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", seu1_matrix_generation_method_version))
-seu2_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", seu2_matrix_generation_method_version))
-
-seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
-```
-
-Data paths
-```{r}
-if (is.null(seu1_data_path)) {
-    seu1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu1_matrix_generation_method_full}/frac{seu1_read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
-}
-
-if (is.null(seu2_data_path)) {
-    seu2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu2_matrix_generation_method_full}/frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
-}
-```
-
-File path definitions
-```{r}
-group1_color <- "#009E73"
-group2_color <- "#CC79A7"
-    
-if (seu1_matrix_generation_method == seu2_matrix_generation_method &&
-    seu1_matrix_generation_method_version == seu2_matrix_generation_method_version &&
-    seu1_included_transcripts == seu2_included_transcripts &&
-    seu1_matrix_source == seu2_matrix_source &&
-    seu1_matrix_qc == seu2_matrix_qc) {
-    matrix_generation_method_full <- glue::glue("{seu1_matrix_generation_method_full}_{seu1_included_transcripts}")
-    # Full vs downsampled
-    group1_color <- "#FFCB57"
-    group2_color <- "#6C27CC"
+if (seu1_matrix_generation_method == seu2_matrix_generation_method && seu1_matrix_generation_method_version == seu2_matrix_generation_method_version) {
+    matrix_generation_method_full <- glue::glue("{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}")
 } else {
-    matrix_generation_method_full <- glue::glue("seu1_{seu1_matrix_generation_method_full}_{seu1_included_transcripts}_vs_seu2_{seu2_matrix_generation_method_full}_{seu2_included_transcripts}")
+    matrix_generation_method_full <- glue::glue("seu1_{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}_vs_seu2_{seu2_matrix_generation_method}{seu2_matrix_generation_method_version}")
+}
+
+cell_fraction_after_downsampling <- ifelse(seu1_cell_fraction_after_downsampling == seu2_cell_fraction_after_downsampling, seu1_cell_fraction_after_downsampling,
+    paste("seu1", seu1_cell_fraction_after_downsampling, "vs", "seu2", seu2_cell_fraction_after_downsampling, sep = "_")
+)
+
+if (cell_fraction_after_downsampling != "1_0") {
+    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
 }
 
 read_fraction_after_downsampling <- ifelse(seu1_read_fraction_after_downsampling == seu2_read_fraction_after_downsampling, seu1_read_fraction_after_downsampling,
     paste("seu1", seu1_read_fraction_after_downsampling, "vs", "seu2", seu2_read_fraction_after_downsampling, sep = "_")
 )
 
-cell_fraction_after_downsampling <- ifelse(seu1_cell_fraction_after_downsampling == seu2_cell_fraction_after_downsampling, seu1_cell_fraction_after_downsampling,
-    paste("seu1", seu1_cell_fraction_after_downsampling, "vs", "seu2", seu2_cell_fraction_after_downsampling, sep = "_")
-)
-
-if (include_seeds_in_file_paths) {
-    if (seu1_read_downsample_seed == seu2_read_downsample_seed) {
-        read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
-    } else {
-        read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seu1_seed{seu1_read_downsample_seed}_seu2_seed{seu2_read_downsample_seed}")
-    }
-    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
+if (seu1_read_fraction_after_downsampling != "1_0") {
+    read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
 }
 
-if (is.null(output_base_path)) {
-    output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+if (seu2_read_fraction_after_downsampling != "1_0") {
+    read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
 }
 
+output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+```
+
+R Setting up variables
+```{r}
+set.seed(R_random_seed)
+seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
+
+if ((seu1_read_fraction_after_downsampling != seu2_read_fraction_after_downsampling) || (seu1_cell_fraction_after_downsampling != seu2_cell_fraction_after_downsampling)) {
+    group1_color <- "#FFCB57"
+    group2_color <- "#6C27CC"
+} else {
+    group1_color <- "#009E73"
+    group2_color <- "#CC79A7"
+}
+```
+
+File path definitions
+```{r}
 output_data_file_paths <- list(
     markers_seu1 = glue::glue("{output_base_path}/data_files/markers_{seu1_name}.rds"),
     markers_seu2 = glue::glue("{output_base_path}/data_files/markers_{seu2_name}.rds"),
@@ -162,13 +128,12 @@ output_data_file_paths <- list(
 # FALSE to have no save
 file_paths <- list(
     filter_arguments = glue::glue("{output_base_path}/stats/filter_stats.txt"),
-    euler_stats_before_QC_file = FALSE, # glue::glue("{output_base_path}/stats/euler_stats_beforeQC.txt"),
     euler_stats_after_QC_file = glue::glue("{output_base_path}/stats/euler_stats_afterQC.txt"),
     pca_knn_clustering_umap_file = glue::glue("{output_base_path}/stats/pca_knn_clustering_umap_stats.txt"),
     de_stats_file = glue::glue("{output_base_path}/stats/de_stats.txt"),
+    
     pre_filtering_upset_cell = FALSE, # glue::glue("{output_base_path}/plots/pre_filtering_upset_cell.tiff"),
     pre_filtering_upset_gene = FALSE, # glue::glue("{output_base_path}/plots/pre_filtering_upset_gene.tiff"),
-
     knee_plot1 = FALSE, # glue::glue("{output_base_path}/plots/knee_plot_{seu1_name}.tiff"),
     knee_plot2 = FALSE, # glue::glue("{output_base_path}/plots/knee_plot_{seu2_name}.tiff"),
     umi_scatterplot = glue::glue("{output_base_path}/plots/umi_scatterplot.tiff"),
@@ -238,11 +203,11 @@ file_paths <- list(
     FC_histogram_signed_file_path = FALSE # glue::glue("{output_base_path}/plots/FC_histogram_signed.tiff")
 )
 
-for (path in output_data_file_paths) {
-    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-}
-
 if (save_data) {
+    for (path in output_data_file_paths) {
+        dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    }
+        
     for (path in file_paths) {
         if (is.character(path)) {
             # Extract the directory part of the path
@@ -254,23 +219,22 @@ if (save_data) {
             }
         }
     }
+    
+    for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clustering_umap_file, file_paths$de_stats_file)) {
+        if (is.character(file)) {
+            sink(file = file, append = FALSE)
+            sink()
+        }
+    }
 } else {
     for (i in seq_along(file_paths)) {
         file_paths[[i]] <- FALSE
-    }
-}
-
-for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clustering_umap_file, file_paths$de_stats_file)) {
-    if (is.character(file)) {
-        sink(file = file, append = FALSE)
-        sink()
     }
 }
 ```
 
 R Imports
 ```{r}
-conda_env <- "analysis_env"
 Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
 library(reticulate)
 use_condaenv(conda_env)
@@ -310,28 +274,36 @@ seu_umap_metric <- "correlation"
 # correction method = bonferroni
 ```
 
+Download data if necessary
+```{python}
+from scripts.download_data import *
+
+if not os.path.exists(r.seu1_data_path) or not os.listdir(r.seu1_data_path):
+    r.seu1_data_path = download_and_extract(r.doi, r.seu1_data_name_from_download, r.data_path_root, r.seu1_data_path)
+if not os.path.exists(r.seu2_data_path) or not os.listdir(r.seu2_data_path):
+    r.seu2_data_path = download_and_extract(r.doi, r.seu2_data_name_from_download, r.data_path_root, r.seu2_data_path)
+```
+
 Read the data into Seurat1 and create knee plot:
 ```{r}
-if (seu1_matrix_qc == "raw") {
-    if (seu1_matrix_generation_method == "kb") {
-        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", unspliced = seu1_matrix_include_unspliced, tcc = FALSE)
-    } else if (seu1_matrix_generation_method == "cellranger") {
-        res_mat1 <- Read10X(seu1_data_path, gene.column = 1)
-    } else {
-        print(seu1_matrix_generation_method, "is not a valid input for seu_matrix_generation_method")
-    }
-
-    if (seu1_cell_fraction_after_downsampling != "1_0") {
-        total_cells <- ncol(res_mat1)
-        numeric_seu1_cell_fraction_after_downsampling <- gsub("_", ".", seu1_cell_fraction_after_downsampling) %>% as.numeric()
-        cells_to_sample <- round(total_cells * numeric_seu1_cell_fraction_after_downsampling)
-        sampled_cells <- sample(total_cells, cells_to_sample)
-        res_mat1 <- res_mat1[, sampled_cells]
-    }
-
-    tot_counts1 <- Matrix::colSums(res_mat1)
-    bc_rank1 <- barcodeRanks(res_mat1)
+if (seu1_matrix_generation_method == "kb") {
+    res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", tcc = FALSE)
+} else if (seu1_matrix_generation_method == "cellranger") {
+    res_mat1 <- Read10X(seu1_data_path, gene.column = 1)
+} else {
+    print(seu1_matrix_generation_method, "is not a valid input for seu_matrix_generation_method")
 }
+
+if (seu1_cell_fraction_after_downsampling != "1_0") {
+    total_cells <- ncol(res_mat1)
+    numeric_seu1_cell_fraction_after_downsampling <- gsub("_", ".", seu1_cell_fraction_after_downsampling) %>% as.numeric()
+    cells_to_sample <- round(total_cells * numeric_seu1_cell_fraction_after_downsampling)
+    sampled_cells <- sample(total_cells, cells_to_sample)
+    res_mat1 <- res_mat1[, sampled_cells]
+}
+
+tot_counts1 <- Matrix::colSums(res_mat1)
+bc_rank1 <- barcodeRanks(res_mat1)
 ```
 
 Knee plot
@@ -342,52 +314,42 @@ knee_plot1
 
 Select threshold for knee plot
 ```{r}
-if (seu1_matrix_qc == "raw") {
-    if (!is.null(seu1_inflection_UMI_manual)) {
-        UMI_cutoff1 <- seu1_inflection_UMI_manual
-    } else {
-        UMI_cutoff1 <- metadata(bc_rank1)$inflection
-    }
-    rank_at_inflection1 <- max(bc_rank1$rank[bc_rank1$total > UMI_cutoff1])
+if (!is.null(seu1_inflection_UMI_manual)) {
+    UMI_cutoff1 <- seu1_inflection_UMI_manual
+} else {
+    UMI_cutoff1 <- metadata(bc_rank1)$inflection
 }
+rank_at_inflection1 <- max(bc_rank1$rank[bc_rank1$total > UMI_cutoff1])
 ```
 
 Apply filtering from knee plot
 ```{r}
-if (seu1_matrix_qc == "raw") {
-    res_mat_filtered1 <- res_mat1[, tot_counts1 > UMI_cutoff1]
-    res_mat_filtered1 <- res_mat_filtered1[Matrix::rowSums(res_mat_filtered1) > 0, ]
-    dim(res_mat_filtered1)
-    seu1 <- CreateSeuratObject(counts = res_mat_filtered1, min.cells = seu1_min_cells, min.features = seu1_min_features)
-} else if (seu1_matrix_qc == "filtered") {
-    seu1 <- CreateSeuratObject(Read10X(seu1_data_path, gene.column = 1), min.cells = seu1_min_cells, min.features = seu1_min_features)
-} else {
-    stop("Invalid value for seu_matrix_qc. It should be either 'raw' or 'filtered'.")
-}
+res_mat_filtered1 <- res_mat1[, tot_counts1 > UMI_cutoff1]
+res_mat_filtered1 <- res_mat_filtered1[Matrix::rowSums(res_mat_filtered1) > 0, ]
+dim(res_mat_filtered1)
+seu1 <- CreateSeuratObject(counts = res_mat_filtered1, min.cells = seu1_min_cells, min.features = seu1_min_features)
 ```
 
 Read the data into Seurat2 and create knee plot:
 ```{r}
-if (seu2_matrix_qc == "raw") {
-    if (seu2_matrix_generation_method == "kb") {
-        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", unspliced = seu2_matrix_include_unspliced, tcc = FALSE)
-    } else if (seu2_matrix_generation_method == "cellranger") {
-        res_mat2 <- Read10X(seu2_data_path, gene.column = 1)
-    } else {
-        print(seu2_matrix_generation_method, "is not a valid input for seu_matrix_generation_method")
-    }
-
-    if (seu2_cell_fraction_after_downsampling != "1_0") {
-        total_cells <- ncol(res_mat2)
-        numeric_seu2_cell_fraction_after_downsampling <- gsub("_", ".", seu2_cell_fraction_after_downsampling) %>% as.numeric()
-        cells_to_sample <- round(total_cells * numeric_seu2_cell_fraction_after_downsampling)
-        sampled_cells <- sample(total_cells, cells_to_sample)
-        res_mat2 <- res_mat2[, sampled_cells]
-    }
-
-    tot_counts2 <- Matrix::colSums(res_mat2)
-    bc_rank2 <- barcodeRanks(res_mat2)
+if (seu2_matrix_generation_method == "kb") {
+    res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", tcc = FALSE)
+} else if (seu2_matrix_generation_method == "cellranger") {
+    res_mat2 <- Read10X(seu2_data_path, gene.column = 1)
+} else {
+    print(seu2_matrix_generation_method, "is not a valid input for seu_matrix_generation_method")
 }
+
+if (seu2_cell_fraction_after_downsampling != "1_0") {
+    total_cells <- ncol(res_mat2)
+    numeric_seu2_cell_fraction_after_downsampling <- gsub("_", ".", seu2_cell_fraction_after_downsampling) %>% as.numeric()
+    cells_to_sample <- round(total_cells * numeric_seu2_cell_fraction_after_downsampling)
+    sampled_cells <- sample(total_cells, cells_to_sample)
+    res_mat2 <- res_mat2[, sampled_cells]
+}
+
+tot_counts2 <- Matrix::colSums(res_mat2)
+bc_rank2 <- barcodeRanks(res_mat2)
 ```
 
 Knee plot
@@ -398,28 +360,20 @@ knee_plot2
 
 Select threshold for knee plot
 ```{r}
-if (seu2_matrix_qc == "raw") {
-    if (!is.null(seu2_inflection_UMI_manual)) {
-        UMI_cutoff2 <- seu2_inflection_UMI_manual
-    } else {
-        UMI_cutoff2 <- metadata(bc_rank2)$inflection
-    }
-    rank_at_inflection2 <- max(bc_rank2$rank[bc_rank2$total > UMI_cutoff2])
+if (!is.null(seu2_inflection_UMI_manual)) {
+    UMI_cutoff2 <- seu2_inflection_UMI_manual
+} else {
+    UMI_cutoff2 <- metadata(bc_rank2)$inflection
 }
+rank_at_inflection2 <- max(bc_rank2$rank[bc_rank2$total > UMI_cutoff2])
 ```
 
 Apply filtering from knee plot
 ```{r}
-if (seu2_matrix_qc == "raw") {
-    res_mat_filtered2 <- res_mat2[, tot_counts2 > UMI_cutoff2]
-    res_mat_filtered2 <- res_mat_filtered2[Matrix::rowSums(res_mat_filtered2) > 0, ]
-    dim(res_mat_filtered2)
-    seu2 <- CreateSeuratObject(counts = res_mat_filtered2, min.cells = seu2_min_cells, min.features = seu2_min_features)
-} else if (seu2_matrix_qc == "filtered") {
-    seu2 <- CreateSeuratObject(Read10X(seu2_data_path, gene.column = 1), min.cells = seu2_min_cells, min.features = seu2_min_features)
-} else {
-    stop("Invalid value for seu_matrix_qc. It should be either 'raw' or 'filtered'.")
-}
+res_mat_filtered2 <- res_mat2[, tot_counts2 > UMI_cutoff2]
+res_mat_filtered2 <- res_mat_filtered2[Matrix::rowSums(res_mat_filtered2) > 0, ]
+dim(res_mat_filtered2)
+seu2 <- CreateSeuratObject(counts = res_mat_filtered2, min.cells = seu2_min_cells, min.features = seu2_min_features)
 ```
 
 Record numbers used for filtering
@@ -442,8 +396,8 @@ if (is.character(file_paths$filter_arguments)) {
 
 Upset plots before filtering by cells, genes, MT genes
 ```{r}
-pre_filtering_upset_cell <- make_upset_seurat(group1 = res_mat1, group2 = res_mat2, comparison = "Cell", group_names = seurat_group_names, before_filtering = TRUE, as_ggplot = FALSE, save = file_paths$pre_filtering_upset_cell)
-pre_filtering_upset_gene <- make_upset_seurat(group1 = res_mat1, group2 = res_mat2, comparison = "Gene", group_names = seurat_group_names, before_filtering = TRUE, as_ggplot = FALSE, save = file_paths$pre_filtering_upset_gene)
+# pre_filtering_upset_cell <- make_upset_seurat(group1 = res_mat1, group2 = res_mat2, comparison = "Cell", group_names = seurat_group_names, before_filtering = TRUE, as_ggplot = FALSE, save = file_paths$pre_filtering_upset_cell)xxx
+# pre_filtering_upset_gene <- make_upset_seurat(group1 = res_mat1, group2 = res_mat2, comparison = "Gene", group_names = seurat_group_names, before_filtering = TRUE, as_ggplot = FALSE, save = file_paths$pre_filtering_upset_gene)
 ```
 
 Euler plots of cell, gene overlap before QC
@@ -467,16 +421,16 @@ mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name
 # mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
 ```
 
-QC Seurat1, Violin plots  #*
+QC Seurat1, Violin plots
 ```{r}
-# assay_gene_names1 <- rownames(seu1[["RNA"]])
-# assay_gene_names_trimmed1 <- gsub("\\..*", "", assay_gene_names1)
-# common_genes1 <- intersect(mt_genes$ensembl_gene_id, assay_gene_names_trimmed1)
-# common_genes_with_version1 <- assay_gene_names1[match(common_genes1, assay_gene_names_trimmed1)]
-# seu1[["pct_mt"]] <- PercentageFeatureSet(seu1, features = common_genes_with_version1)
-# 
-# violin_plot1 <- make_violin_plot(seu1, show_points = FALSE, color = group1_color, save = file_paths$seu1_violin_file_path)
-# violin_plot1
+assay_gene_names1 <- rownames(seu1[["RNA"]])
+assay_gene_names_trimmed1 <- gsub("\\..*", "", assay_gene_names1)
+common_genes1 <- intersect(mt_genes$ensembl_gene_id, assay_gene_names_trimmed1)
+common_genes_with_version1 <- assay_gene_names1[match(common_genes1, assay_gene_names_trimmed1)]
+seu1[["pct_mt"]] <- PercentageFeatureSet(seu1, features = common_genes_with_version1)
+
+violin_plot1 <- make_violin_plot(seu1, show_points = FALSE, color = group1_color, save = file_paths$seu1_violin_file_path)
+violin_plot1
 ```
 
 QC Seurat2, Violin plots
@@ -1044,21 +998,23 @@ seu2_umap_info <- RunUMAP(seu2, dims = 1:seu2_num_pcs, min.dist = seu_umap_min_d
 
 Plot UMAP
 ```{r}
-umap_plots <- plot_umap(group1_umap_info = seu1_umap_info$umap@cell.embeddings, group1_clusters = seu1$seurat_clusters, group2_umap_info = seu2_umap_info$umap@cell.embeddings, group2_clusters = seu2_clusters_renumbered, group1 = seu1_name, group2 = seu2_name, save = c(file_paths$umap_seu1, file_paths$umap_seu2))
+colors_group2 <- find_group2_colors(clus_df_gather, seu1_name, seu2_name)
+
+umap_plots <- plot_umap(group1_umap_info = seu1_umap_info$umap@cell.embeddings, group1_clusters = seu1$seurat_clusters, group2_umap_info = seu2_umap_info$umap@cell.embeddings, group2_clusters = seu2_clusters_renumbered, group1 = seu1_name, group2 = seu2_name, colors_group2 = colors_group2, save = c(file_paths$umap_seu1, file_paths$umap_seu2))
 seu1_umap <- umap_plots[[1]]
 seu2_umap <- umap_plots[[2]]
 
 seu1_umap
 seu2_umap
 
-if (identical(seu1_inds, seu2_inds)) {
-    umap_plots_swapped_clusters <- plot_umap(group1_umap_info = seu1_umap_info$umap@cell.embeddings, group1_clusters = seu2_clusters_renumbered, group2_umap_info = seu2_umap_info$umap@cell.embeddings, group2_clusters = seu1$seurat_clusters, group1 = seu1_name, group2 = seu2_name, group1_title = glue("Seurat {seu1_name} UMAP with {seu2_name} clusters"), group2_title = glue("Seurat {seu2_name} UMAP with {seu1_name} clusters"), save = c(file_paths$umap_seu1_clusters_seu2, file_paths$umap_seu2_clusters_seu1))
-    umap_seu1_clusters_seu2 <- umap_plots_swapped_clusters[[1]]
-    umap_seu2_clusters_seu1 <- umap_plots_swapped_clusters[[2]]
-
-    print(umap_seu1_clusters_seu2)
-    print(umap_seu2_clusters_seu1)
-}
+# if (identical(seu1_inds, seu2_inds)) {
+#     umap_plots_swapped_clusters <- plot_umap(group1_umap_info = seu1_umap_info$umap@cell.embeddings, group1_clusters = seu2_clusters_renumbered, group2_umap_info = seu2_umap_info$umap@cell.embeddings, group2_clusters = seu1$seurat_clusters, group1 = seu1_name, group2 = seu2_name, colors_group1 = colors_group2, group1_title = glue("Seurat {seu1_name} UMAP with {seu2_name} clusters"), group2_title = glue("Seurat {seu2_name} UMAP with {seu1_name} clusters"), save = c(file_paths$umap_seu1_clusters_seu2, file_paths$umap_seu2_clusters_seu1))
+#     umap_seu1_clusters_seu2 <- umap_plots_swapped_clusters[[1]]
+#     umap_seu2_clusters_seu1 <- umap_plots_swapped_clusters[[2]]
+# 
+#     print(umap_seu1_clusters_seu2)
+#     print(umap_seu2_clusters_seu1)
+# }
 ```
 
 Compute KNN graph of UMAP space
@@ -1187,7 +1143,9 @@ seu2_clusters_renumbered_umap <- factor(named_vector)
 
 UMAP with UMAP Leiden clusters
 ```{r}
-umap_plots <- plot_umap(group1_umap_info = seu1_umap_data, group1_clusters = seu1_umap_knn_clusters, group2_umap_info = seu2_umap_data, group2_clusters = seu2_clusters_renumbered_umap, group1 = seu1_name, group2 = seu2_name, save = c(file_paths$umap_umap_leiden_seu1, file_paths$umap_umap_leiden_seu2))
+colors_group2_umap <- find_group2_colors(clus_df_gather_umap, seu1_name, seu2_name)
+
+umap_plots <- plot_umap(group1_umap_info = seu1_umap_data, group1_clusters = seu1_umap_knn_clusters, group2_umap_info = seu2_umap_data, group2_clusters = seu2_clusters_renumbered_umap, colors_group2 = colors_group2_umap, group1 = seu1_name, group2 = seu2_name, save = c(file_paths$umap_umap_leiden_seu1, file_paths$umap_umap_leiden_seu2))
 seu1_umap <- umap_plots[[1]]
 seu2_umap <- umap_plots[[2]]
 
@@ -1231,7 +1189,7 @@ upset_marker_gene_only <- make_upset_seurat(vectorized_seu1_filtered_markers, ve
 Stop DE analysis if data input does not align (as without aligned cluster information, DE analysis is not meaningful)
 ```{r}
 if (data_input == "default" || !identical(seu1_inds, seu2_inds)) {
-    if (save_data == TRUE) {
+    if (save_data) {
         saveRDS(markers_seu1, file = output_data_file_paths$markers_seu1)
         saveRDS(seu1, file = output_data_file_paths$seu1_object)
         saveRDS(markers_seu2, file = output_data_file_paths$markers_seu2)
@@ -1301,7 +1259,7 @@ Save markers df
 ```{r}
 subset_markers2 <- markers2[, c("gene", "cluster", glue("avg_log2FC.{seu1_name}"), glue("avg_log2FC.{seu2_name}"), glue("p_val_adj.{seu1_name}"), glue("p_val_adj.{seu1_name}"), "logFC_difference_magnitude", "logFC_difference_signed", "pvaladj_difference_magnitude", "pvaladj_difference_signed")]
 
-if (save_data == TRUE) {
+if (save_data) {
     saveRDS(markers_seu1, file = output_data_file_paths$markers_seu1)
     saveRDS(seu1, file = output_data_file_paths$seu1_object)
     saveRDS(markers_seu2, file = output_data_file_paths$markers_seu2)

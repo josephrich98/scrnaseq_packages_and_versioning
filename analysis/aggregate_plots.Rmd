@@ -13,23 +13,22 @@ theme_set(theme_bw())
 ```{r}
 frac_list <- c(0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64) #***
 downsampled_seeds_list <- c(100)
-type_downsampled <- "cell" # "read" or "cell"
+type_downsampled <- "read" # "read" or "cell"
 margin_correct <- 0.05
 ```
 
 ```{r}
 project_base_path <- "/workspace/analysis"
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
-include_seeds_in_file_paths <- FALSE
-seurat_version <- "4.3.0"
-scanpy_version <- "1.9.5"
+seurat_version <- "4_3_0"
+scanpy_version <- "1_9_5"
 matrix_generation <- "kb0_28_0_raw_generated_sa"
 read_fraction_downsampled_for_cell_downsample_comparisons <- "1_0"
 cell_fraction_downsampled_for_read_downsample_comparisons <- "1_0"
 ```
 
 ```{r}
-get_stats_filepath <- function(set, frac_str, package, type_downsampled) {
+get_stats_filepath <- function(set, frac_str, package, type_downsampled, seed) {
     if (package == "seu") {
         package_full_name <- "Seurat"
         package_version <- seurat_version
@@ -39,9 +38,9 @@ get_stats_filepath <- function(set, frac_str, package, type_downsampled) {
     }
 
     if (type_downsampled == "read") {
-        downsample_string <- glue("cell_fraction_{cell_fraction_downsampled_for_read_downsample_comparisons}/read_fraction_{package}1_1_0_vs_{package}2_{frac_str}")
+        downsample_string <- glue("cell_fraction_{cell_fraction_downsampled_for_read_downsample_comparisons}/read_fraction_{package}1_1_0_vs_{package}2_{frac_str}_seed{seed}")
     } else if (type_downsampled == "cell") {
-        downsample_string <- glue("cell_fraction_{package}1_1_0_vs_{package}2_{frac_str}/read_fraction_{read_fraction_downsampled_for_cell_downsample_comparisons}")
+        downsample_string <- glue("cell_fraction_{package}1_1_0_vs_{package}2_{frac_str}/read_fraction_{read_fraction_downsampled_for_cell_downsample_comparisons}_seed{seed}")
     }
 
     if (set$file_name == "de_stats.txt" && set$statistic_name != "Marker Genes Jaccard") {
@@ -52,6 +51,22 @@ get_stats_filepath <- function(set, frac_str, package, type_downsampled) {
 
     return(glue("{project_base_path}/output/{data_name}/{package_full_name}v{package_version}/input_{data_input_for_filepath}/{matrix_generation}/{downsample_string}/stats/{set$file_name}"))
 }
+
+find_intersection <- function(df, y_value) {
+        interpolated <- approx(df$frac, df$value, xout = seq(min(df$frac), max(df$frac), length.out = 1000))
+
+        intersect_indices <- which(abs(interpolated$y - y_value) < 0.01)
+
+        if (length(intersect_indices) == 0) {
+            return(min(frac_list))
+        } else if ((set$ideal_value == 1 && interpolated$y[1] > interpolated$y[which.min(abs(interpolated$y - y_value))]) || (set$ideal_value == 0 && interpolated$y[1] < interpolated$y[which.min(abs(interpolated$y - y_value))])) {
+            return(min(frac_list))
+        }
+        else{
+            x_intersect <- interpolated$x[which.min(abs(interpolated$y - y_value))]
+            return(x_intersect)
+        }
+    }
 ```
 
 List of all metrics to extract
@@ -184,8 +199,10 @@ variable_sets <- list(
 Downsample line plots
 ```{r}
 if (type_downsampled == "cell") {
-    variable_sets <- variable_sets[1:8]
+    variable_sets <- variable_sets[2:8]
 }
+
+statistic_names_total <- unlist(lapply(variable_sets, function(x) x$statistic_name))
 
 # variable_sets <- list(
 #     list(
@@ -220,33 +237,33 @@ if (file.exists(output_stat_filepath)) {
 
 
 for (set in variable_sets) {
-    results_df <- data.frame(frac = numeric(), value_group1 = numeric(), value_group2 = numeric())
+    results_df <- data.frame(frac = numeric(), value_group1 = numeric(), value_group2 = numeric(), seed = numeric())
 
     output_plot_filepath <- glue("{output_path_base}/{set$output_plot_name}")
 
     for (package in c("seu", "scan")) {
         for (frac in frac_list) {
-            frac_str <- gsub("\\.", "_", as.character(frac)) # fraction of reads after downsampling, as string
-
-            stats_path <- get_stats_filepath(set, frac_str = frac_str, package = package, type_downsampled = type_downsampled)
-
-            # Read the file lines
-            lines <- readLines(stats_path)
-
-            value_line <- grep(set$extraction_phrase, lines, value = TRUE)
-
-            # Extract the numerical variance using string manipulation
-            value <- as.numeric(str_extract(value_line, "(?<=: )\\d+(\\.\\d+)?(e[-+]?\\d+)?"))
-
-            if (package == "seu") {
-                new_row <- data.frame(frac = frac, value_group1 = value, value_group2 = NA)
-            } else if (package == "scan") {
-                new_row <- data.frame(frac = frac, value_group1 = NA, value_group2 = value)
+            for (seed in downsampled_seeds_list) {
+                frac_str <- gsub("\\.", "_", as.character(frac)) # fraction of reads after downsampling, as string
+    
+                stats_path <- get_stats_filepath(set, frac_str = frac_str, package = package, type_downsampled = type_downsampled, seed = seed)
+    
+                # Read the file lines
+                lines <- readLines(stats_path)
+    
+                value_line <- grep(set$extraction_phrase, lines, value = TRUE)
+    
+                # Extract the numerical variance using string manipulation
+                value <- as.numeric(str_extract(value_line, "(?<=: )\\d+(\\.\\d+)?(e[-+]?\\d+)?"))
+    
+                if (package == "seu") {
+                    new_row <- data.frame(frac = frac, value_group1 = value, value_group2 = NA, seed = seed)
+                } else if (package == "scan") {
+                    new_row <- data.frame(frac = frac, value_group1 = NA, value_group2 = value, seed = seed)
+                }
+                # Add the results to the data frame
+                results_df <- rbind(results_df, new_row)
             }
-
-
-            # Add the results to the data frame
-            results_df <- rbind(results_df, new_row)
         }
     }
 
@@ -254,16 +271,29 @@ for (set in variable_sets) {
         distinct() %>%
         group_by(frac) %>%
         summarize(
-            value_group1 = max(value_group1, na.rm = TRUE),
-            value_group2 = max(value_group2, na.rm = TRUE)
+            value_group1_mean = mean(value_group1, na.rm = TRUE),
+            value_group2_mean = mean(value_group2, na.rm = TRUE),
+            sd_group1 = sd(value_group1, na.rm = TRUE),
+            sd_group2 = sd(value_group2, na.rm = TRUE)
+        ) %>%
+        dplyr::rename(
+            value_group1 = value_group1_mean,
+            value_group2 = value_group2_mean
         )
-
+    
     long_df <- results_df2 %>%
         pivot_longer(
             cols = c(value_group1, value_group2),
             names_to = "variable",
             values_to = "value"
-        )
+        ) %>%
+        mutate(
+            sd = case_when(
+              variable == "value_group1" ~ sd_group1,
+              variable == "value_group2" ~ sd_group2
+            )
+        ) %>%
+        select(-sd_group1, -sd_group2) 
     
     baseline_rows <- tibble(
         frac = c(1.0, 1.0),
@@ -271,7 +301,7 @@ for (set in variable_sets) {
         value = c(ifelse(set$seurat_noise_value == 0, set$ideal_value, set$seurat_noise_value), ifelse(set$scanpy_noise_value == 0, set$ideal_value, set$scanpy_noise_value))
     )
 
-    long_df <- bind_rows(long_df, baseline_rows)
+    long_df <- bind_rows(long_df, baseline_rows) %>% mutate(sd = ifelse(is.na(sd), 0, sd))
 
     y_axis_max <- max(1, set$baseline_value_seurat_vs_scanpy_default, set$baseline_value_seurat_vs_scanpy_same_input, max(long_df$value, na.rm = TRUE), na.rm = TRUE)
     
@@ -280,15 +310,22 @@ for (set in variable_sets) {
     } else {
         y_axis_min <- 0
     }
+    
+    long_df <- long_df %>%
+        mutate(ymin = pmax(value - sd, y_axis_min),
+               ymax = pmin(value + sd, y_axis_max))
 
     p <- ggplot(long_df, aes(x = frac, y = value, group = variable, color = variable)) +
         geom_line(linewidth = 1.3) +
+        geom_ribbon(aes(ymin = ymin, ymax = ymax, fill = variable), alpha = 0.3, color = NA) +
         scale_color_manual(values = c("value_group1" = "#D55E00", "value_group2" = "#56B4E9"), labels = c("Seurat", "Scanpy")) +
+        scale_fill_manual(values = c("value_group1" = "#D55E00", "value_group2" = "#56B4E9"), labels = c("Seurat", "Scanpy"), guide = FALSE) +
         labs(color = "variable") +
         theme_minimal() +
         theme(
+            text = element_text(family = "Arial"),
             legend.position = "none",
-            axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.8)),
+            axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.55)),
             axis.text.y = element_text(size = rel(1)), # Increase axis tick labels size
             axis.title = element_text(size = rel(1.45))
         ) +
@@ -356,23 +393,6 @@ for (set in variable_sets) {
     group1_df <- filter(long_df, variable == "value_group1")
     group2_df <- filter(long_df, variable == "value_group2")
 
-    # Function to find intersection
-    find_intersection <- function(df, y_value) {
-        interpolated <- approx(df$frac, df$value, xout = seq(min(df$frac), max(df$frac), length.out = 1000))
-
-        intersect_indices <- which(abs(interpolated$y - y_value) < 0.01)
-
-        if (length(intersect_indices) == 0) {
-            return(min(frac_list))
-        } else if ((set$ideal_value == 1 && interpolated$y[1] > interpolated$y[which.min(abs(interpolated$y - y_value))]) || (set$ideal_value == 0 && interpolated$y[1] < interpolated$y[which.min(abs(interpolated$y - y_value))])) {
-            return(min(frac_list))
-        }
-        else{
-            x_intersect <- interpolated$x[which.min(abs(interpolated$y - y_value))]
-            return(x_intersect)
-        }
-    }
-
     if (set$ideal_value == 0) {
         margin_adjustment <- 1 + margin_correct
     } else {
@@ -402,6 +422,112 @@ for (set in variable_sets) {
 }
 ```
 
+WORK IN PROGRESS
+```{r}
+if (length(downsampled_seeds_list) > 1) {
+    seed_intersections <- list(
+        Seurat = data.frame(matrix(ncol = length(downsampled_seeds_list), nrow = length(statistic_names_total))),
+        Scanpy = data.frame(matrix(ncol = length(downsampled_seeds_list), nrow = length(statistic_names_total)))
+    )
+    
+    # Set row and column names for each dataframe in the list
+    names(seed_intersections$Seurat) <- downsampled_seeds_list
+    rownames(seed_intersections$Seurat) <- statistic_names_total
+    
+    names(seed_intersections$Scanpy) <- downsampled_seeds_list
+    rownames(seed_intersections$Scanpy) <- statistic_names_total
+    
+    
+    
+    for (set in variable_sets) {
+        for (seed in downsampled_seeds_list) {
+            results_df <- data.frame(frac = numeric(), value_group1 = numeric(), value_group2 = numeric(), seed = numeric())
+    
+            for (package in c("seu", "scan")) {
+                for (frac in frac_list) {
+                    
+                    frac_str <- gsub("\\.", "_", as.character(frac)) # fraction of reads after downsampling, as string
+        
+                    stats_path <- get_stats_filepath(set, frac_str = frac_str, package = package, type_downsampled = type_downsampled, seed = seed)
+        
+                    # Read the file lines
+                    lines <- readLines(stats_path)
+        
+                    value_line <- grep(set$extraction_phrase, lines, value = TRUE)
+        
+                    # Extract the numerical variance using string manipulation
+                    value <- as.numeric(str_extract(value_line, "(?<=: )\\d+(\\.\\d+)?(e[-+]?\\d+)?"))
+        
+                    if (package == "seu") {
+                        new_row <- data.frame(frac = frac, value_group1 = value, value_group2 = NA, seed = seed)
+                    } else if (package == "scan") {
+                        new_row <- data.frame(frac = frac, value_group1 = NA, value_group2 = value, seed = seed)
+                    }
+                    # Add the results to the data frame
+                    results_df <- rbind(results_df, new_row)
+                }
+            }
+        
+            results_df2 <- results_df %>%
+                distinct() %>%
+                group_by(frac) %>%
+                summarize(
+                    value_group1 = max(value_group1, na.rm = TRUE),
+                    value_group2 = max(value_group2, na.rm = TRUE)
+                )
+            
+            long_df <- results_df2 %>%
+                pivot_longer(
+                    cols = c(value_group1, value_group2),
+                    names_to = "variable",
+                    values_to = "value"
+                )
+        
+            baseline_rows <- tibble(
+                frac = c(1.0, 1.0),
+                variable = c("value_group1", "value_group2"),
+                value = c(ifelse(set$seurat_noise_value == 0, set$ideal_value, set$seurat_noise_value), ifelse(set$scanpy_noise_value == 0, set$ideal_value, set$scanpy_noise_value))
+            )
+        
+            long_df <- bind_rows(long_df, baseline_rows)
+        
+            group1_df <- filter(long_df, variable == "value_group1")
+            group2_df <- filter(long_df, variable == "value_group2")
+        
+            if (set$ideal_value == 0) {
+                margin_adjustment <- 1 + margin_correct
+            } else {
+                margin_adjustment <- 1 - margin_correct
+            }
+        
+            x_intersect_defaults_group1 <- find_intersection(group1_df, margin_adjustment * set$baseline_value_seurat_vs_scanpy_default)
+            x_intersect_defaults_group2 <- find_intersection(group2_df, margin_adjustment * set$baseline_value_seurat_vs_scanpy_default)
+        
+            x_intersect_same_input_group1 <- find_intersection(group1_df, margin_adjustment * set$baseline_value_seurat_vs_scanpy_same_input)
+            x_intersect_same_input_group2 <- find_intersection(group2_df, margin_adjustment * set$baseline_value_seurat_vs_scanpy_same_input)
+        
+            if (!(set$statistic_name %in% c("Markers Jaccard", "logFC CCC", "Adj p-value flip rate"))) {
+                seed_intersections[["Seurat"]][set$statistic_name, as.character(seed)] <- x_intersect_defaults_group1
+                seed_intersections[["Scanpy"]][set$statistic_name, as.character(seed)] <- x_intersect_defaults_group2
+            } else {
+                seed_intersections[["Seurat"]][set$statistic_name, as.character(seed)] <- x_intersect_same_input_group1
+                seed_intersections[["Scanpy"]][set$statistic_name, as.character(seed)] <- x_intersect_same_input_group2
+            }
+        }
+    }
+    
+    rownames(seed_intersections$Seurat)[rownames(seed_intersections$Seurat) == "Median log SNN degree ratio"] <- "Median log(SNN degree ratio)"
+    rownames(seed_intersections$Scanpy)[rownames(seed_intersections$Scanpy) == "Median log SNN degree ratio"] <- "Median log(SNN degree ratio)"
+    
+    seed_intersections$Seurat$Category <- factor(rownames(seed_intersections$Seurat), levels = rownames(seed_intersections$Seurat))
+    seed_intersections$Scanpy$Category <- factor(rownames(seed_intersections$Scanpy), levels = rownames(seed_intersections$Scanpy))
+    
+    df_long_seurat <- pivot_longer(seed_intersections$Seurat, cols = -Category, names_to = "Sample", values_to = "Value")
+    df_long_scanpy <- pivot_longer(seed_intersections$Scanpy, cols = -Category, names_to = "Sample", values_to = "Value")
+}
+```
+
+
 Bar charts summarizing all line graphs
 ```{r}
 bar_chart_df <- data.frame(
@@ -421,11 +547,9 @@ if (margin_correct == 0) {
     aggregate_bar_chart_name <- glue("bar_plot_across_reads_{margin_correct}.tiff")
 }
 
-statistic_names_total <- c("Cells jaccard", "Genes jaccard", "HVGs jaccard", "Mean ΔPC1-3 loadings", "Median log SNN degree ratio", "Clustering ARI", "Median jaccard of UMAP KNN", "Marker Genes Jaccard", "Markers Jaccard", "logFC CCC", "Adj p-value flip rate")
-
-if (type_downsampled == "cell") {
-    statistic_names_total <- statistic_names_total[2:8]
-}
+# if (type_downsampled == "cell") {
+#     statistic_names_total <- statistic_names_total[2:8]
+# }
 
 lines <- readLines(output_stat_filepath)
 
@@ -468,6 +592,8 @@ long_bar_chart <- bar_chart_df %>%
         values_to = "value"
     )
 
+long_bar_chart$value <- ifelse(long_bar_chart$value < min(frac_list), min(frac_list), long_bar_chart$value)
+
 long_bar_chart$variable <- factor(long_bar_chart$variable, levels = c("Seurat", "Scanpy"))
 
 
@@ -485,11 +611,34 @@ aggregate_bar_chart <- ggplot(long_bar_chart, aes(x = Category, y = value, fill 
     theme_minimal() +
     guides(fill = guide_legend(title = NULL)) +
     theme(
+        text = element_text(family = "Arial"),
         # legend.position = "none",
         legend.text = element_text(size = rel(1.45)),
         axis.text.x = element_text(angle = 45, hjust = 1, size = rel(1.2)),
         axis.title = element_text(size = rel(1.45))
     ) # Rotate x-axis labels if needed
+
+if (length(downsampled_seeds_list) > 1) {
+    aggregate_bar_chart <- aggregate_bar_chart + 
+        geom_point(data = df_long_seurat, 
+                 aes(x = Category, y = Value, group = Category), 
+                 inherit.aes = FALSE,
+                 position = position_nudge(x = -0.222),  # Adjust width to align with bars
+                 color = "black",  # Choose color to distinguish points
+                 fill = "#D55E00",
+                 shape = 21,
+                 size = 1.5, 
+                 alpha = 0.5) +
+        geom_point(data = df_long_scanpy, 
+                 aes(x = Category, y = Value, group = Category), 
+                 inherit.aes = FALSE,
+                 position = position_nudge(x = 0.222),  # Adjust width to align with bars
+                 color = "black",  # Choose color to distinguish points
+                 fill = "#56B4E9",
+                 shape = 21,
+                 size = 1.5, 
+                 alpha = 0.5)
+}
 
 print(aggregate_bar_chart)
 
@@ -516,6 +665,7 @@ custom_legend <- ggplot(df, aes(x, y, group = group, color = group, linetype = g
     scale_color_manual(values = c("Seurat Downsampled" = "#D55E00", "Scanpy Downsampled" = "#56B4E9", "Seurat vs. Scanpy" = "black")) +
     scale_linetype_manual(values = c("Seurat Downsampled" = "solid", "Scanpy Downsampled" = "solid", "Seurat vs. Scanpy (defaults)" = "dashed")) +
     theme(
+        text = element_text(family = "Arial"),
         legend.title = element_blank(),
         legend.text = element_text(size = 12)
     ) +
@@ -527,45 +677,3 @@ custom_legend_filepath <- glue("{output_path_base}/line_plot_legend.tiff")
 
 ggsave(custom_legend_filepath, plot = custom_legend, dpi = 500, bg = "white")
 ```
-
-```{r}
-# Generate sample data
-set.seed(123)  # For reproducibility
-x_values <- rep(1:5, times=3)
-conditions <- rep(c("Condition A", "Condition B", "Condition C"), each=5)
-y_values <- rnorm(15, mean=50, sd=10)  # Random y values around 50
-
-# Create DataFrame
-df <- data.frame(X=x_values, Y=y_values, Condition=conditions)
-
-# Calculate means and standard deviations for each X within each Condition
-summary_df <- df %>%
-  group_by(X, Condition) %>%
-  summarise(Mean=mean(Y), SD=sd(Y), .groups='drop')
-
-# Plot
-ggplot() +
-  geom_line(data=summary_df, aes(x=X, y=Mean, color=Condition), size=1) +
-  geom_ribbon(data=summary_df, aes(x=X, ymin=Mean-SD, ymax=Mean+SD, fill=Condition), alpha=0.2) +
-  scale_color_manual(values=c("red", "red", "red")) +
-  scale_fill_manual(values=c("red", "red", "red")) +
-  theme_minimal() +
-  labs(title="Average Y Value by Condition", x="X Value", y="Average Y Value") +
-  theme(legend.title=element_blank())
-
-# Calculate means and standard deviations for each X within each Condition
-overall_summary_df <- df %>%
-  group_by(X) %>%
-  summarise(Mean=mean(Y), SD=sd(Y), .groups='drop')
-
-# Plot with a single red line for the average and a shaded area for the range
-ggplot(overall_summary_df, aes(x=X)) +
-  geom_line(aes(y=Mean), color="red", size=1) +
-  geom_ribbon(aes(ymin=Mean-SD, ymax=Mean+SD), fill="red", alpha=0.2) +
-  theme_minimal() +
-  labs(title="Average Y Value Across Conditions", x="X Value", y="Average Y Value") +
-  theme(legend.title=element_blank())
-```
-
-
-

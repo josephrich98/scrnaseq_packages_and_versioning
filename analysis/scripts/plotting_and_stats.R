@@ -1114,9 +1114,15 @@ make_combined_pc_variance_loadings_plot <- function(combined_pc_variance, loadin
 make_snn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn", save = FALSE) {
     xmax <- ceiling(max(abs(jaccards$logged_degree_ratio)))
     xmin <- -xmax
+    
+    if (!(all(jaccards$Jaccard == 1) && all(jaccards$degree_ratio == 1))) {
+        point_size = 0.3
+    } else {
+        point_size = 1.5
+    }
 
     p <- ggplot(jaccards, aes(x = logged_degree_ratio, y = Jaccard)) +
-        ggpointdensity::geom_pointdensity(size = 0.3, alpha = 1, adjust = 0.2) +
+        ggpointdensity::geom_pointdensity(size = point_size, alpha = 1, adjust = 0.2) +
         scico::scale_color_scico(palette = "grayC", direction = -1, end = 0.8) +
         geom_vline(xintercept = 0, color = "black", linetype = "solid") +
         geom_hline(yintercept = 0, color = "black", linetype = "solid") +
@@ -1132,8 +1138,6 @@ make_snn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
         theme_minimal(base_family = "Arial") +
         stat_function(fun = function(x) 2^x, color = "grey30", linetype = 2, xlim = c(xmin, 0)) +
         stat_function(fun = function(x) 2^(-x), color = "grey30", linetype = 2, xlim = c(0, xmax)) +
-        annotate("text", x = xmin, y = 0.13, label = "y == 2^{x}", parse = TRUE, color = "grey30", size = 4.5) +
-        annotate("text", x = xmax, y = 0.13, label = "y == 2^-{x}", parse = TRUE, color = "grey30", size = 4.5) +
         theme(
             text = element_text(family = "Arial"), 
             legend.position = "none",
@@ -1143,6 +1147,12 @@ make_snn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
             axis.title = element_text(size = rel(axis_text_size)),
         )
     # geom_density_2d()
+    
+    if (!(all(jaccards$Jaccard == 1) && all(jaccards$degree_ratio == 1))) {
+        p <- p +
+            annotate("text", x = xmin, y = 0.13, label = "y == 2^{x}", parse = TRUE, color = "grey30", size = 4.5) +
+            annotate("text", x = xmax, y = 0.13, label = "y == 2^-{x}", parse = TRUE, color = "grey30", size = 4.5)
+    }
 
     if (neighbor_space == "umap") {
         p <- p +
@@ -1239,16 +1249,59 @@ plot_heatmap <- function(jacc_seu_sc3, ari_value = NULL, show_axis_titles = FALS
 }
 
 
+find_group2_colors <- function(clus_df_gather, group1_name, group2_name) {
+    clus_df_filtered <- clus_df_gather[, c(group1_name, group2_name, "value")]
+    
+    clus_df_filtered[[group1_name]] <- paste0("G1_", clus_df_filtered[[group1_name]])
+    clus_df_filtered[[group2_name]] <- paste0("G2_", clus_df_filtered[[group2_name]])
+    
+    g <- igraph::graph_from_data_frame(d = clus_df_filtered, directed = FALSE)
+    igraph::V(g)$type <- ifelse(igraph::V(g)$name %in% clus_df_filtered[[group1_name]], TRUE, FALSE)
+    
+    matching <- igraph::max_bipartite_match(g, weights = clus_df_filtered$value)
+    
+    keys <- names(matching$matching)
+    number_group1_clusters <- length(sub("^G1_", "", keys[grep("^G1_", keys)]))
+    number_group2_clusters <- length(sub("^G2_", "", keys[grep("^G2_", keys)]))
+    
+    # Extract and filter the matching pairs
+    non_na_pairs <- matching$matching[!is.na(matching$matching)]
+    
+    # Filter out pairs where S is matched to C (excluding C matched to S or NA)
+    g1_to_g2_pairs <- non_na_pairs[grep("^G1_", names(non_na_pairs))]
+    
+    
+    # Extract numeric indices from the filtered pairs
+    g1_indices <- as.numeric(sub("G1_", "", names(g1_to_g2_pairs)))
+    g2_indices <- as.numeric(sub("G2_", "", g1_to_g2_pairs))
+    
+    # Initialize the new colors vector
+    group2_colors <- vector("character", number_group2_clusters)
+    
+    # Assign colors based on the matching
+    for (i in seq_along(g1_indices)) {
+        # Check if the C index is within the bounds of ditto_colors
+        if (g2_indices[i] <= length(ditto_colors)) {
+            group2_colors[g2_indices[i]] <- ditto_colors[g1_indices[i]]
+        }
+    }
+    
+    remaining_colors <- ditto_colors[number_group1_clusters+1:length(ditto_colors)]
+    group2_colors[(group2_colors == "")] <- remaining_colors[1:sum(group2_colors == "")]
+    
+    return (group2_colors)
+}
+
 plot_alluvial <- function(clus_df_gather, group1_name = "Seurat", group2_name = "Scanpy", color_boxes = TRUE, color_bands = FALSE, alluvial_alpha = 0.5, save = FALSE) {
     num_levels_group1 <- length(levels(clus_df_gather[[group1_name]]))
     num_levels_group2 <- length(levels(clus_df_gather[[group2_name]]))
 
     # Extract colors for each factor, assuming ditto_colors is long enough
     colors_group1 <- ditto_colors[1:num_levels_group1]
-    colors_group2 <- ditto_colors[1:num_levels_group2]
+    colors_group2 <- find_group2_colors(clus_df_gather, group1_name, group2_name)   # ditto_colors[1:num_levels_group2]
 
-    colors_group1_reverse <- rev(ditto_colors[1:num_levels_group1])
-    colors_group2_reverse <- rev(ditto_colors[1:num_levels_group2])
+    colors_group1_reverse <- rev(colors_group1)
+    colors_group2_reverse <- rev(colors_group2)
 
     # Combine the colors
     combined_colors <- c(colors_group1, colors_group2)
@@ -1297,7 +1350,7 @@ plot_alluvial <- function(clus_df_gather, group1_name = "Seurat", group2_name = 
 }
 
 
-make_umap_plot <- function(dataframe, package, title = "UMAP", overall_min_dim1 = 0, overall_max_dim1 = 20, overall_min_dim2 = 0, overall_max_dim2 = 20, show_legend = FALSE) {
+make_umap_plot <- function(dataframe, package, colors = ditto_colors, title = "UMAP", overall_min_dim1 = 0, overall_max_dim1 = 20, overall_min_dim2 = 0, overall_max_dim2 = 20, show_legend = FALSE) {
     centroids <- dataframe %>%
         group_by(cluster) %>%
         summarise(
@@ -1327,7 +1380,7 @@ make_umap_plot <- function(dataframe, package, title = "UMAP", overall_min_dim1 
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
             plot.title = element_text(size = rel(1.5), hjust = 0.5) # Center the title
         ) +
-        scale_color_manual(values = ditto_colors, name = "Cluster") +
+        scale_color_manual(values = colors, name = "Cluster") +
         guides(color = guide_legend(override.aes = list(size = 3)))
 
     if (!show_legend) {
@@ -1340,17 +1393,38 @@ make_umap_plot <- function(dataframe, package, title = "UMAP", overall_min_dim1 
 }
 
 
-plot_umap <- function(group1_umap_info, group1_clusters, group2_umap_info, group2_clusters, group1 = "Seurat", group2 = "Scanpy", group1_title = "", group2_title = "", show_legend = FALSE, save = FALSE) {
+plot_umap <- function(group1_umap_info, group1_clusters, group2_umap_info, group2_clusters, colors_group1 = ditto_colors, colors_group2 = ditto_colors, group1 = "Seurat", group2 = "Scanpy", group1_title = "", group2_title = "", show_legend = FALSE, save = FALSE) {
+    if ((nrow(group1_umap_info) == 0) || (length(group2_umap_info) == 0)) {
+        return (list(NA, NA))
+    }
+    
     umap_df_group1 <- as.data.frame(group1_umap_info)
     names(umap_df_group1) <- c("UMAP_1", "UMAP_2")
     umap_df_group1$cluster <- group1_clusters
+    
+    if ("0" %in% levels(umap_df_group1$cluster)) {
+        new_dataframe <- as.numeric(as.character(umap_df_group1$cluster)) + 1
+        new_levels <- as.numeric(levels(umap_df_group1$cluster)) + 1
+        umap_df_group1$cluster <- factor(new_dataframe, levels = new_levels, labels = new_levels)
+    }
+    
     group1_max_cluster_id <- max(as.numeric(as.character(group1_clusters[!is.na(group1_clusters)])))
     group1_min_cluster_id <- min(as.numeric(as.character(group1_clusters[!is.na(group1_clusters)])))
     umap_df_group1$cluster <- factor(umap_df_group1$cluster, levels = as.character(group1_min_cluster_id:group1_max_cluster_id))
 
+    
+    
+    
     umap_df_group2 <- as.data.frame(group2_umap_info)
     names(umap_df_group2) <- c("UMAP_1", "UMAP_2")
     umap_df_group2$cluster <- group2_clusters
+    
+    if ("0" %in% levels(umap_df_group2$cluster)) {
+        new_dataframe <- as.numeric(as.character(umap_df_group2$cluster)) + 1
+        new_levels <- as.numeric(levels(umap_df_group2$cluster)) + 1
+        umap_df_group2$cluster <- factor(new_dataframe, levels = new_levels, labels = new_levels)
+    }
+    
     group2_max_cluster_id <- max(as.numeric(as.character(group2_clusters[!is.na(group2_clusters)])))
     group2_min_cluster_id <- min(as.numeric(as.character(group2_clusters[!is.na(group2_clusters)])))
     umap_df_group2$cluster <- factor(umap_df_group2$cluster, levels = as.character(group2_min_cluster_id:group2_max_cluster_id))
@@ -1371,16 +1445,16 @@ plot_umap <- function(group1_umap_info, group1_clusters, group2_umap_info, group
     overall_max_dim1 <- max(group1_max_dim1, group2_max_dim1)
     overall_max_dim2 <- max(group1_max_dim2, group2_max_dim2)
 
-    if (group1_title == "") {
+    if (group1_title != "") {
         group1_title <- tools::toTitleCase(group1)
     }
 
-    if (group2_title == "") {
+    if (group2_title != "") {
         group2_title <- tools::toTitleCase(group2)
     }
 
-    p1 <- make_umap_plot(umap_df_group1, package = group1, title = group1_title, overall_min_dim1, overall_max_dim1, overall_min_dim2, overall_max_dim2, show_legend = show_legend)
-    p2 <- make_umap_plot(umap_df_group2, package = group2, title = group2_title, overall_min_dim1, overall_max_dim1, overall_min_dim2, overall_max_dim2, show_legend = show_legend)
+    p1 <- make_umap_plot(umap_df_group1, package = group1, colors = colors_group1, title = group1_title, overall_min_dim1, overall_max_dim1, overall_min_dim2, overall_max_dim2, show_legend = show_legend)
+    p2 <- make_umap_plot(umap_df_group2, package = group2, colors = colors_group2, title = group2_title, overall_min_dim1, overall_max_dim1, overall_min_dim2, overall_max_dim2, show_legend = show_legend)
 
 
     if (length(save) > 1) {
@@ -1778,7 +1852,7 @@ make_violin_nfeatures_seu <- function(seu1, seu2, group1_name = "Group 1", group
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$violin_counts_comparison)
-        ggsave(filepath, plot = combined_plot, dpi = dpi_color, width = 2100, height = 2100, units = "px")
+        ggsave(filepath, plot = combined_plot, dpi = 300, width = 2100, height = 2100, units = "px")
     }
 
     return(combined_plot)

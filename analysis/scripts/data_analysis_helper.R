@@ -273,6 +273,11 @@ get_py_de_results <- function(adata_name) {
         pts = "pts",
         pts_rest = "pts_rest"
     )
+    
+    if (scanpy_minor_version < 5) {
+        name_lookup$pts <- NULL
+        name_lookup$pts_rest <- NULL
+    }
 
     out <- list()
     for (ele in names(name_lookup)) {

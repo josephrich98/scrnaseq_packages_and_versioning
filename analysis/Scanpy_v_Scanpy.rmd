@@ -6,36 +6,44 @@ date: "2024-01-01"
 
 HYPERPARAMETERS
 ```{r}
-# Random seeds
+data_input <- "default" # str["default", "scan1", "scan2"]
+save_data <- TRUE
+
+scan1_name <- "Full"  # Must have no spaces
+scan2_name <- "Downsampled_reads"  # Must have no spaces
+
+# Input and output path specifications
+project_base_path <- getwd()  # also used for locating script files
+data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # str
+scanpy_version <- "1_9_5"  # str (with _ in place of .)
+conda_env <- "analysis_env"
+R_random_seed <- 100 # including for cell downsampling  # also used for global R session seed and python seed
+
+scan1_matrix_generation_method <- "kb" # str["kb", "cellranger"]  # also used for loading data
+scan1_matrix_generation_method_version <- "0_28_0"  # str (with _ in place of .)
+
+scan1_cell_fraction_after_downsampling <- "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
+scan1_read_fraction_after_downsampling <- "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
 scan1_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-scan2_read_downsample_seed <- "100" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-R_random_seed <- 100 # including for cell downsampling
 
-# Downsample fractions
-scan1_read_fraction_after_downsampling <- "1.0" # fraction of reads after downsampling - any number from (0,1.0]
-scan2_read_fraction_after_downsampling <- "0.04" # fraction of reads after downsampling - any number from (0,1.0]
 
-scan1_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
-scan2_cell_fraction_after_downsampling <- "1.0" # fraction of cells after downsampling - any number from (0,1.0]
+scan2_matrix_generation_method <- "kb" # str["kb", "cellranger"]  # also used for loading data
+scan2_matrix_generation_method_version <- "0_28_0"  # str (with _ in place of .)
 
-# Matrix generation methods
-scan1_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-scan1_matrix_generation_method_version <- "0.28.0"
-scan1_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
-scan1_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
-scan1_matrix_qc <- "raw" # "raw" or "filtered"
+scan2_cell_fraction_after_downsampling <- "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
+scan2_read_fraction_after_downsampling <- "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
+scan2_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
 
-scan2_matrix_generation_method <- "kb" # str["kb", "cellranger"]
-scan2_matrix_generation_method_version <- "0.28.0"
-scan2_matrix_include_unspliced <- FALSE # kb only; if TRUE --> .total.mtx (kb SUA); if FALSE --> .cell.mtx (KB SA) or .mtx (older versions of KB)
-scan2_matrix_source <- "generated" # "generated" (kb/cellranger count) or "downloaded" (eg 10x website)
-scan2_matrix_qc <- "raw" # "raw" or "filtered"
+scan1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}/frac{scan1_read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
+scan2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan2_matrix_generation_method}{scan2_matrix_generation_method_version}/frac{scan2_read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
 
-# Function argument and input settings
-data_input <- "scan1" # str["default", "scan1", "scan2"]
 
-# Package version
-scanpy_version <- "1.9.5"
+# Specifications for downloading data
+doi <- "AAAAAAA"  # FILL IN
+data_path_root <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}")
+scan1_data_name_from_download <- glue::glue("{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}_frac{scan1_read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
+scan2_data_name_from_download <- glue::glue("{scan2_matrix_generation_method}{scan2_matrix_generation_method_version}_frac{scan2_read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
+
 
 # Custom parameters
 scan1_inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
@@ -44,121 +52,83 @@ scan2_inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic sele
 scan1_min_cells <- 3
 scan1_min_features <- 200
 
-scan2_min_cells <- 1
-scan2_min_features <- 150
+scan2_min_cells <- 3
+scan2_min_features <- 200
 
-max_pct_mct <- 20 # default 5
 scan1_max_n_genes_by_counts_scanpy <- 12000 # default 2500
 scan2_max_n_genes_by_counts_scanpy <- 12000 # default 2500
+max_pct_mct <- 20 # default 5
 scan1_num_pcs <- 50 # number 1-50; or NULL to select after elbow plot visualization
 scan2_num_pcs <- 50
 umap_knn_k <- 50
 umap_leiden_clustering_resolution <- 0.8
 
-pca_seed1 <- 0
-pca_seed2 <- 0
+pca_seed1 <- 42
+pca_seed2 <- 42
 clustering_seed1 <- 0
 clustering_seed2 <- 0
-umap_seed1 <- 0
-umap_seed2 <- 0
+umap_seed1 <- 42
+umap_seed2 <- 42
 
-# Data path specifications
-scan1_data_path <- NULL  # NULL for default path
-scan2_data_path <- NULL  # NULL for default path
-output_base_path <- NULL   # NULL for default path
-
-# Output path specifications
-scan1_name <- "Full"  # Must have no spaces
-scan2_name <- "Downsampled_reads"  # Must have no spaces
-save_data <- TRUE
 dpi_bw <- 300
 dpi_color <- 500
-project_base_path <- "/workspace/analysis"  # Only needed if using default input/output paths
-data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # Only needed if using default input/output paths
-include_seeds_in_file_paths <- FALSE  # Only needed if using default input/output paths
-```
 
-R Setting up variables
-```{r}
-set.seed(R_random_seed)
-options(max.print = 130)
 
-scan1_read_fraction_after_downsampling <- gsub("\\.", "_", as.character(scan1_read_fraction_after_downsampling)) # fraction of reads after downsampling, as string representation and using underscores in place of decimal
-scan2_read_fraction_after_downsampling <- gsub("\\.", "_", as.character(scan2_read_fraction_after_downsampling))
-scan1_cell_fraction_after_downsampling <- gsub("\\.", "_", as.character(scan1_cell_fraction_after_downsampling))
-scan2_cell_fraction_after_downsampling <- gsub("\\.", "_", as.character(scan2_cell_fraction_after_downsampling))
-
-scan1_matrix_generation_method_version <- gsub("\\.", "_", scan1_matrix_generation_method_version)
-scan2_matrix_generation_method_version <- gsub("\\.", "_", scan2_matrix_generation_method_version)
-
-scan1_included_transcripts <- ifelse(scan1_matrix_include_unspliced == TRUE, "sua", "sa")
-scan2_included_transcripts <- ifelse(scan2_matrix_include_unspliced == TRUE, "sua", "sa")
-
-scan1_matrix_generation_method_full <- glue::glue("{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}_{scan1_matrix_qc}_{scan1_matrix_source}")
-scan2_matrix_generation_method_full <- glue::glue("{scan2_matrix_generation_method}{scan2_matrix_generation_method_version}_{scan2_matrix_qc}_{scan2_matrix_source}")
-
-scan1_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", scan1_matrix_generation_method_version))
-scan2_kb_major_version <- as.integer(sub("^[0-9]+_([0-9]+)_.*$", "\\1", scan2_matrix_generation_method_version))
-
-scanpy_group_names <- list(Scanpy1 = scan1_name, Scanpy2 = scan2_name)
-```
-
-Data paths
-```{r}
-if (is.null(scan1_data_path)) {
-    scan1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan1_matrix_generation_method_full}/frac{scan1_read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
-}
-
-if (is.null(scan2_data_path)) {
-    scan2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan2_matrix_generation_method_full}/frac{scan2_read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
-}
-```
-
-File path definitions
-```{r}
-group1_color <- "#009E73"
-group2_color <- "#CC79A7"
-
-if (scan1_matrix_generation_method == scan2_matrix_generation_method &&
-    scan1_matrix_generation_method_version == scan2_matrix_generation_method_version &&
-    scan1_included_transcripts == scan2_included_transcripts &&
-    scan1_matrix_source == scan2_matrix_source &&
-    scan1_matrix_qc == scan2_matrix_qc) {
-    matrix_generation_method_full <- glue::glue("{scan1_matrix_generation_method_full}_{scan1_included_transcripts}")
-    # Full vs downsampled
-    group1_color <- "#FFCB57"
-    group2_color <- "#6C27CC"
+if (scan1_matrix_generation_method == scan2_matrix_generation_method && scan1_matrix_generation_method_version == scan2_matrix_generation_method_version) {
+    matrix_generation_method_full <- glue::glue("{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}")
 } else {
-    matrix_generation_method_full <- glue::glue("scan1_{scan1_matrix_generation_method_full}_{scan1_included_transcripts}_vs_scan2_{scan2_matrix_generation_method_full}_{scan2_included_transcripts}")
+    matrix_generation_method_full <- glue::glue("scan1_{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}_vs_scan2_{scan2_matrix_generation_method}{scan2_matrix_generation_method_version}")
+}
+
+cell_fraction_after_downsampling <- ifelse(scan1_cell_fraction_after_downsampling == scan2_cell_fraction_after_downsampling, scan1_cell_fraction_after_downsampling,
+    paste("scan1", scan1_cell_fraction_after_downsampling, "vs", "scan2", scan2_cell_fraction_after_downsampling, sep = "_")
+)
+
+if (cell_fraction_after_downsampling != "1_0") {
+    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
 }
 
 read_fraction_after_downsampling <- ifelse(scan1_read_fraction_after_downsampling == scan2_read_fraction_after_downsampling, scan1_read_fraction_after_downsampling,
     paste("scan1", scan1_read_fraction_after_downsampling, "vs", "scan2", scan2_read_fraction_after_downsampling, sep = "_")
 )
 
-cell_fraction_after_downsampling <- ifelse(scan1_cell_fraction_after_downsampling == scan2_cell_fraction_after_downsampling, scan1_cell_fraction_after_downsampling,
-    paste("scan1", scan1_cell_fraction_after_downsampling, "vs", "scan2", scan2_cell_fraction_after_downsampling, sep = "_")
-)
-
-if (include_seeds_in_file_paths) {
-    if (scan1_read_downsample_seed == scan2_read_downsample_seed) {
-        read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
-    } else {
-        read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_scan1_seed{scan1_read_downsample_seed}_scan2_seed{scan2_read_downsample_seed}")
-    }
-    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
+if (scan1_read_fraction_after_downsampling != "1_0") {
+    read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
 }
 
-if (is.null(output_base_path)) {
-    output_base_path <- glue::glue("{project_base_path}/output/{data_name}/scanpyv{scanpy_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+if (scan2_read_fraction_after_downsampling != "1_0") {
+    read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
 }
 
+output_base_path <- glue::glue("{project_base_path}/output/{data_name}/scanpyv{scanpy_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+```
+
+R Setting up variables
+```{r}
+set.seed(R_random_seed)
+scanpy_group_names <- list(Scanpy1 = scan1_name, Scanpy2 = scan2_name)
+
+if ((scan1_read_fraction_after_downsampling != scan2_read_fraction_after_downsampling) || (scan1_cell_fraction_after_downsampling != scan2_cell_fraction_after_downsampling)) {
+    group1_color <- "#FFCB57"
+    group2_color <- "#6C27CC"
+} else {
+    group1_color <- "#009E73"
+    group2_color <- "#CC79A7"
+}
+
+scanpy_minor_version <- as.integer(strsplit(scanpy_version, "_")[[1]][2])
+```
+
+File path definitions
+```{r}
 output_data_file_paths <- list(
     markers_scan1 = glue::glue("{output_base_path}/data_files/markers_{scan1_name}.rds"),
     markers_scan2 = glue::glue("{output_base_path}/data_files/markers_{scan2_name}.rds"),
     markers2 = glue::glue("{output_base_path}/data_files/markers2.rds"),
-    adata1_object = glue::glue("{output_base_path}/data_files/adata1.rds"),
-    adata2_object = glue::glue("{output_base_path}/data_files/adata2.rds")
+    adata1_object = glue::glue("{output_base_path}/data_files/adata1.h5ad"),
+    adata2_object = glue::glue("{output_base_path}/data_files/adata2.h5ad"),
+    adata1_object_all_genes = glue::glue("{output_base_path}/data_files/adata1_object_all_genes.h5ad"),
+    adata2_object_all_genes = glue::glue("{output_base_path}/data_files/adata2_object_all_genes.h5ad")
 )
 
 # FALSE to have no save
@@ -168,9 +138,9 @@ file_paths <- list(
     euler_stats_after_QC_file = glue::glue("{output_base_path}/stats/euler_stats_afterQC.txt"),
     pca_knn_clustering_umap_file = glue::glue("{output_base_path}/stats/pca_knn_clustering_umap_stats.txt"),
     de_stats_file = glue::glue("{output_base_path}/stats/de_stats.txt"),
+    
     pre_filtering_upset_cell = FALSE, # glue::glue("{output_base_path}/plots/pre_filtering_upset_cell.tiff"),
     pre_filtering_upset_gene = FALSE, # glue::glue("{output_base_path}/plots/pre_filtering_upset_gene.tiff"),
-
     knee_plot1 = FALSE, # glue::glue("{output_base_path}/plots/knee_plot_{scan1_name}.tiff"),
     knee_plot2 = FALSE, # glue::glue("{output_base_path}/plots/knee_plot_{scan2_name}.tiff"),
     umi_scatterplot = glue::glue("{output_base_path}/plots/umi_scatterplot.tiff"),
@@ -244,11 +214,11 @@ file_paths <- list(
     FC_histogram_signed_file_path = FALSE # glue::glue("{output_base_path}/plots/FC_histogram_signed.tiff")
 )
 
-for (path in output_data_file_paths) {
-    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-}
-
 if (save_data) {
+    for (path in output_data_file_paths) {
+        dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    }
+    
     for (path in file_paths) {
         if (is.character(path)) {
             # Extract the directory part of the path
@@ -260,23 +230,22 @@ if (save_data) {
             }
         }
     }
+    
+    for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clustering_umap_file, file_paths$de_stats_file)) {
+        if (is.character(file)) {
+            sink(file = file, append = FALSE)
+            sink()
+        }
+    }
 } else {
     for (i in seq_along(file_paths)) {
         file_paths[[i]] <- FALSE
-    }
-}
-
-for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clustering_umap_file, file_paths$de_stats_file)) {
-    if (is.character(file)) {
-        sink(file = file, append = FALSE)
-        sink()
     }
 }
 ```
 
 R Imports
 ```{r}
-conda_env <- "analysis_env"
 Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
 library(reticulate)
 use_condaenv(conda_env)
@@ -312,6 +281,16 @@ scanpy_resolution <- 1
 scanpy_cluster_iters <- -1
 scanpy_umap_min_dist <- 0.5
 scanpy_correction_method <- "benjamini-hochberg"
+```
+
+Download data if necessary
+```{python}
+from scripts.download_data import *
+
+if not os.path.exists(r.scan1_data_path) or not os.listdir(r.scan1_data_path):
+    r.scan1_data_path = download_and_extract(r.doi, r.scan1_data_name_from_download, r.data_path_root, r.scan1_data_path)
+if not os.path.exists(r.scan2_data_path) or not os.listdir(r.scan2_data_path):
+    r.scan2_data_path = download_and_extract(r.doi, r.scan2_data_name_from_download, r.data_path_root, r.scan2_data_path)
 ```
 
 Python imports and setting up variables
@@ -360,51 +339,41 @@ def save_scanpy_image(filepath):
 
 Import adata1
 ```{python}
-if r.scan1_matrix_qc == "raw":
-    if (scan1_matrix_generation_method=="kb" and r.scan1_matrix_include_unspliced):
-        matrix_file = "cells_x_genes.total.mtx"
-        adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
-    elif (scan1_matrix_generation_method=="kb" and not r.scan1_matrix_include_unspliced):
-        matrix_file = "cells_x_genes.cell.mtx"
-        if not os.path.exists(f"{scan1_data_path}/{matrix_file}"):
-            # If it doesn't exist, use the alternative .mtx file
-            matrix_file = "cells_x_genes.mtx"
-        adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/{matrix_file}",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
-    elif scan1_matrix_generation_method=="cellranger":
-        adata1 = sc.read_10x_mtx(scan1_data_path, var_names='gene_ids')
-    
-    adata1_unfiltered = adata1.copy()
-    
-    if r.scan1_cell_fraction_after_downsampling != "1_0":
-        total_cells1 = adata1.n_obs
-        numeric_scan1_cell_fraction_after_downsampling = float(r.scan1_cell_fraction_after_downsampling.replace("_", "."))
-        cells_to_sample1 = round(total_cells1 * numeric_scan1_cell_fraction_after_downsampling)
-        sampled_cells_indices1 = np.random.choice(total_cells1, cells_to_sample1, replace=False)
-        adata1 = adata1[sampled_cells_indices1]
+if (scan1_matrix_generation_method=="kb"):
+    adata1 = kb_utils.import_matrix_as_anndata(f"{scan1_data_path}/cells_x_genes.mtx",f"{scan1_data_path}/cells_x_genes.barcodes.txt",f"{scan1_data_path}/cells_x_genes.genes.txt")
+elif scan1_matrix_generation_method=="cellranger":
+    adata1 = sc.read_10x_mtx(scan1_data_path, var_names='gene_ids')
+
+adata1_unfiltered = adata1.copy()
+
+if r.scan1_cell_fraction_after_downsampling != "1_0":
+    total_cells1 = adata1.n_obs
+    numeric_scan1_cell_fraction_after_downsampling = float(r.scan1_cell_fraction_after_downsampling.replace("_", "."))
+    cells_to_sample1 = round(total_cells1 * numeric_scan1_cell_fraction_after_downsampling)
+    sampled_cells_indices1 = np.random.choice(total_cells1, cells_to_sample1, replace=False)
+    adata1 = adata1[sampled_cells_indices1]
 ```
 
 Knee plot
 ```{r}
-if (scan1_matrix_qc == "raw") {
-    if (scan1_matrix_generation_method == "kb") {
-        res_mat1 <- read_count_output_modified(scan1_data_path, name = "cells_x_genes", unspliced = scan1_matrix_include_unspliced, tcc = FALSE)
-    } else if (scan1_matrix_generation_method == "cellranger") {
-        res_mat1 <- Read10X(scan1_data_path, gene.column = 1)
-    } else {
-        print(scan1_matrix_generation_method, "is not a valid input for scan1_matrix_generation_method")
-    }
-
-    if (scan1_cell_fraction_after_downsampling != "1_0") {
-        total_cells <- ncol(res_mat1)
-        numeric_scan1_cell_fraction_after_downsampling <- gsub("_", ".", scan1_cell_fraction_after_downsampling) %>% as.numeric()
-        cells_to_sample <- round(total_cells * numeric_scan1_cell_fraction_after_downsampling)
-        sampled_cells <- sample(total_cells, cells_to_sample)
-        res_mat1 <- res_mat1[, sampled_cells]
-    }
-
-    tot_counts1 <- Matrix::colSums(res_mat1)
-    bc_rank1 <- barcodeRanks(res_mat1)
+if (scan1_matrix_generation_method == "kb") {
+    res_mat1 <- read_count_output_modified(scan1_data_path, name = "cells_x_genes", tcc = FALSE)
+} else if (scan1_matrix_generation_method == "cellranger") {
+    res_mat1 <- Read10X(scan1_data_path, gene.column = 1)
+} else {
+    print(scan1_matrix_generation_method, "is not a valid input for scan1_matrix_generation_method")
 }
+
+if (scan1_cell_fraction_after_downsampling != "1_0") {
+    total_cells <- ncol(res_mat1)
+    numeric_scan1_cell_fraction_after_downsampling <- gsub("_", ".", scan1_cell_fraction_after_downsampling) %>% as.numeric()
+    cells_to_sample <- round(total_cells * numeric_scan1_cell_fraction_after_downsampling)
+    sampled_cells <- sample(total_cells, cells_to_sample)
+    res_mat1 <- res_mat1[, sampled_cells]
+}
+
+tot_counts1 <- Matrix::colSums(res_mat1)
+bc_rank1 <- barcodeRanks(res_mat1)
 
 knee_plot1 <- make_knee_plot(bc_rank1, save = file_paths$knee_plot1)
 knee_plot1
@@ -412,27 +381,19 @@ knee_plot1
 
 Select threshold for knee plot
 ```{r}
-if (scan1_matrix_qc == "raw") {
-    if (!is.null(scan1_inflection_UMI_manual)) {
-        UMI_cutoff1 <- scan1_inflection_UMI_manual
-    } else {
-        UMI_cutoff1 <- metadata(bc_rank1)$inflection
-    }
-    rank_at_inflection1 <- max(bc_rank1$rank[bc_rank1$total > UMI_cutoff1])
+if (!is.null(scan1_inflection_UMI_manual)) {
+    UMI_cutoff1 <- scan1_inflection_UMI_manual
+} else {
+    UMI_cutoff1 <- metadata(bc_rank1)$inflection
 }
+rank_at_inflection1 <- max(bc_rank1$rank[bc_rank1$total > UMI_cutoff1])
 ```
 
 Apply filtering from knee plot
 ```{python}
-if r.scan1_matrix_qc == "raw":  
-    # Apply filtering of knee plot
-    sc.pp.filter_cells(adata1, min_counts=r.UMI_cutoff1)  # r.UMI_cutoff (same cutoff as R default) OR custom number
-    sc.pp.filter_genes(adata1, min_counts=1)
-elif r.scan_matrix_qc == "filtered":
-    adata1 = sc.read_10x_mtx(scan1_data_path, var_names='gene_ids')
-    adata1_unfiltered = adata.copy()
-else:
-    raise ValueError("Invalid value for scan1_matrix_qc. It should be either 'raw' or 'filtered'.")
+# Apply filtering of knee plot
+sc.pp.filter_cells(adata1, min_counts=r.UMI_cutoff1)  # r.UMI_cutoff (same cutoff as R default) OR custom number
+sc.pp.filter_genes(adata1, min_counts=1)
 
 adata1.var_names_make_unique()
 sc.pp.filter_cells(adata1, min_genes=r.scan1_min_features)
@@ -441,51 +402,41 @@ sc.pp.filter_genes(adata1, min_cells=r.scan1_min_cells)
 
 Import adata2
 ```{python}
-if r.scan2_matrix_qc == "raw":
-    if (scan2_matrix_generation_method=="kb" and r.scan2_matrix_include_unspliced):
-        matrix_file = "cells_x_genes.total.mtx"
-        adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
-    elif (scan2_matrix_generation_method=="kb" and not r.scan2_matrix_include_unspliced):
-        matrix_file = "cells_x_genes.cell.mtx"
-        if not os.path.exists(f"{scan2_data_path}/{matrix_file}"):
-            # If it doesn't exist, use the alternative .mtx file
-            matrix_file = "cells_x_genes.mtx"
-        adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/{matrix_file}",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
-    elif scan2_matrix_generation_method=="cellranger":
-        adata2 = sc.read_10x_mtx(scan2_data_path, var_names='gene_ids')
+if (scan2_matrix_generation_method=="kb"):
+    adata2 = kb_utils.import_matrix_as_anndata(f"{scan2_data_path}/cells_x_genes.mtx",f"{scan2_data_path}/cells_x_genes.barcodes.txt",f"{scan2_data_path}/cells_x_genes.genes.txt")
+elif scan2_matrix_generation_method=="cellranger":
+    adata2 = sc.read_10x_mtx(scan2_data_path, var_names='gene_ids')
     
-    adata2_unfiltered = adata2.copy()
-    
-    if r.scan2_cell_fraction_after_downsampling != "1_0":
-        total_cells2 = adata2.n_obs
-        numeric_scan2_cell_fraction_after_downsampling = float(r.scan2_cell_fraction_after_downsampling.replace("_", "."))
-        cells_to_sample2 = round(total_cells2 * numeric_scan2_cell_fraction_after_downsampling)
-        sampled_cells_indices2 = np.random.choice(total_cells2, cells_to_sample2, replace=False)
-        adata2 = adata2[sampled_cells_indices2]
+adata2_unfiltered = adata2.copy()
+
+if r.scan2_cell_fraction_after_downsampling != "1_0":
+    total_cells2 = adata2.n_obs
+    numeric_scan2_cell_fraction_after_downsampling = float(r.scan2_cell_fraction_after_downsampling.replace("_", "."))
+    cells_to_sample2 = round(total_cells2 * numeric_scan2_cell_fraction_after_downsampling)
+    sampled_cells_indices2 = np.random.choice(total_cells2, cells_to_sample2, replace=False)
+    adata2 = adata2[sampled_cells_indices2]
 ```
 
 Knee plot
 ```{r}
-if (scan2_matrix_qc == "raw") {
-    if (scan2_matrix_generation_method == "kb") {
-        res_mat2 <- read_count_output_modified(scan2_data_path, name = "cells_x_genes", unspliced = scan2_matrix_include_unspliced, tcc = FALSE)
-    } else if (scan2_matrix_generation_method == "cellranger") {
-        res_mat2 <- Read10X(scan2_data_path, gene.column = 1)
-    } else {
-        print(scan2_matrix_generation_method, "is not a valid input for scan2_matrix_generation_method")
-    }
-
-    if (scan2_cell_fraction_after_downsampling != "1_0") {
-        total_cells <- ncol(res_mat2)
-        numeric_scan2_cell_fraction_after_downsampling <- gsub("_", ".", scan2_cell_fraction_after_downsampling) %>% as.numeric()
-        cells_to_sample <- round(total_cells * numeric_scan2_cell_fraction_after_downsampling)
-        sampled_cells <- sample(total_cells, cells_to_sample)
-        res_mat2 <- res_mat2[, sampled_cells]
-    }
-
-    tot_counts2 <- Matrix::colSums(res_mat2)
-    bc_rank2 <- barcodeRanks(res_mat2)
+if (scan2_matrix_generation_method == "kb") {
+    res_mat2 <- read_count_output_modified(scan2_data_path, name = "cells_x_genes", tcc = FALSE)
+} else if (scan2_matrix_generation_method == "cellranger") {
+    res_mat2 <- Read10X(scan2_data_path, gene.column = 1)
+} else {
+    print(scan2_matrix_generation_method, "is not a valid input for scan2_matrix_generation_method")
 }
+
+if (scan2_cell_fraction_after_downsampling != "1_0") {
+    total_cells <- ncol(res_mat2)
+    numeric_scan2_cell_fraction_after_downsampling <- gsub("_", ".", scan2_cell_fraction_after_downsampling) %>% as.numeric()
+    cells_to_sample <- round(total_cells * numeric_scan2_cell_fraction_after_downsampling)
+    sampled_cells <- sample(total_cells, cells_to_sample)
+    res_mat2 <- res_mat2[, sampled_cells]
+}
+
+tot_counts2 <- Matrix::colSums(res_mat2)
+bc_rank2 <- barcodeRanks(res_mat2)
 
 knee_plot2 <- make_knee_plot(bc_rank2, save = file_paths$knee_plot2)
 knee_plot2
@@ -493,27 +444,19 @@ knee_plot2
 
 Select threshold for knee plot
 ```{r}
-if (scan2_matrix_qc == "raw") {
-    if (!is.null(scan2_inflection_UMI_manual)) {
-        UMI_cutoff2 <- scan2_inflection_UMI_manual
-    } else {
-        UMI_cutoff2 <- metadata(bc_rank2)$inflection
-    }
-    rank_at_inflection2 <- max(bc_rank2$rank[bc_rank2$total > UMI_cutoff2])
+if (!is.null(scan2_inflection_UMI_manual)) {
+    UMI_cutoff2 <- scan2_inflection_UMI_manual
+} else {
+    UMI_cutoff2 <- metadata(bc_rank2)$inflection
 }
+rank_at_inflection2 <- max(bc_rank2$rank[bc_rank2$total > UMI_cutoff2])
 ```
 
 Apply filtering from knee plot
 ```{python}
-if r.scan2_matrix_qc == "raw":  
-    # Apply filtering of knee plot
-    sc.pp.filter_cells(adata2, min_counts=r.UMI_cutoff2)  # r.UMI_cutoff (same cutoff as R default) OR custom number
-    sc.pp.filter_genes(adata2, min_counts=1)
-elif r.scan_matrix_qc == "filtered":
-    adata2 = sc.read_10x_mtx(scan2_data_path, var_names='gene_ids')
-    adata2_unfiltered = adata.copy()
-else:
-    raise ValueError("Invalid value for scan2_matrix_qc. It should be either 'raw' or 'filtered'.")
+# Apply filtering of knee plot
+sc.pp.filter_cells(adata2, min_counts=r.UMI_cutoff2)  # r.UMI_cutoff (same cutoff as R default) OR custom number
+sc.pp.filter_genes(adata2, min_counts=1)
 
 adata2.var_names_make_unique()
 sc.pp.filter_cells(adata2, min_genes=r.scan2_min_features)
@@ -552,17 +495,17 @@ Euler plots of cell, gene overlap before QC
 
 UMI scatterplot between the two groups
 ```{r}
-umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = scanpy_group_names$Scanpy1, res_mat2_name = scanpy_group_names$Scanpy2, point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)
-umi_scatterplot
+# umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = scanpy_group_names$Scanpy1, res_mat2_name = scanpy_group_names$Scanpy2, point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)
+# umi_scatterplot
 ```
 
 Find list of mitochondrial Ensembl gene names
 ```{r}
 # ensembl <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")  # Service may be down on this mirror
-ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")
-mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)
+# ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")
+# mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)
 
-# mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
+mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
 ```
 
 QC and filter high mito cells out of Scanpy1, Violin plots
@@ -570,7 +513,13 @@ QC and filter high mito cells out of Scanpy1, Violin plots
 sc_mito_genes = r.mt_genes.ensembl_gene_id.tolist()
 adata1.var['mt'] = adata1.var_names.isin(sc_mito_genes)
 
-sc.pp.calculate_qc_metrics(adata1, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+if r.scanpy_minor_version >= 5:
+    sc.pp.calculate_qc_metrics(adata1, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+    gene_obs_name = 'n_genes_by_counts'
+    count_obs_name = 'total_counts'
+else:
+    gene_obs_name = 'n_genes'
+    count_obs_name = 'n_counts'
 
 # Extracting gene names from adata and trimming any versions (like '.1', '.2', etc.)
 adata1_gene_names_trimmed = [name.split('.')[0] for name in adata1.var_names]
@@ -588,10 +537,11 @@ save_genes1 = save_scanpy_image(r.file_paths[f"scan1_violin_file_path_genes"])
 save_counts1 = save_scanpy_image(r.file_paths[f"scan1_violin_file_path_counts"])
 save_mt1 = save_scanpy_image(r.file_paths[f"scan1_violin_file_path_mt"])
 
-# sc.pl.violin(adata, ['n_genes_by_counts', 'total_counts', 'pct_mt'], jitter=0.4, multi_panel = True)
-sc.pl.violin(adata1, ['n_genes_by_counts'], jitter=0.4, size=0, save = save_genes1)
-sc.pl.violin(adata1, ['total_counts'], jitter=0.4, size=0, save = save_counts1)
-sc.pl.violin(adata1, ['pct_mt'], jitter=0.4, size=0, save = save_mt1)
+if r.scanpy_minor_version >= 5:
+    # sc.pl.violin(adata1, [gene_obs_name, count_obs_name, 'pct_mt'], jitter=0.4, multi_panel = True)
+    sc.pl.violin(adata1, [gene_obs_name], jitter=0.4, size=0, save = save_genes1)
+    sc.pl.violin(adata1, [count_obs_name], jitter=0.4, size=0, save = save_counts1)
+    sc.pl.violin(adata1, keys = ['pct_mt'], jitter=0.4, size=0, save = save_mt1)
 
 if r.file_paths[f"scan1_violin_file_path_genes"]:
     shutil.move(f"{os.getcwd()}/{save_genes}", r.file_paths[f"scan1_violin_file_path_genes"])
@@ -608,9 +558,9 @@ print(f"percentage of genes with %mct > threshold: {pct_cells_over_threshold_mct
 # Filter out cells where the percentage of mitochondrial reads is > 20%
 adata1 = adata1[adata1.obs['pct_mt'] < r.max_pct_mct, :]
 
-pct_cells_over_threshold_genes_by_counts = np.mean(adata1.obs['n_genes_by_counts'] > r.scan1_max_n_genes_by_counts_scanpy) * 100
+pct_cells_over_threshold_genes_by_counts = np.mean(adata1.obs[gene_obs_name] > r.scan1_max_n_genes_by_counts_scanpy) * 100
 print(f"percentage of genes with n_genes_by_count > threshold: {pct_cells_over_threshold_genes_by_counts}")
-adata1 = adata1[adata1.obs.n_genes_by_counts < r.scan1_max_n_genes_by_counts_scanpy, :]
+adata1 = adata1[adata1.obs[gene_obs_name] < r.scan1_max_n_genes_by_counts_scanpy, :]
     
 # Filter adata to only include the common cells 
 cells_adata1 = adata1.obs_names.tolist()
@@ -623,7 +573,13 @@ QC and filter high mito cells out of Scanpy2, Violin plots
 ```{python}
 adata2.var['mt'] = adata2.var_names.isin(sc_mito_genes)
 
-sc.pp.calculate_qc_metrics(adata2, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+if r.scanpy_minor_version >= 5:
+    sc.pp.calculate_qc_metrics(adata2, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+    gene_obs_name = 'n_genes_by_counts'
+    count_obs_name = 'total_counts'
+else:
+    gene_obs_name = 'n_genes'
+    count_obs_name = 'n_counts'
 
 # Extracting gene names from adata and trimming any versions (like '.1', '.2', etc.)
 adata2_gene_names_trimmed = [name.split('.')[0] for name in adata2.var_names]
@@ -641,10 +597,11 @@ save_genes2 = save_scanpy_image(r.file_paths[f"scan2_violin_file_path_genes"])
 save_counts2 = save_scanpy_image(r.file_paths[f"scan2_violin_file_path_counts"])
 save_mt2 = save_scanpy_image(r.file_paths[f"scan2_violin_file_path_mt"])
 
-# sc.pl.violin(adata, ['n_genes_by_counts', 'total_counts', 'pct_mt'], jitter=0.4, multi_panel = True)
-sc.pl.violin(adata2, ['n_genes_by_counts'], jitter=0.4, size=0, save = save_genes2)
-sc.pl.violin(adata2, ['total_counts'], jitter=0.4, size=0, save = save_counts2)
-sc.pl.violin(adata2, ['pct_mt'], jitter=0.4, size=0, save = save_mt2)
+if r.scanpy_minor_version >= 5:
+    # sc.pl.violin(adata, ['n_genes_by_counts', 'total_counts', 'pct_mt'], jitter=0.4, multi_panel = True)
+    sc.pl.violin(adata2, [gene_obs_name], jitter=0.4, size=0, save = save_genes2)
+    sc.pl.violin(adata2, [count_obs_name], jitter=0.4, size=0, save = save_counts2)
+    sc.pl.violin(adata2, ['pct_mt'], jitter=0.4, size=0, save = save_mt2)
 
 if r.file_paths[f"scan2_violin_file_path_genes"]:
     shutil.move(f"{os.getcwd()}/{save_genes}", r.file_paths[f"scan2_violin_file_path_genes"])
@@ -661,9 +618,9 @@ print(f"percentage of genes with %mct > threshold: {pct_cells_over_threshold_mct
 # Filter out cells where the percentage of mitochondrial reads is > 20%
 adata2 = adata2[adata2.obs['pct_mt'] < r.max_pct_mct, :]
 
-pct_cells_over_threshold_genes_by_counts = np.mean(adata2.obs['n_genes_by_counts'] > r.scan2_max_n_genes_by_counts_scanpy) * 100
+pct_cells_over_threshold_genes_by_counts = np.mean(adata2.obs[gene_obs_name] > r.scan2_max_n_genes_by_counts_scanpy) * 100
 print(f"percentage of genes with n_genes_by_count > threshold: {pct_cells_over_threshold_genes_by_counts}")
-adata2 = adata2[adata2.obs.n_genes_by_counts < r.scan2_max_n_genes_by_counts_scanpy, :]
+adata2 = adata2[adata2.obs[gene_obs_name] < r.scan2_max_n_genes_by_counts_scanpy, :]
     
 # Filter adata to only include the common cells 
 cells_adata2 = adata2.obs_names.tolist()
@@ -685,6 +642,8 @@ Upset plots of cell, gene overlap after QC
 ```{r}
 upset_cell <- make_upset_scanpy(py$adata1, py$adata2, comparison = "Cell", group_names = scanpy_group_names, save = file_paths$upset_cells)
 upset_gene <- make_upset_scanpy(py$adata1, py$adata2, comparison = "Gene", group_names = scanpy_group_names, save = file_paths$upset_genes)
+py$adata1$write_h5ad(output_data_file_paths$adata1_object_all_genes, compression = py$hdf5plugin$FILTERS$zstd)
+py$adata2$write_h5ad(output_data_file_paths$adata2_object_all_genes, compression = py$hdf5plugin$FILTERS$zstd)
 ```
 
 Create cell and gene lists
@@ -796,12 +755,12 @@ if (file_paths$euler_stats_after_QC_file != FALSE) {
 
 Find HVGs
 ```{python}
-sc.pp.highly_variable_genes(adata1, n_top_genes = n_top_genes, flavor = r.scanpy_hvg_flavor)
+sc.pp.highly_variable_genes(adata1, min_mean = 0.0125, max_mean = 3, min_disp = 0.5, n_top_genes = n_top_genes, flavor = r.scanpy_hvg_flavor)
 
 scanpy_highly_variable_genes1 = adata1.var.index[adata1.var['highly_variable']]
 scanpy_highly_variable_genes_list1 = adata1.var[adata1.var['highly_variable']].index.tolist()
 
-sc.pp.highly_variable_genes(adata2, n_top_genes = n_top_genes, flavor = r.scanpy_hvg_flavor)
+sc.pp.highly_variable_genes(adata2, min_mean = 0.0125, max_mean = 3, min_disp = 0.5, n_top_genes = n_top_genes, flavor = r.scanpy_hvg_flavor)
 
 scanpy_highly_variable_genes2 = adata2.var.index[adata2.var['highly_variable']]
 scanpy_highly_variable_genes_list2 = adata2.var[adata2.var['highly_variable']].index.tolist()
@@ -853,10 +812,10 @@ hvgs <- list(Scanpy1 = py$scanpy_highly_variable_genes_list1, Scanpy2 = py$scanp
 Keep only HVGs, regress out features
 ```{python}
 adata1 = adata1[:, adata1.var.highly_variable]
-sc.pp.regress_out(adata1, ['total_counts', 'pct_mt'])
+sc.pp.regress_out(adata1, [count_obs_name, 'pct_mt'])
 
 adata2 = adata2[:, adata2.var.highly_variable]
-sc.pp.regress_out(adata2, ['total_counts', 'pct_mt'])
+sc.pp.regress_out(adata2, [count_obs_name, 'pct_mt'])
 ```
 
 Scaling
@@ -1009,12 +968,18 @@ if (data_input == "scan2" && identical(scan1_inds, scan2_inds)) {
 Neighbors
 ```{python}
 sc.pp.neighbors(adata1, n_neighbors=int(r.scan_n_neighbors), n_pcs=int(scan1_num_pcs))
-snn_graph_scan1 = adata1.obsp['connectivities']
-knn_graph_scan1 = adata1.obsp['distances']
-
 sc.pp.neighbors(adata2, n_neighbors=int(r.scan_n_neighbors), n_pcs=int(scan2_num_pcs))
-snn_graph_scan2 = adata2.obsp['connectivities']
-knn_graph_scan2 = adata2.obsp['distances']
+    
+if r.scanpy_minor_version >= 5:
+    snn_graph_scan1 = adata1.obsp['connectivities']
+    knn_graph_scan1 = adata1.obsp['distances']
+    snn_graph_scan2 = adata2.obsp['connectivities']
+    knn_graph_scan2 = adata2.obsp['distances']
+else:
+    snn_graph_scan1 = adata1.uns['neighbors']['connectivities']
+    knn_graph_scan1 = adata1.uns['neighbors']['distances']
+    snn_graph_scan2 = adata2.uns['neighbors']['connectivities']
+    knn_graph_scan2 = adata2.uns['neighbors']['distances']
 ```
 
 Plot SNN graph jaccard indices (ie similarity of neighborhoods) and degrees (ie size of neighborhoods)
@@ -1244,30 +1209,70 @@ if data_input == "scan2" and (r.scan1_inds == r.scan2_inds):
 ```
 
 UMAP
+```{r}
+if (scanpy_minor_version < 5) {
+    adata1_cluster_input_object_path <- glue::glue("{output_base_path}/data_files/adata1_cluster.h5ad")
+    adata2_cluster_input_object_path <- glue::glue("{output_base_path}/data_files/adata2_cluster.h5ad")
+        
+    adata1_umap_object_output_path <- glue::glue("{output_base_path}/data_files/adata1_umap.h5ad")
+    adata2_umap_object_output_path <- glue::glue("{output_base_path}/data_files/adata2_umap.h5ad")
+    
+    py$adata1$write_h5ad(adata1_cluster_input_object_path, compression = py$hdf5plugin$FILTERS$zstd)
+    py$adata2$write_h5ad(adata2_cluster_input_object_path, compression = py$hdf5plugin$FILTERS$zstd)
+    
+    conda_environment_with_older_umap_learn = "sc14_umap4"
+    python_script_path <- glue("{project_base_path}/scripts/run_scanpy14_umap.py")
+    
+    conda_path <- paste("/home/rstudio/.conda/envs", conda_environment_with_older_umap_learn, "bin/python3.9", sep = "/")
+
+    cmd_adata1 <- sprintf("%s %s '%s' '%s'", conda_path, python_script_path, adata1_cluster_input_object_path, adata1_umap_object_output_path)
+    cmd_adata2 <- sprintf("%s %s '%s' '%s'", conda_path, python_script_path, adata2_cluster_input_object_path, adata2_umap_object_output_path)
+    
+    system(cmd_adata1)
+    system(cmd_adata2)
+}
+```
+
 ```{python}
-sc.tl.umap(adata1, min_dist = r.scanpy_umap_min_dist, random_state = int(r.umap_seed1))
+if r.scanpy_minor_version < 5:
+    adata1 = sc.read_h5ad(r.adata1_umap_object_output_path)
+    adata2 = sc.read_h5ad(r.adata2_umap_object_output_path)
+    
+    adata1.uns['neighbors']['connectivities'] = adata1.obsp['connectivities']
+    adata1.uns['neighbors']['distances'] = adata1.obsp['distances']
+    adata2.uns['neighbors']['connectivities'] = adata2.obsp['connectivities']
+    adata2.uns['neighbors']['distances'] = adata2.obsp['distances']
+else:
+    sc.tl.umap(adata1, min_dist = r.scanpy_umap_min_dist, random_state = int(r.umap_seed1))
+    sc.tl.umap(adata2, min_dist = r.scanpy_umap_min_dist, random_state = int(r.umap_seed2))
 # sc.pl.umap(adata, color=r.scanpy_clustering_algorithm, palette=r.ditto_colors, ax=ax, show=False, title="UMAP (Clustering)")
-sc.tl.umap(adata2, min_dist = r.scanpy_umap_min_dist, random_state = int(r.umap_seed2))
 # sc.pl.umap(adata, color=r.scanpy_clustering_algorithm, palette=r.ditto_colors, ax=ax, show=False, title="UMAP (Clustering)")
 ```
 
 Plot UMAP
 ```{r}
-umap_plots <- plot_umap(group1_umap_info = py$adata1$obsm["X_umap"], group1_clusters = py$adata1$obs[scanpy_clustering_algorithm][, 1], group2_umap_info = py$adata2$obsm["X_umap"], group2_clusters = scan2_clusters_renumbered, group1 = scan1_name, group2 = scan2_name, save = c(file_paths$umap_scan1, file_paths$umap_scan2))
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
+
+colors_group2 <- find_group2_colors(clus_df_gather, scan1_name, scan2_name)
+
+group1_umap_info <- py$adata1$obsm[["X_umap"]]
+group2_umap_info <- py$adata2$obsm[["X_umap"]]
+    
+umap_plots <- plot_umap(group1_umap_info = group1_umap_info, group1_clusters = py$adata1$obs[scanpy_clustering_algorithm][, 1], group2_umap_info = group2_umap_info, group2_clusters = scan2_clusters_renumbered, group1 = scan1_name, group2 = scan2_name, colors_group2 = colors_group2, save = c(file_paths$umap_scan1, file_paths$umap_scan2))
 scan1_umap <- umap_plots[[1]]
 scan2_umap <- umap_plots[[2]]
 
 scan1_umap
 scan2_umap
 
-if (identical(scan1_inds, scan2_inds)) {
-    umap_plots_swapped_clusters <- plot_umap(group1_umap_info = py$adata1$obsm["X_umap"], group1_clusters = scan2_clusters_renumbered, group2_umap_info = py$adata2$obsm["X_umap"], group2_clusters = py$adata1$obs[scanpy_clustering_algorithm][, 1], group1 = scan1_name, group2 = scan2_name, group1_title = glue("Scanpy {scan1_name} UMAP with {scan2_name} clusters"), group2_title = glue("Scanpy {scan2_name} UMAP with {scan1_name} clusters"), save = c(file_paths$umap_scan1_clusters_scan2, file_paths$umap_scan2_clusters_scan1))
-    umap_scan1_clusters_scan2 <- umap_plots_swapped_clusters[[1]]
-    umap_scan2_clusters_scan1 <- umap_plots_swapped_clusters[[2]]
-
-    print(umap_scan1_clusters_scan2)
-    print(umap_scan2_clusters_scan1)
-}
+# if (identical(scan1_inds, scan2_inds)) {
+#     umap_plots_swapped_clusters <- plot_umap(group1_umap_info = py$adata1$obsm["X_umap"], group1_clusters = scan2_clusters_renumbered, group2_umap_info = py$adata2$obsm["X_umap"], group2_clusters = py$adata1$obs[scanpy_clustering_algorithm][, 1], group1 = scan1_name, colors_group1 = colors_group2, group2 = scan2_name, group1_title = glue("Scanpy {scan1_name} UMAP with {scan2_name} clusters"), group2_title = glue("Scanpy {scan2_name} UMAP with {scan1_name} clusters"), save = c(file_paths$umap_scan1_clusters_scan2, file_paths$umap_scan2_clusters_scan1))
+#     umap_scan1_clusters_scan2 <- umap_plots_swapped_clusters[[1]]
+#     umap_scan2_clusters_scan1 <- umap_plots_swapped_clusters[[2]]
+# 
+#     print(umap_scan1_clusters_scan2)
+#     print(umap_scan2_clusters_scan1)
+# }
 ```
 
 Compute KNN graph of UMAP space
@@ -1402,7 +1407,9 @@ scan2_clusters_renumbered_umap <- factor(named_vector)
 
 UMAP with UMAP Leiden clusters
 ```{r}
-umap_plots <- plot_umap(group1_umap_info = scan1_umap_data, group1_clusters = scan1_umap_knn_clusters, group2_umap_info = scan2_umap_data, group2_clusters = scan2_clusters_renumbered_umap, group1 = scan1_name, group2 = scan2_name, save = c(file_paths$umap_umap_leiden_scan1, file_paths$umap_umap_leiden_scan2))
+colors_group2_umap <- find_group2_colors(clus_df_gather_umap, scan1_name, scan2_name)
+
+umap_plots <- plot_umap(group1_umap_info = scan1_umap_data, group1_clusters = scan1_umap_knn_clusters, group2_umap_info = scan2_umap_data, group2_clusters = scan2_clusters_renumbered_umap, colors_group2 = colors_group2_umap, group1 = scan1_name, group2 = scan2_name, save = c(file_paths$umap_umap_leiden_scan1, file_paths$umap_umap_leiden_scan2))
 scan1_umap <- umap_plots[[1]]
 scan2_umap <- umap_plots[[2]]
 
@@ -1412,6 +1419,10 @@ scan2_umap
 
 Find markers
 ```{python}
+if r.scanpy_minor_version < 5:
+    adata1.uns['log1p'] = {'base': np.e}
+    adata2.uns['log1p'] = {'base': np.e}
+
 sc.tl.rank_genes_groups(adata1, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = True)
 sc.tl.rank_genes_groups(adata2, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = True)
 ```
@@ -1446,7 +1457,7 @@ upset_marker_gene_only <- make_upset_scanpy(vectorized_scan1_filtered_markers, v
 Stop DE analysis if data input does not align (as without aligned cluster information, DE analysis is not meaningful)
 ```{r}
 if (data_input == "default" || !identical(scan1_inds, scan2_inds)) {
-    if (save_data == TRUE) {
+    if (save_data) {
         saveRDS(result1, file = output_data_file_paths$markers_scan1)
         saveRDS(result2, file = output_data_file_paths$markers_scan2)
         py$adata1$write_h5ad(output_data_file_paths$adata1_object, compression = py$hdf5plugin$FILTERS$zstd)
@@ -1516,7 +1527,7 @@ Save markers df
 ```{r}
 subset_markers2 <- markers2[, c("gene", "cluster", glue("avg_log2FC.{scan1_name}"), glue("avg_log2FC.{scan2_name}"), glue("p_val_adj.{scan1_name}"), glue("p_val_adj.{scan1_name}"), "logFC_difference_magnitude", "logFC_difference_signed", "pvaladj_difference_magnitude", "pvaladj_difference_signed")]
 
-if (save_data == TRUE) {
+if (save_data) {
     saveRDS(result1, file = output_data_file_paths$markers_scan1)
     saveRDS(result2, file = output_data_file_paths$markers_scan2)
     py$adata1$write_h5ad(output_data_file_paths$adata1_object, compression = py$hdf5plugin$FILTERS$zstd)

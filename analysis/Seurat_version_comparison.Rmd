@@ -6,8 +6,8 @@ date: "2023-11-15"
 
 ```{r}
 project_base_path <- "/workspace/analysis"
-seurat1_version <- "4.3.0"
-seurat2_version <- "5.0.1"
+seurat1_version <- "5.0.1"
+seurat2_version <- "4.3.0"
 
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
 save_data <- TRUE
@@ -15,19 +15,20 @@ save_data <- TRUE
 data_input <- "default"
 
 # Don't have either name say "Seurat" or "Scanpy" or else helper functions will get confused
-seu1_name <- "Seuratv4"
-seu2_name <- "Seuratv5"
+seu1_name <- "Seuratv5"
+seu2_name <- "Seuratv4"
 
 scanpy_unfiltered <- 0
 
 seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
 
-seu1_markers_data_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_default/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers.rds"   # "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratvPLEASE_WORK_OLD_ARGUMENTS/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_seuv5.rds"
-seu2_markers_data_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratvPLEASE_WORK_OLD_ARGUMENTS/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_seuv5.rds"   # "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_default/input_seurat/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/results_scan.rds"
+seu1_markers_data_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv5_old_marker_arguments/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_seuv5.rds"   # "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratvPLEASE_WORK_OLD_ARGUMENTS/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_seuv5.rds"
+seu2_markers_data_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_default/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers.rds"   # "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_default/input_seurat/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/results_scan.rds"
 
 output_base_path <- glue::glue("{project_base_path}/seurat5 vs seurat4")
 
-
+dpi_bw <- 300
+dpi_color <- 500
 # seu1_data_path <- ""
 # seu1_markers_data_path <- ""
 # seu2_data_path <- ""
