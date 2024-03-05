@@ -65,8 +65,7 @@ clustering_seed2 <- 0
 umap_seed1 <- 42
 umap_seed2 <- 42
 
-dpi_bw <- 300
-dpi_color <- 500
+dpi <- 300
 
 
 if (seu_matrix_generation_method == scan_matrix_generation_method && seu_matrix_generation_method_version == scan_matrix_generation_method_version) {
@@ -671,6 +670,7 @@ scanpy_highly_variable_genes_list = adata.var[adata.var['highly_variable']].inde
 
 Euler plot of HVG overlap
 ```{r}
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 euler_hvg_afterqc <- make_euler_seurat_vs_scanpy(seu, py$adata, comparison = "HVG", save_plot = file_paths$euler_after_qc_hvg_file_path, save_stats = file_paths$euler_stats_after_QC_file)
 euler_hvg_afterqc
 

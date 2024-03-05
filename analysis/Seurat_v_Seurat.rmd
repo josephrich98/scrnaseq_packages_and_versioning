@@ -68,8 +68,7 @@ clustering_seed2 <- 0
 umap_seed1 <- 42
 umap_seed2 <- 42
 
-dpi_bw <- 300
-dpi_color <- 500
+dpi <- 300
 
 
 if (seu1_matrix_generation_method == seu2_matrix_generation_method && seu1_matrix_generation_method_version == seu2_matrix_generation_method_version) {
@@ -469,6 +468,7 @@ euler_gene_afterqc
 
 Upset plots of cell, gene overlap after QC
 ```{r}
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 upset_cell <- make_upset_seurat(group1 = seu1, group2 = seu2, comparison = "Cell", group_names = seurat_group_names, save = file_paths$upset_cells)
 upset_gene <- make_upset_seurat(group1 = seu1, group2 = seu2, comparison = "Gene", group_names = seurat_group_names, save = file_paths$upset_genes)
 ```

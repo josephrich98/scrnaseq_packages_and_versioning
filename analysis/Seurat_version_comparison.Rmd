@@ -6,33 +6,25 @@ date: "2023-11-15"
 
 ```{r}
 project_base_path <- "/workspace/analysis"
-seurat1_version <- "5.0.1"
+seurat1_version <- "5.0.2"
 seurat2_version <- "4.3.0"
 
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
 save_data <- TRUE
 
-data_input <- "default"
-
 # Don't have either name say "Seurat" or "Scanpy" or else helper functions will get confused
 seu1_name <- "Seuratv5"
 seu2_name <- "Seuratv4"
 
-scanpy_unfiltered <- 0
-
 seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
 
-seu1_markers_data_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv5_old_marker_arguments/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_seuv5.rds"   # "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratvPLEASE_WORK_OLD_ARGUMENTS/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_seuv5.rds"
-seu2_markers_data_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_default/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers.rds"   # "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_default/input_seurat/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/results_scan.rds"
+output_base_path <- glue::glue("{project_base_path}/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv5_0_2_vs_seuratv4_3_0")
 
-output_base_path <- glue::glue("{project_base_path}/seurat5 vs seurat4")
-
-dpi_bw <- 300
-dpi_color <- 500
+dpi <- 300
 # seu1_data_path <- ""
-# seu1_markers_data_path <- ""
 # seu2_data_path <- ""
-# seu2_markers_data_path <- ""
+seu1_markers_data_path <- glue::glue("{project_base_path}/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv5_old_marker_arguments/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_seuv5.rds")
+seu2_markers_data_path <- glue::glue("{project_base_path}/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_default/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers.rds")
 ```
 
 R Imports #!
@@ -365,38 +357,6 @@ umap_jaccard_plot
 
 From this point on, make sure to use markers dataframes with aligned cluster info
 ```{r}
-if (as.integer(scanpy_unfiltered) == 1) {
-    markers_seu1_unfiltered <- markers_seu1
-
-    markers_seu1 <- markers_seu1 %>%
-        filter(!(pts < 0.1 & pts_rest < 0.1)) %>%   # 0.01 in Seu5
-        filter(!(abs(log_fc) < 0.25)) %>%  # 0.1 in Seu5
-        filter(p_value < 0.01)
-} else if (as.integer(scanpy_unfiltered) == 2) {
-    markers_seu2_unfiltered <- markers_seu2
-
-    markers_seu2 <- markers_seu2 %>%
-        filter(!(pts < 0.1 & pts_rest < 0.1)) %>%   # 0.01 in Seu5
-        filter(!(abs(log_fc) < 0.25)) %>%  # 0.1 in Seu5
-        filter(p_value < 0.01)
-}
-
-if ("log_fc" %in% names(markers_seu1)) {
-    markers_seu1 <- markers_seu1 |> dplyr::rename(avg_log2FC = log_fc)
-}
-
-if ("p_value_adj" %in% names(markers_seu1)) {
-    markers_seu1 <- markers_seu1 |> dplyr::rename(p_val_adj = p_value_adj)
-}
-
-if ("log_fc" %in% names(markers_seu2)) {
-    markers_seu2 <- markers_seu2 |> dplyr::rename(avg_log2FC = log_fc)
-}
-
-if ("p_value_adj" %in% names(markers_seu2)) {
-    markers_seu2 <- markers_seu2 |> dplyr::rename(p_val_adj = p_value_adj)
-}
-
 seu1_filtered_markers <- markers_seu1 %>% filter(p_val_adj < 0.05)
 seu2_filtered_markers <- markers_seu2 %>% filter(p_val_adj < 0.05)
 

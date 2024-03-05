@@ -23,8 +23,7 @@ scan2_data_path_base <-  "/workspace/scanpy146/data_files"
 
 output_base_path <- glue::glue("/workspace/scanpy19vsscanpy14")
 
-dpi_bw <- 300
-dpi_color <- 500
+dpi <- 300
 ```
 
 R Imports

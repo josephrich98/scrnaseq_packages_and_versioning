@@ -1,5 +1,5 @@
-# dpi_bw <- 300
-# dpi_color <- 500
+# dpi <- 300
+# dpi <- 500
 axis_text_size <- 1.7
 axis_numbering_size <- 1.4
 
@@ -120,7 +120,7 @@ make_knee_plot <- function(bc_rank, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$knee_plot)
-        ggsave(filepath, plot = p, dpi = dpi_bw)
+        ggsave(filepath, plot = p, dpi = dpi)
     }
 
     return(p)
@@ -220,7 +220,7 @@ make_umi_scatterplot <- function(res_mat1, res_mat2, UMI_cutoff1 = NULL, UMI_cut
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$umi_scatterplot)
-        ggsave(filepath, plot = p, dpi = dpi_bw, width = 2100, height = 2100, units = "px")
+        ggsave(filepath, plot = p, dpi = dpi, width = 2100, height = 2100, units = "px")
     }
 
     return(p)
@@ -249,7 +249,7 @@ make_violin_plot <- function(seu, show_points = FALSE, color = NULL, save = FALS
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$violin_file_path)
-        ggsave(filepath, plot = combined_plot, dpi = dpi_color)
+        ggsave(filepath, plot = combined_plot, dpi = dpi)
     }
 
     return(combined_plot)
@@ -278,19 +278,25 @@ upset_plot_general <- function(data, group1_name, group2_name, comparison, befor
     } else {
         y_label <- glue("{comparison} Intersection")
     }
+    
+    if (comparison == "HVG") {
+        set_size_scale_max_value <- 1.35
+    } else {
+        set_size_scale_max_value <- 1.4
+    }
 
-    p <- UpSetR::upset(df[, -1], set_size.show = TRUE, set_size.scale_max = 1.4 * length(df$element), set_size.numbers_size = 11, mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), text.scale = c(2.4, 1.4, 1.85, 1, 1.85, 1.95), empty.intersections = TRUE)
+    p <- UpSetR::upset(df[, -1], set_size.show = TRUE, set_size.scale_max = set_size_scale_max_value * max(length(data[[group1_name]]), length(data[[group2_name]])), set_size.numbers_size = 10.5, mainbar.y.label = y_label, sets.x.label = glue("{comparison}s"), text.scale = c(2.4, 1.4, 1.85, 1, 1.85, 1.95), empty.intersections = TRUE)
 
     if (as_ggplot) {
         p <- as.ggplot(p)
         if (save == TRUE || is.character(save)) {
             filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-            ggsave(filepath, plot = p, dpi = dpi_bw, bg = "white", width = 2300, height = 2100, units = "px")
+            ggsave(filepath, plot = p, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
         }
     } else {
         if (save == TRUE || is.character(save)) {
             filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-            tiff(filepath, width = 2300, height = 2100, res = dpi_bw, bg = "white", units = "px")
+            tiff(filepath, width = 2300, height = 2100, res = dpi, bg = "white", units = "px")
             print(p)
             dev.off()
         }
@@ -405,7 +411,7 @@ make_euler_seurat_vs_scanpy <- function(seu, adata, comparison, before_QC = FALS
 
     if (save_plot == TRUE || is.character(save_plot)) {
         filepath <- make_save_path(filepath = save_plot, default_filepath = default_plotpath)
-        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi_color, bg = "white", width = 2300, height = 2100, units = "px")
+        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
     }
 
     return(euler_plot_ggplot_compatible)
@@ -478,7 +484,7 @@ plot_differences_histogram_seurat_vs_scanpy <- function(df, column, title, media
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi_bw)
+        ggsave(filepath, plot = p, dpi = dpi)
     }
 
     return(p)
@@ -496,7 +502,7 @@ plot_differences_boxplot_seurat_vs_scanpy <- function(df, column, title, x_label
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi_bw)
+        ggsave(filepath, plot = p, dpi = dpi)
     }
 
     if (column == "logFC_difference_magnitude") {
@@ -513,7 +519,7 @@ plot_differences_boxplot_seurat_vs_scanpy <- function(df, column, title, x_label
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi_bw)
+        ggsave(filepath, plot = p, dpi = dpi)
     }
 
     return(p)
@@ -613,7 +619,7 @@ plot_scatterplot_de_wilcoxon <- function(markers2, metric, outliers_excluded = F
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$wilcoxon_scatterplot_file_path)
-        ggsave(filepath, plot = p, dpi = dpi_bw, width = 2100, height = 2100, units = "px")
+        ggsave(filepath, plot = p, dpi = dpi, width = 2100, height = 2100, units = "px")
     }
 
     return(p)
@@ -773,7 +779,7 @@ plot_scatterplot_de_logfc <- function(markers2, outliers_excluded = FALSE, show_
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = default_plotpath)
-        ggsave(filepath, plot = p, dpi = dpi_bw, width = 2100, height = 2100, units = "px")
+        ggsave(filepath, plot = p, dpi = dpi, width = 2100, height = 2100, units = "px")
     }
 
     return(p)
@@ -791,7 +797,7 @@ make_bar_plot <- function(df, metric, save = FALSE, filename = NULL) {
     print(p)
 
     if (save) {
-        ggsave(filename, plot = p, dpi = dpi_color)
+        ggsave(filename, plot = p, dpi = dpi)
     }
 
     return(p)
@@ -844,7 +850,7 @@ plot_var_explained <- function(eigs_df, npcs = 20, group_names = waiver(), save 
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_elbow_filepath_combined)
-        ggsave(filepath, plot = p, dpi = dpi_color)
+        ggsave(filepath, plot = p, dpi = dpi)
     }
 
     return(p)
@@ -944,7 +950,7 @@ plot_pca_compare <- function(embeddings1, embeddings2,
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$knee_plot)
-        ggsave(filepath, plot = p, width = 2100, height = 2100, dpi = dpi_color, units = "px")
+        ggsave(filepath, plot = p, width = 2100, height = 2100, dpi = dpi, units = "px")
     }
 
     return(p)
@@ -989,7 +995,7 @@ plot_loading_diffs <- function(df, mean_loadings_diff = NULL, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_loading_diffs)
-        ggsave(filepath, plot = p, dpi = dpi_bw)
+        ggsave(filepath, plot = p, dpi = dpi)
     }
 
     return(p)
@@ -1019,7 +1025,7 @@ plot_eigs_diffs <- function(df, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_eigs_diff)
-        ggsave(filepath, plot = p, dpi = dpi_color)
+        ggsave(filepath, plot = p, dpi = dpi)
     }
 
     return(p)
@@ -1064,7 +1070,7 @@ make_jaccard_plot <- function(jaccards, median_jaccard = NULL, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pca_eigs_diff)
-        ggsave(filepath, plot = jaccard_plot, dpi = dpi_bw)
+        ggsave(filepath, plot = jaccard_plot, dpi = dpi)
     }
 
     return(jaccard_plot)
@@ -1085,7 +1091,7 @@ make_knn_scatterplot <- function(nei_pairs, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$knn_scatterplot)
-        ggsave(filepath, plot = knn_scatterplot, dpi = dpi_bw)
+        ggsave(filepath, plot = knn_scatterplot, dpi = dpi)
     }
 
     return(knn_scatterplot)
@@ -1104,7 +1110,7 @@ make_combined_pc_variance_loadings_plot <- function(combined_pc_variance, loadin
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$combined_pc_variance_loadings_plot)
-        ggsave(filepath, plot = combined_plot, dpi = dpi_color)
+        ggsave(filepath, plot = combined_plot, dpi = dpi)
     }
 
     return(combined_plot)
@@ -1164,7 +1170,7 @@ make_snn_jaccard_degree_scatterplot <- function(jaccards, neighbor_space = "knn"
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$jaccard_degree_scatterplot)
-        ggsave(filepath, plot = p, dpi = dpi_bw, bg = "white")
+        ggsave(filepath, plot = p, dpi = dpi, bg = "white")
     }
 
     return(p)
@@ -1210,7 +1216,7 @@ make_umap_jaccard_plot <- function(jaccards_df, facet = NULL, save = FALSE) {
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$umap_jaccard_knn_density)
-        ggsave(filepath, plot = umap_jaccard_plot, dpi = dpi_color, bg = "white", width = 2100, height = 2100, units = "px")
+        ggsave(filepath, plot = umap_jaccard_plot, dpi = dpi, bg = "white", width = 2100, height = 2100, units = "px")
     }
 
     return(umap_jaccard_plot)
@@ -1243,7 +1249,7 @@ plot_heatmap <- function(jacc_seu_sc3, ari_value = NULL, show_axis_titles = FALS
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$pheatmap)
-        ggsave(filepath, plot = cluster_pheatmap, dpi = dpi_color, bg = "white")
+        ggsave(filepath, plot = cluster_pheatmap, dpi = dpi, bg = "white")
     }
     return(cluster_pheatmap)
 }
@@ -1343,7 +1349,7 @@ plot_alluvial <- function(clus_df_gather, group1_name = "Seurat", group2_name = 
 
     if (save == TRUE || is.character(save)) {
         filepath <- make_save_path(filepath = save, default_filepath = file_paths_default$alluvial)
-        ggsave(filepath, plot = p, dpi = dpi_color, bg = "white")
+        ggsave(filepath, plot = p, dpi = dpi, bg = "white")
     }
 
     return(p)
@@ -1363,7 +1369,7 @@ make_umap_plot <- function(dataframe, package, colors = ditto_colors, title = "U
         xlim(overall_min_dim1, overall_max_dim1) +
         ylim(overall_min_dim2, overall_max_dim2) +
         ggrepel::geom_text_repel(data = centroids, aes(x = UMAP_1, y = UMAP_2, label = cluster), alpha = 0.6, 
-                         vjust = "center", hjust = "center", color = "black", size = 4.5, force = 1e-3) +
+                         vjust = "center", hjust = "center", color = "black", size = 4.5, force = 2.5e-4) +
         # ggrepel::geom_label_repel(data = centroids, aes(x = UMAP_1, y = UMAP_2, label = cluster, fill = cluster), alpha = 0.6, 
                    # vjust = "center", hjust = "center", color = "black", size = 4) +
         # scale_fill_manual(values = ditto_colors, name = "Cluster") +
@@ -1378,7 +1384,7 @@ make_umap_plot <- function(dataframe, package, colors = ditto_colors, title = "U
             axis.text.y = element_blank(), # Turn off y-axis numbers
             axis.ticks = element_blank(), # Optionally, turn off axis ticks as well
             axis.text = element_text(size = rel(axis_numbering_size)), # Increase axis tick labels size
-            plot.title = element_text(size = rel(1.5), hjust = 0.5) # Center the title
+            plot.title = element_text(size = rel(2), hjust = 0.5) # Center the title
         ) +
         scale_color_manual(values = colors, name = "Cluster") +
         guides(color = guide_legend(override.aes = list(size = 3)))
@@ -1445,11 +1451,11 @@ plot_umap <- function(group1_umap_info, group1_clusters, group2_umap_info, group
     overall_max_dim1 <- max(group1_max_dim1, group2_max_dim1)
     overall_max_dim2 <- max(group1_max_dim2, group2_max_dim2)
 
-    if (group1_title != "") {
+    if (group1_title == "") {
         group1_title <- tools::toTitleCase(group1)
     }
 
-    if (group2_title != "") {
+    if (group2_title == "") {
         group2_title <- tools::toTitleCase(group2)
     }
 
@@ -1467,12 +1473,12 @@ plot_umap <- function(group1_umap_info, group1_clusters, group2_umap_info, group
 
     if (save_1 == TRUE || (is.character(save_1)) && !is.na(save_1)) {
         filepath_1 <- make_save_path(filepath = save_1, default_filepath = file_paths_default$umap_seu)
-        ggsave(filepath_1, plot = p1, dpi = dpi_color, bg = "white", width = 2100, height = 2100, units = "px")
+        ggsave(filepath_1, plot = p1, dpi = dpi, bg = "white", width = 2100, height = 2100, units = "px")
     }
 
     if (save_2 == TRUE || (is.character(save_2)) && !is.na(save_2)) {
         filepath_2 <- make_save_path(filepath = save_2, default_filepath = file_paths_default$umap_scan)
-        ggsave(filepath_2, plot = p2, dpi = dpi_color, bg = "white", width = 2100, height = 2100, units = "px")
+        ggsave(filepath_2, plot = p2, dpi = dpi, bg = "white", width = 2100, height = 2100, units = "px")
     }
 
     return(list(p1, p2))
@@ -1724,7 +1730,7 @@ make_euler_scanpy <- function(adata1, adata2, comparison, before_QC = FALSE, gro
 
     if (save_plot == TRUE || is.character(save_plot)) {
         filepath <- make_save_path(filepath = save_plot, default_filepath = default_plotpath)
-        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi_color, bg = "white", width = 2300, height = 2100, units = "px")
+        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
     }
 
     return(euler_plot_ggplot_compatible)
@@ -1802,7 +1808,7 @@ make_euler_seurat <- function(seu1, seu2, comparison, before_QC = FALSE, group_n
 
     if (save_plot == TRUE || is.character(save_plot)) {
         filepath <- make_save_path(filepath = save_plot, default_filepath = default_plotpath)
-        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi_color, bg = "white", width = 2300, height = 2100, units = "px")
+        ggsave(filepath, plot = euler_plot_ggplot_compatible, dpi = dpi, bg = "white", width = 2300, height = 2100, units = "px")
     }
 
     return(euler_plot_ggplot_compatible)

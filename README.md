@@ -12,3 +12,6 @@ There are two main folders
 - analysis
 
 Each folder has its own README.md file with more information.
+
+
+[![Run in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/josephrich98/scrnaseq_packages_and_versioning/blob/main/test.ipynb)

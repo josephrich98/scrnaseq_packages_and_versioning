@@ -70,8 +70,7 @@ clustering_seed2 <- 0
 umap_seed1 <- 42
 umap_seed2 <- 42
 
-dpi_bw <- 300
-dpi_color <- 500
+dpi <- 300
 
 
 if (scan1_matrix_generation_method == scan2_matrix_generation_method && scan1_matrix_generation_method_version == scan2_matrix_generation_method_version) {
