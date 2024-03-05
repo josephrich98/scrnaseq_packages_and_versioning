@@ -5,7 +5,7 @@ date: "2023-11-15"
 ---
 
 ```{r}
-project_base_path <- "/workspace/analysis"
+project_base_path <- dirname(getwd())
 seurat1_version <- "5.0.2"
 seurat2_version <- "4.3.0"
 
@@ -380,28 +380,6 @@ markers_euler <- make_euler_seurat(vectorized_seu1_markers, vectorized_seu2_mark
 markers_euler
 
 upset_markers_all <- make_upset_seurat(vectorized_seu1_markers, vectorized_seu2_markers, comparison = "Marker", group_names = seurat_group_names, save = file_paths$upset_markers)
-
-if (as.integer(scanpy_unfiltered) == 1) {
-    markers_seu1 <- markers_seu1_unfiltered
-} else if (as.integer(scanpy_unfiltered) == 2) {
-    markers_seu2 <- markers_seu2_unfiltered
-}
-
-if ("log_fc" %in% names(markers_seu1)) {
-    markers_seu1 <- markers_seu1 |> dplyr::rename(avg_log2FC = log_fc)
-}
-
-if ("p_value_adj" %in% names(markers_seu1)) {
-    markers_seu1 <- markers_seu1 |> dplyr::rename(p_val_adj = p_value_adj)
-}
-
-if ("log_fc" %in% names(markers_seu2)) {
-    markers_seu2 <- markers_seu2 |> dplyr::rename(avg_log2FC = log_fc)
-}
-
-if ("p_value_adj" %in% names(markers_seu2)) {
-    markers_seu2 <- markers_seu2 |> dplyr::rename(p_val_adj = p_value_adj)
-}
 
 markers2 <- markers_seu1 |>
     inner_join(markers_seu2, by = c("cluster", "gene"), suffix = c(glue(".{seu1_name}"), glue(".{seu2_name}")))

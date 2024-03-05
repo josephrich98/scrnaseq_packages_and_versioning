@@ -13,7 +13,7 @@ scan1_name <- "Full"  # Must have no spaces
 scan2_name <- "Downsampled_reads"  # Must have no spaces
 
 # Input and output path specifications
-project_base_path <- getwd()  # also used for locating script files
+project_base_path <- dirname(getwd())  # also used for locating script files
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # str
 scanpy_version <- "1_9_5"  # str (with _ in place of .)
 conda_env <- "analysis_env"

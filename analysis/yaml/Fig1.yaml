@@ -1,0 +1,5 @@
+analysis_methods: default  # with a comment
+data_input: default
+save_data: true
+data_name: SC3_v3_NextGem_SI_PBMC_10K
+seurat_version: 5_0_2

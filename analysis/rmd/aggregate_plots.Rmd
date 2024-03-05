@@ -18,7 +18,7 @@ margin_correct <- 0.05
 ```
 
 ```{r}
-project_base_path <- "/workspace/analysis"
+project_base_path <- dirname(getwd())
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
 seurat_version <- "4_3_0"
 scanpy_version <- "1_9_5"
