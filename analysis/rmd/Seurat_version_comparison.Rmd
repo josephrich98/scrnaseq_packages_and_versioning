@@ -18,6 +18,11 @@ seu2_name <- "Seuratv4"
 
 seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
 
+if (exists("using_colab") && get("using_colab")) {
+    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
+    setwd(project_base_path)
+}
+
 output_base_path <- glue::glue("{project_base_path}/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv5_0_2_vs_seuratv4_3_0")
 
 dpi <- 300

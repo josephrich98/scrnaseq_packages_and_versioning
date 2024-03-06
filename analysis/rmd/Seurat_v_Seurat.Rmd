@@ -15,7 +15,6 @@ seu2_name <- "Downsampled_reads"  # Must have no spaces
 # Input and output path specifications
 project_base_path <- dirname(getwd())  # also used for locating script files
 data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # str
-seurat_version <- "5_0_2"  # str (with _ in place of .)
 conda_env <- "analysis_env"
 R_random_seed <- 100 # including for cell downsampling  # also used for global R session seed and python seed
 
@@ -95,6 +94,11 @@ if (seu1_read_fraction_after_downsampling != "1_0") {
 
 if (seu2_read_fraction_after_downsampling != "1_0") {
     read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
+}
+
+if (exists("using_colab") && get("using_colab")) {
+    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
+    setwd(project_base_path)
 }
 
 output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
@@ -275,7 +279,9 @@ seu_umap_metric <- "correlation"
 
 Download data if necessary
 ```{python}
-from scripts.download_data import *
+import sys
+sys.path.append(f"{r.project_base_path}/scripts")
+from download_data import *
 
 if not os.path.exists(r.seu1_data_path) or not os.listdir(r.seu1_data_path):
     r.seu1_data_path = download_and_extract(r.doi, r.seu1_data_name_from_download, r.data_path_root, r.seu1_data_path)
@@ -313,7 +319,7 @@ knee_plot1
 
 Select threshold for knee plot
 ```{r}
-if (!is.null(seu1_inflection_UMI_manual)) {
+if (seu1_inflection_UMI_manual == "") {
     UMI_cutoff1 <- seu1_inflection_UMI_manual
 } else {
     UMI_cutoff1 <- metadata(bc_rank1)$inflection
@@ -359,7 +365,7 @@ knee_plot2
 
 Select threshold for knee plot
 ```{r}
-if (!is.null(seu2_inflection_UMI_manual)) {
+if (seu2_inflection_UMI_manual == "") {
     UMI_cutoff2 <- seu2_inflection_UMI_manual
 } else {
     UMI_cutoff2 <- metadata(bc_rank2)$inflection
@@ -378,8 +384,8 @@ seu2 <- CreateSeuratObject(counts = res_mat_filtered2, min.cells = seu2_min_cell
 Record numbers used for filtering
 ```{r}
 if (is.character(file_paths$filter_arguments)) {
-    UMI_cutoff1_automatic_or_manual <- ifelse(is.null(seu1_inflection_UMI_manual), "automatic", "manual")
-    UMI_cutoff2_automatic_or_manual <- ifelse(is.null(seu2_inflection_UMI_manual), "automatic", "manual")
+    UMI_cutoff1_automatic_or_manual <- ifelse(seu1_inflection_UMI_manual == "", "automatic", "manual")
+    UMI_cutoff2_automatic_or_manual <- ifelse(seu2_inflection_UMI_manual == "", "automatic", "manual")
     sink(file_paths$filter_arguments, append = FALSE, split = FALSE)
     print(glue("UMI cutoff, seu1 ({seu1_name}): {UMI_cutoff1}"))
     print(glue("UMI cutoff automatic or manual, seu1 ({seu1_name}): {UMI_cutoff1_automatic_or_manual}"))

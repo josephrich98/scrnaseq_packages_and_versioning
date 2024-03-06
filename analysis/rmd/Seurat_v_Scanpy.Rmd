@@ -4,69 +4,52 @@ output: html_document
 date: "2024-01-01"
 ---
 
-HYPERPARAMETERS
+Select yaml file
 ```{r}
-# Function argument and input settings
-analysis_methods <- "default" # str["default", "seurat_like", "scanpy_like"]
-data_input <- "default" # str["default", "seurat", "scanpy"]
-save_data <- TRUE
+yaml_file <- "Fig1"  # Fig1, Supp_Fig2, Supp_Fig3, Supp_Fig4, Supp_Fig5
+```
 
-# Input and output path specifications
-project_base_path <- dirname(getwd())  # also used for locating script files
-data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # str
-seurat_version <- "5_0_2"  # str (with _ in place of .)
-scanpy_version <- "1_9_5"  # str (with _ in place of .)
-conda_env <- "analysis_env"
-R_random_seed <- 100 # including for cell downsampling  # also used for global R session seed and python seed
+Load contents of yaml file into global R environment
+```{r}
+if (exists("using_colab") && get("using_colab")) {
+    yaml_dir <- "/content/scrnaseq_packages_and_versioning/analysis/yaml"
+} else {
+    yaml_dir <- glue::glue("{dirname(getwd())}/yaml")
+}
 
-seu_matrix_generation_method <- "kb" # str["kb", "cellranger"]  # also used for loading data
-seu_matrix_generation_method_version <- "0_28_0"  # str (with _ in place of .)
+yaml_file_path <- glue::glue("{yaml_dir}/{yaml_file}.yaml")
 
-seu_cell_fraction_after_downsampling <- "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
-seu_read_fraction_after_downsampling <- "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
-seu_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
+config <- yaml::read_yaml(yaml_file_path)
 
+for (name in names(config)) {
+    assign(name, config[[name]], envir = .GlobalEnv)
+}
+```
 
-scan_matrix_generation_method <- "kb" # str["kb", "cellranger"]  # also used for loading data
-scan_matrix_generation_method_version <- "0_28_0"  # str (with _ in place of .)
+File path definitions
+```{r}
+if (seu_data_path == "") {
+    seu_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu_matrix_generation_method}{seu_matrix_generation_method_version}/frac{seu_read_fraction_after_downsampling}_seed{seu_read_downsample_seed}")
+}
 
-scan_cell_fraction_after_downsampling <- "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
-scan_read_fraction_after_downsampling <- "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
-scan_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-
-seu_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu_matrix_generation_method}{seu_matrix_generation_method_version}/frac{seu_read_fraction_after_downsampling}_seed{seu_read_downsample_seed}")
-scan_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan_matrix_generation_method}{scan_matrix_generation_method_version}/frac{scan_read_fraction_after_downsampling}_seed{scan_read_downsample_seed}")
-
+if (scan_data_path == "") {
+    scan_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan_matrix_generation_method}{scan_matrix_generation_method_version}/frac{scan_read_fraction_after_downsampling}_seed{scan_read_downsample_seed}")
+}
 
 # Specifications for downloading data
 doi <- "AAAAAA"  # FILL IN
-data_path_root <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}")
-seu_data_name_from_download <- glue::glue("{seu_matrix_generation_method}{seu_matrix_generation_method_version}_frac{seu_read_fraction_after_downsampling}_seed{seu_read_downsample_seed}")
-scan_data_name_from_download <- glue::glue("{scan_matrix_generation_method}{scan_matrix_generation_method_version}_frac{scan_read_fraction_after_downsampling}_seed{scan_read_downsample_seed}")
 
+if (data_path_root == "") {
+    data_path_root <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}")
+}
 
-# Custom parameters
-inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
+if (seu_data_name_from_download == "") {
+    seu_data_name_from_download <- glue::glue("{seu_matrix_generation_method}{seu_matrix_generation_method_version}_frac{seu_read_fraction_after_downsampling}_seed{seu_read_downsample_seed}")
+}
 
-min_cells <- 3
-min_features <- 200
-
-max_n_genes_by_counts_scanpy <- 12000 # default 2500
-max_pct_mct <- 20 # default 5
-seu_num_pcs <- 50 # number 1-50; or NULL to select after elbow plot visualization
-scan_num_pcs <- 50
-umap_knn_k <- 50
-umap_leiden_clustering_resolution <- 0.8
-
-pca_seed1 <- 42
-pca_seed2 <- 42
-clustering_seed1 <- 0
-clustering_seed2 <- 0
-umap_seed1 <- 42
-umap_seed2 <- 42
-
-dpi <- 300
-
+if (scan_data_name_from_download == "") {
+    scan_data_name_from_download <- glue::glue("{scan_matrix_generation_method}{scan_matrix_generation_method_version}_frac{scan_read_fraction_after_downsampling}_seed{scan_read_downsample_seed}")
+}
 
 if (seu_matrix_generation_method == scan_matrix_generation_method && seu_matrix_generation_method_version == scan_matrix_generation_method_version) {
     matrix_generation_method_full <- glue::glue("{seu_matrix_generation_method}{seu_matrix_generation_method_version}")
@@ -94,10 +77,15 @@ if (scan_read_fraction_after_downsampling != "1_0") {
     read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{scan_read_downsample_seed}")
 }
 
-output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}_vs_scanpyv{scanpy_version}/methods_{analysis_methods}_input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+if (exists("using_colab") && get("using_colab")) {
+    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
+}
+
+if (output_base_path == "") {
+    output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}_vs_scanpyv{scanpy_version}/methods_{analysis_methods}_input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+}
 ```
 
-R Setting up variables
 ```{r}
 set.seed(R_random_seed)
 
@@ -107,7 +95,6 @@ group2_color <- "#56B4E9"
 scanpy_minor_version <- as.integer(strsplit(scanpy_version, "_")[[1]][2])
 ```
 
-File path definitions
 ```{r}
 output_data_file_paths <- list(
     markers = glue::glue("{output_base_path}/data_files/markers.rds"),
@@ -225,8 +212,6 @@ if (save_data) {
         file_paths[[i]] <- FALSE
     }
 }
-
-
 ```
 
 R Imports
@@ -320,7 +305,9 @@ py_config()
 
 Download data if necessary
 ```{python}
-from scripts.download_data import *
+import sys
+sys.path.append(f"{r.project_base_path}/scripts")
+from download_data import *
 
 if not os.path.exists(r.seu_data_path) or not os.listdir(r.seu_data_path):
     r.seu_data_path = download_and_extract(r.doi, r.seu_data_name_from_download, r.data_path_root, r.seu_data_path)
@@ -399,7 +386,7 @@ knee_plot
 
 Select threshold for knee plot
 ```{r}
-if (!is.null(inflection_UMI_manual)) {
+if (inflection_UMI_manual == "") {
     UMI_cutoff <- inflection_UMI_manual
 } else {
     inflection_UMI <- metadata(bc_rank)$inflection

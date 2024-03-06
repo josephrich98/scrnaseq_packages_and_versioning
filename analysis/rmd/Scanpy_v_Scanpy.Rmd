@@ -99,6 +99,11 @@ if (scan2_read_fraction_after_downsampling != "1_0") {
     read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
 }
 
+if (exists("using_colab") && get("using_colab")) {
+    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
+    setwd(project_base_path)
+}
+
 output_base_path <- glue::glue("{project_base_path}/output/{data_name}/scanpyv{scanpy_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
 ```
 
@@ -284,7 +289,9 @@ scanpy_correction_method <- "benjamini-hochberg"
 
 Download data if necessary
 ```{python}
-from scripts.download_data import *
+import sys
+sys.path.append(f"{r.project_base_path}/scripts")
+from download_data import *
 
 if not os.path.exists(r.scan1_data_path) or not os.listdir(r.scan1_data_path):
     r.scan1_data_path = download_and_extract(r.doi, r.scan1_data_name_from_download, r.data_path_root, r.scan1_data_path)
@@ -380,7 +387,7 @@ knee_plot1
 
 Select threshold for knee plot
 ```{r}
-if (!is.null(scan1_inflection_UMI_manual)) {
+if (scan1_inflection_UMI_manual == "") {
     UMI_cutoff1 <- scan1_inflection_UMI_manual
 } else {
     UMI_cutoff1 <- metadata(bc_rank1)$inflection
@@ -443,7 +450,7 @@ knee_plot2
 
 Select threshold for knee plot
 ```{r}
-if (!is.null(scan2_inflection_UMI_manual)) {
+if (scan2_inflection_UMI_manual == "") {
     UMI_cutoff2 <- scan2_inflection_UMI_manual
 } else {
     UMI_cutoff2 <- metadata(bc_rank2)$inflection
@@ -465,8 +472,8 @@ sc.pp.filter_genes(adata2, min_cells=r.scan2_min_cells)
 Record numbers used for filtering
 ```{r}
 if (is.character(file_paths$filter_arguments)) {
-    UMI_cutoff1_automatic_or_manual <- ifelse(is.null(scan1_inflection_UMI_manual), "automatic", "manual")
-    UMI_cutoff2_automatic_or_manual <- ifelse(is.null(scan2_inflection_UMI_manual), "automatic", "manual")
+    UMI_cutoff1_automatic_or_manual <- ifelse(scan1_inflection_UMI_manual == "", "automatic", "manual")
+    UMI_cutoff2_automatic_or_manual <- ifelse(scan2_inflection_UMI_manual == "", "automatic", "manual")
     sink(file_paths$filter_arguments, append = FALSE, split = FALSE)
     print(glue("UMI cutoff, scan1 ({scan1_name}): {UMI_cutoff1}"))
     print(glue("UMI cutoff automatic or manual, scan1 ({scan1_name}): {UMI_cutoff1_automatic_or_manual}"))

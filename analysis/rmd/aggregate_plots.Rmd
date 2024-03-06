@@ -5,10 +5,120 @@ date: "2024-01-01"
 ---
 
 ```{r}
+library(stringr)
+
+# Base path for analysis
+base_path <- "/workspace/analysis/output/SC3_v3_NextGem_SI_PBMC_10K"
+# Target base path
+target_base_path <- "/workspace/analysis/downsampled_text_files"
+
+seed_list <- c("100", "101", "102")
+
+# Loop through each variant
+for (var in c("seuratv5.0.2", "scanpyv1.9.5")) {
+    for (seed in seed_list) {
+        if (var == "seuratv5.0.2") {
+            input_list <- c("input_default", "input_seu1")
+            short_name <- "seu"
+        } else {
+            input_list <- c("input_default", "input_scan1")
+            short_name <- "scan"
+        }
+        
+        for (input in input_list) {
+            if (input == "input_default") {
+                cell_list <- c("cell_fraction_1_0", glue::glue("cell_fraction_{short_name}1_1_0_vs_{short_name}2_0_64_seed{seed}"), glue::glue("cell_fraction_{short_name}1_1_0_vs_{short_name}2_0_32_seed{seed}"), glue::glue("cell_fraction_{short_name}1_1_0_vs_{short_name}2_0_16_seed{seed}"), glue::glue("cell_fraction_{short_name}1_1_0_vs_{short_name}2_0_08_seed{seed}"), glue::glue("cell_fraction_{short_name}1_1_0_vs_{short_name}2_0_04_seed{seed}"), glue::glue("cell_fraction_{short_name}1_1_0_vs_{short_name}2_0_02_seed{seed}"), glue::glue("cell_fraction_{short_name}1_1_0_vs_{short_name}2_0_01_seed{seed}"))
+            } else {
+                cell_list <- "cell_fraction_1_0"
+            }
+            
+            for (cell in cell_list) {
+                if (cell == "cell_fraction_1_0") {
+                    read_list <- c(glue::glue("read_fraction_{short_name}1_1_0_vs_{short_name}2_0_64_seed{seed}"), glue::glue("read_fraction_{short_name}1_1_0_vs_{short_name}2_0_32_seed{seed}"), glue::glue("read_fraction_{short_name}1_1_0_vs_{short_name}2_0_16_seed{seed}"), glue::glue("read_fraction_{short_name}1_1_0_vs_{short_name}2_0_08_seed{seed}"), glue::glue("read_fraction_{short_name}1_1_0_vs_{short_name}2_0_04_seed{seed}"), glue::glue("read_fraction_{short_name}1_1_0_vs_{short_name}2_0_02_seed{seed}"), glue::glue("read_fraction_{short_name}1_1_0_vs_{short_name}2_0_01_seed{seed}"))
+                } else {
+                    read_list <- "read_fraction_1_0"
+                }
+                
+                for (read in read_list) {
+                    path <- file.path(base_path, var, input, "kb0_28_0", cell, read, "stats")
+                    
+                    # Extract information
+                    seurat_scanpy <- ifelse(str_detect(path, "seurat"), "seurat", ifelse(str_detect(path, "scanpy"), "scanpy", NA))
+                    downsampling_type <- ifelse(str_detect(path, "/read_fraction.*vs"), "read", ifelse(str_detect(path, "cell_fraction.*vs"), "cell", NA))
+                    input_type <- ifelse(str_detect(path, "input_default"), "default", "controlled")
+                    downsampling_fraction <- str_extract(path, "(?<=seu2_|scan2_)[0-9]+_[0-9]+")
+                    downsampling_seed <- str_extract(path, "(?<=seed)[0-9]+")
+                    
+                    print(path)
+                    # Print results
+                    cat("Seurat or Scanpy:", seurat_scanpy, "\n")
+                    cat("Read or Cell Downsampling:", downsampling_type, "\n")
+                    cat("Input Default or Controlled:", input_type, "\n")
+                    cat("Downsampling Fraction:", downsampling_fraction, "\n")
+                    cat("Downsampling Seed:", downsampling_seed, "\n")
+                    
+                    # Construct the target directory path
+                    target_path <- file.path(target_base_path, downsampling_type, seurat_scanpy, glue::glue("input_{input_type}"), glue::glue("fraction_{downsampling_fraction}"), glue::glue("seed_{downsampling_seed}"))
+                
+                    # Ensure the target directory exists
+                    if (!dir.exists(target_path)) {
+                        dir.create(target_path, recursive = TRUE)
+                    }
+                    
+                    files <- list.files(path = source_dir, full.names = TRUE)
+
+                    sapply(files, function(file) {file.copy(file, target_dir)})
+                }
+            }
+        }
+    }
+}
+```
+
+Select yaml file
+```{r}
+yaml_file <- "Fig2_Supp_Fig11_Supp_Fig12"  # Fig2_Supp_Fig11_Supp_Fig12
+```
+
+Load contents of yaml file into global R environment
+```{r}
+if (exists("using_colab") && get("using_colab")) {
+    yaml_dir <- "/content/scrnaseq_packages_and_versioning/analysis/yaml"
+} else {
+    yaml_dir <- glue::glue("{dirname(getwd())}/yaml")
+}
+
+yaml_file_path <- glue::glue("{yaml_dir}/{yaml_file}.yaml")
+
+config <- yaml::read_yaml(yaml_file_path)
+
+for (name in names(config)) {
+    assign(name, config[[name]], envir = .GlobalEnv)
+}
+```
+
+```{r}
+
+```
+
+```{r}
+Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
+library(reticulate)
+use_condaenv(conda_env)
 library(tidyverse)
 library(glue)
 theme_set(theme_bw())
 ```
+
+```{python}
+import sys
+sys.path.append(f"{r.project_base_path}/scripts")
+from download_data import *
+
+if r.download_data:
+    download_and_extract(r.doi, r.data_name_from_download, r.data_path_root)
+```
+
 
 ```{r}
 frac_list <- c(0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64) #***
@@ -25,9 +135,18 @@ scanpy_version <- "1_9_5"
 matrix_generation <- "kb0_28_0_raw_generated_sa"
 read_fraction_downsampled_for_cell_downsample_comparisons <- "1_0"
 cell_fraction_downsampled_for_read_downsample_comparisons <- "1_0"
+
+if (exists("using_colab") && get("using_colab")) {
+    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
+}
 ```
 
 ```{r}
+get_stats_filepath_from_download <- function(set, frac_str, package, type_downsampled, seed) {
+    print("xxx")
+}
+
+
 get_stats_filepath <- function(set, frac_str, package, type_downsampled, seed) {
     if (package == "seu") {
         package_full_name <- "Seurat"
@@ -246,7 +365,11 @@ for (set in variable_sets) {
             for (seed in downsampled_seeds_list) {
                 frac_str <- gsub("\\.", "_", as.character(frac)) # fraction of reads after downsampling, as string
     
-                stats_path <- get_stats_filepath(set, frac_str = frac_str, package = package, type_downsampled = type_downsampled, seed = seed)
+                if (download_data) {
+                    stats_path <- get_stats_filepath_from_download(set, frac_str = frac_str, package = package, type_downsampled = type_downsampled, seed = seed)
+                } else {
+                    stats_path <- get_stats_filepath(set, frac_str = frac_str, package = package, type_downsampled = type_downsampled, seed = seed)
+                }
     
                 # Read the file lines
                 lines <- readLines(stats_path)

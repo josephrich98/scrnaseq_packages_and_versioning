@@ -21,6 +21,11 @@ scanpy_group_names <- list(Scanpy1 = scan1_name, Scanpy2 = scan2_name)
 scan1_data_path_base <- "/workspace/scanpy195/data_files"
 scan2_data_path_base <-  "/workspace/scanpy146/data_files"
 
+if (exists("using_colab") && get("using_colab")) {
+    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
+    setwd(project_base_path)
+}
+
 output_base_path <- glue::glue("/workspace/scanpy19vsscanpy14")
 
 dpi <- 300

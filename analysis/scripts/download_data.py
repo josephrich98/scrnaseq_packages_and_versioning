@@ -4,7 +4,7 @@ import requests
 import json
 from tqdm import tqdm
 
-def download_file(doi, filepath):
+def download_file(doi, filename, data_path_root):
     url = 'https://api.datacite.org/dois/'+doi+'/media'
     r = requests.get(url).json()
     found = False
@@ -39,9 +39,12 @@ def download_file(doi, filepath):
                     f.write(chunk)
         return full_path
     
-def download_and_extract(doi, filename, data_path_root, final_path):
+def download_and_extract(doi, filename, data_path_root, final_path = ""):
     full_path = download_file(doi, filename, data_path_root)
-    filepath_final = final_path
+    if final_path != "":
+        filepath_final = final_path
+    else:
+        filepath_final = full_path
     if full_path:
         os.makedirs(final_path, exist_ok = True)
         if filename.endswith('.tar.gz'):

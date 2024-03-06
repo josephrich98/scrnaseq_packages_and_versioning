@@ -18,14 +18,14 @@ sc14_umap4: pip install kb-python==0.27.3 ngs-tools==1.8.5 --no-deps
 
 To perform analysis, select a yaml file (with modifications as desired) and run the appropriate Rmd notebook. Each notebook is also present as a Jupyter notebook (not compatible with the docker image), which can be run locally or in Google Colab (links below). A yaml file is present for each figure. The appropriate notebook to which each yaml files belongs is as follows:
 
-Seurat_v_Scanpy: Fig1, Supp_Fig2, Supp_Fig3, Supp_Fig4, Supp_Fig5
-Seurat_v_Seurat: Supp_Fig7, Supp_Fig9, Supp_Fig13, Supp_Fig14, Fig3_cellranger, Fig3_kallisto
-Scanpy_v_Scanpy: Supp_Fig8, Supp_Fig10
-aggregate_plots: Fig2, Supp_Fig11, Supp_Fig12
-Scanpy_version_comparison: Fig3_scanpy
-Seurat_version_comparison: Fig3_seurat
+- aggregate_plots: Fig2_Supp_Fig11_Supp_Fig12
+- Seurat_v_Scanpy: Fig1, Supp_Fig2, Supp_Fig3, Supp_Fig4, Supp_Fig5
+- Seurat_v_Seurat: Supp_Fig7, Supp_Fig9, Supp_Fig13, Supp_Fig14, Fig3_cellranger, Fig3_kallisto
+- Scanpy_v_Scanpy: Supp_Fig8, Supp_Fig10
+- Scanpy_version_comparison: Fig3_scanpy
+- Seurat_version_comparison: Fig3_seurat
 
-Note: Supp Fig 7 (Extended UMAP analysis) is derived from portions of the runs of Fig1, Supp_Fig2, Supp_Fig3, and Supp_Fig4. Supp Fig 15 (UMI filtering analysis) is derived from portions of the runs of Supp_Fig7, Supp_Fig13, and Supp_Fig14.
+Note: Supp Fig 6 (Extended UMAP analysis) is derived from portions of the runs of Fig1, Supp_Fig2, Supp_Fig3, and Supp_Fig4. Supp Fig 15 (UMI filtering analysis) is derived from portions of the runs of Supp_Fig7, Supp_Fig13, and Supp_Fig14.
 
 
 Google colab links:

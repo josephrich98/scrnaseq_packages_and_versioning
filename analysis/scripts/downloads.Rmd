@@ -43,8 +43,8 @@ if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
 if (!requireNamespace("tidyverse", quietly = TRUE)) remotes::install_version("tidyverse", version = "2.0.0", upgrade = "never")
 if (!requireNamespace("rmarkdown", quietly = TRUE)) remotes::install_version("rmarkdown", version = "2.25", upgrade = "never")
 
-seurat_version = "5.0.2"
-if (!requireNamespace("Seurat", quietly = TRUE)) remotes::install_version("Seurat", version = seurat_version, upgrade = "never")
+seurat_version_for_download = "5.0.2"
+if (!requireNamespace("Seurat", quietly = TRUE)) remotes::install_version("Seurat", version = seurat_version_for_download, upgrade = "never")
 if (!requireNamespace("Matrix", quietly = TRUE)) remotes::install_version("Matrix", version = "1.6.4", upgrade = "never")
 if (!requireNamespace("reticulate", quietly = TRUE)) remotes::install_version("reticulate", version = "1.34.0", upgrade = "never")
 if (!requireNamespace("patchwork", quietly = TRUE)) remotes::install_version("patchwork", version = "1.1.3", upgrade = "never")
@@ -72,7 +72,7 @@ if (!requireNamespace("biomaRt", quietly = TRUE)) BiocManager::install("biomaRt"
 
 Set up conda environment
 ```{r}
-scanpy_version <- "1.4.6"
+scanpy_version_for_download <- "1.4.6"
 umap_learn_version <- "0.4.6"
 
 conda_binary <- "auto"
@@ -81,7 +81,7 @@ yaml_path <- NULL
 ```
 
 ```{r}
-scanpy_minor_version <- as.integer(strsplit(scanpy_version, split = "\\.")[[1]][2])
+scanpy_minor_version <- as.integer(strsplit(scanpy_version_for_download, split = "\\.")[[1]][2])
 umap_minor_version <- as.integer(strsplit(umap_learn_version, split = "\\.")[[1]][2])
 
 library(reticulate)

@@ -1,0 +1,36 @@
+# Input and output path specifications
+project_base_path: "/workspace/analysis"  # also used for locating script files; "/workspace/analysis" for docker image with repository mounted in /workspace; "/content/scrnaseq_packages_and_versioning/analysis" for Google Colab
+
+
+conda_env: "analysis_env"
+
+# Specifications for downloading data
+download_data: TRUE
+doi: "AAAAAA"  # FILL IN
+data_path_root: "/workspace/analysis/downsampled_text_files"
+data_name: "downsampled_text_files"  # str
+
+# Custom parameters
+inflection_UMI_manual: "" # number >=0; or "" to have automatic selection
+
+min_cells: 3
+min_features: 200
+
+max_n_genes_by_counts_scanpy: 12000 # default 2500
+max_pct_mct: 20 # default 5
+seu_num_pcs: 50 # number 1-50; or NULL to select after elbow plot visualization
+scan_num_pcs: 50
+umap_knn_k: 50
+umap_leiden_clustering_resolution: 0.8
+
+pca_seed1: 42
+pca_seed2: 42
+clustering_seed1: 0
+clustering_seed2: 0
+umap_seed1: 42
+umap_seed2: 42
+
+dpi: 300
+
+# Output path
+output_base_path: "" # "" for default - glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}_vs_scanpyv{scanpy_version}/methods_{analysis_methods}_input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
