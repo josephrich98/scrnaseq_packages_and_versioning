@@ -2,76 +2,57 @@
 title: "Scanpy_v_Scanpy"
 output: html_document
 date: "2024-01-01"
+params:
+  data_input: !r NULL
+  scan2_cell_fraction_after_downsampling: !r NULL
+  scan2_cell_downsample_seed: !r NULL
+  scan2_read_fraction_after_downsampling: !r NULL
+  scan2_read_downsample_seed: !r NULL
 ---
 
-HYPERPARAMETERS
+Select yaml file
 ```{r}
-data_input <- "default" # str["default", "scan1", "scan2"]
-save_data <- TRUE
+yaml_file <- "Supp_Fig8"  # Supp_Fig8, Supp_Fig8_DE, Supp_Fig10, Supp_Fig16_scan
+```
 
-scan1_name <- "Full"  # Must have no spaces
-scan2_name <- "Downsampled_reads"  # Must have no spaces
+Load contents of yaml file into global R environment
+```{r}
+yaml_dir <- glue::glue("{dirname(getwd())}/yaml")
+yaml_file_path <- glue::glue("{yaml_dir}/{yaml_file}.yaml")
 
-# Input and output path specifications
-project_base_path <- dirname(getwd())  # also used for locating script files
-data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # str
-scanpy_version <- "1_9_5"  # str (with _ in place of .)
-conda_env <- "analysis_env"
-R_random_seed <- 100 # including for cell downsampling  # also used for global R session seed and python seed
+source(glue::glue("{dirname(getwd())}/scripts/load_yaml_contents.R"))
+load_yaml_contents(yaml_file_path)
 
-scan1_matrix_generation_method <- "kb" # str["kb", "cellranger"]  # also used for loading data
-scan1_matrix_generation_method_version <- "0_28_0"  # str (with _ in place of .)
+#!!!!!!
+# # uncomment as needed if running from command line
+# data_input <- params$data_input
+# scan2_cell_fraction_after_downsampling <- params$scan2_cell_fraction_after_downsampling
+# scan2_cell_downsample_seed <- params$scan2_cell_downsample_seed
+# scan2_read_fraction_after_downsampling <- params$scan2_read_fraction_after_downsampling
+# scan2_read_downsample_seed <- params$scan2_read_downsample_seed
+```
 
-scan1_cell_fraction_after_downsampling <- "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
-scan1_read_fraction_after_downsampling <- "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
-scan1_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
+Analysis settings
+```{r}
+if (scan1_data_path == "") {
+    scan1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}/frac{scan1_read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
+}
 
+if (scan2_data_path == "") {
+    scan2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan2_matrix_generation_method}{scan2_matrix_generation_method_version}/frac{scan2_read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
+}
 
-scan2_matrix_generation_method <- "kb" # str["kb", "cellranger"]  # also used for loading data
-scan2_matrix_generation_method_version <- "0_28_0"  # str (with _ in place of .)
+if (data_path_root == "") {
+    data_path_root <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}")
+}
 
-scan2_cell_fraction_after_downsampling <- "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
-scan2_read_fraction_after_downsampling <- "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
-scan2_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
+if (scan1_data_name_from_download == "") {
+    scan1_data_name_from_download <- glue::glue("{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}_frac{scan1_read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
+}
 
-scan1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}/frac{scan1_read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
-scan2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan2_matrix_generation_method}{scan2_matrix_generation_method_version}/frac{scan2_read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
-
-
-# Specifications for downloading data
-doi <- "AAAAAAA"  # FILL IN
-data_path_root <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}")
-scan1_data_name_from_download <- glue::glue("{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}_frac{scan1_read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
-scan2_data_name_from_download <- glue::glue("{scan2_matrix_generation_method}{scan2_matrix_generation_method_version}_frac{scan2_read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
-
-
-# Custom parameters
-scan1_inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
-scan2_inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
-
-scan1_min_cells <- 3
-scan1_min_features <- 200
-
-scan2_min_cells <- 3
-scan2_min_features <- 200
-
-scan1_max_n_genes_by_counts_scanpy <- 12000 # default 2500
-scan2_max_n_genes_by_counts_scanpy <- 12000 # default 2500
-max_pct_mct <- 20 # default 5
-scan1_num_pcs <- 50 # number 1-50; or NULL to select after elbow plot visualization
-scan2_num_pcs <- 50
-umap_knn_k <- 50
-umap_leiden_clustering_resolution <- 0.8
-
-pca_seed1 <- 42
-pca_seed2 <- 42
-clustering_seed1 <- 0
-clustering_seed2 <- 0
-umap_seed1 <- 42
-umap_seed2 <- 42
-
-dpi <- 300
-
+if (scan2_data_name_from_download == "") {
+    scan2_data_name_from_download <- glue::glue("{scan2_matrix_generation_method}{scan2_matrix_generation_method_version}_frac{scan2_read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
+}
 
 if (scan1_matrix_generation_method == scan2_matrix_generation_method && scan1_matrix_generation_method_version == scan2_matrix_generation_method_version) {
     matrix_generation_method_full <- glue::glue("{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}")
@@ -83,8 +64,12 @@ cell_fraction_after_downsampling <- ifelse(scan1_cell_fraction_after_downsamplin
     paste("scan1", scan1_cell_fraction_after_downsampling, "vs", "scan2", scan2_cell_fraction_after_downsampling, sep = "_")
 )
 
-if (cell_fraction_after_downsampling != "1_0") {
-    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
+if (scan1_cell_fraction_after_downsampling != "1_0") {
+    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{scan1_cell_downsample_seed}")
+}
+
+if (scan2_cell_fraction_after_downsampling != "1_0") {
+    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{scan2_cell_downsample_seed}")
 }
 
 read_fraction_after_downsampling <- ifelse(scan1_read_fraction_after_downsampling == scan2_read_fraction_after_downsampling, scan1_read_fraction_after_downsampling,
@@ -99,17 +84,101 @@ if (scan2_read_fraction_after_downsampling != "1_0") {
     read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
 }
 
-if (exists("using_colab") && get("using_colab")) {
-    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
-    setwd(project_base_path)
+if (output_base_path == "") {
+    output_base_path <- glue::glue("{project_base_path}/output/{data_name}/scanpyv{scanpy_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+}
+```
+
+Use the min_cells and min_features filtering values used in this study for different downsampled fractions
+```{r}
+read_min_cells_and_genes_mapping <- list(
+    "1_0" = c(3, 200),
+    "0_64" = c(3, 200),
+    "0_32" = c(3, 200),
+    "0_16" = c(2, 200),
+    "0_08" = c(1, 200),
+    "0_04" = c(1, 150),
+    "0_02" = c(1, 100),
+    "0_01" = c(1, 50)
+)
+
+if (scan1_read_fraction_after_downsampling != "1_0" && scan1_cell_fraction_after_downsampling == "1_0") {
+    if (scan1_min_cells == "" || scan1_min_features == "") {
+        if (scan1_read_fraction_after_downsampling %in% names(read_min_cells_and_genes_mapping)) {
+            scan1_min_cells <- read_min_cells_and_genes_mapping[[scan1_read_fraction_after_downsampling]][1]
+            scan1_min_features <- read_min_cells_and_genes_mapping[[scan1_read_fraction_after_downsampling]][2]
+        } else {
+            scan1_min_cells <- 3
+            scan1_min_features <- 200
+        }
+    }
 }
 
-output_base_path <- glue::glue("{project_base_path}/output/{data_name}/scanpyv{scanpy_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+if (scan2_read_fraction_after_downsampling != "1_0" && scan2_cell_fraction_after_downsampling == "1_0") {
+    if (scan2_min_cells == "" || scan2_min_features == "") {
+        if (scan2_read_fraction_after_downsampling %in% names(read_min_cells_and_genes_mapping)) {
+            scan2_min_cells <- read_min_cells_and_genes_mapping[[scan2_read_fraction_after_downsampling]][1]
+            scan2_min_features <- read_min_cells_and_genes_mapping[[scan2_read_fraction_after_downsampling]][2]
+        } else {
+            scan2_min_cells <- 3
+            scan2_min_features <- 200
+        }
+    }
+}
+
+
+cell_min_cells_mapping <- list(
+    "1_0" = 3,
+    "0_64" = 2,
+    "0_32" = 2,
+    "0_16" = 1,
+    "0_08" = 1,
+    "0_04" = 1,
+    "0_02" = 1,
+    "0_01" = 1
+)
+
+if (scan1_cell_fraction_after_downsampling != "1_0" && scan1_read_fraction_after_downsampling == "1_0") {
+    if (scan1_min_cells == "") {
+        if(scan1_cell_fraction_after_downsampling %in% names(cell_min_cells_mapping)) {
+            scan1_min_cells <- cell_min_cells_mapping[[scan1_cell_fraction_after_downsampling]]
+        } else {
+            scan1_min_cells <- 3
+        }
+    }
+}
+
+if (scan2_cell_fraction_after_downsampling != "1_0" && scan2_read_fraction_after_downsampling == "1_0") {
+    if (scan2_min_cells == "") {
+        if(scan2_cell_fraction_after_downsampling %in% names(cell_min_cells_mapping)) {
+            scan2_min_cells <- cell_min_cells_mapping[[scan2_cell_fraction_after_downsampling]]
+        } else {
+            scan2_min_cells <- 3
+        }
+    }
+}
+
+
+if (scan1_min_cells == "") {
+    scan1_min_cells <- 3
+}
+
+if (scan2_min_cells == "") {
+    scan2_min_cells <- 3
+}
+
+if (scan1_min_features == "") {
+    scan1_min_features <- 200
+}
+
+if (scan2_min_features == "") {
+    scan2_min_features <- 200
+}
 ```
 
 R Setting up variables
 ```{r}
-set.seed(R_random_seed)
+set.seed(100)
 scanpy_group_names <- list(Scanpy1 = scan1_name, Scanpy2 = scan2_name)
 
 if ((scan1_read_fraction_after_downsampling != scan2_read_fraction_after_downsampling) || (scan1_cell_fraction_after_downsampling != scan2_cell_fraction_after_downsampling)) {
@@ -249,10 +318,10 @@ if (save_data) {
 ```
 
 R Imports
-```{r}
+```{r, message = FALSE}
 Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
 library(reticulate)
-use_condaenv(conda_env)
+use_condaenv(paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
 library(Seurat)
 library(Matrix)
 library(tidyverse)
@@ -288,20 +357,30 @@ scanpy_correction_method <- "benjamini-hochberg"
 ```
 
 Download data if necessary
+```{r}
+if (scan1_file_link != "" && (!dir.exists(scan1_data_path) || length(list.files(scan1_data_path)) == 0)) {
+    scan1_data_path <- download_box(scan1_file_link, scan1_data_name_from_download, data_path_root)
+}
+
+if (scan2_file_link != "" && (!dir.exists(scan2_data_path) || length(list.files(scan2_data_path)) == 0)) {
+    scan2_data_path <- download_box(scan2_file_link, scan2_data_name_from_download, data_path_root)
+}
+```
+
 ```{python}
+import os 
 import sys
 sys.path.append(f"{r.project_base_path}/scripts")
 from download_data import *
 
-if not os.path.exists(r.scan1_data_path) or not os.listdir(r.scan1_data_path):
-    r.scan1_data_path = download_and_extract(r.doi, r.scan1_data_name_from_download, r.data_path_root, r.scan1_data_path)
-if not os.path.exists(r.scan2_data_path) or not os.listdir(r.scan2_data_path):
-    r.scan2_data_path = download_and_extract(r.doi, r.scan2_data_name_from_download, r.data_path_root, r.scan2_data_path)
+if not r.doi == "" and (not os.path.exists(r.scan1_data_path) or not os.listdir(r.scan1_data_path)):
+    r.scan1_data_path = download_and_extract(r.doi, r.scan1_data_name_from_download, r.data_path_root)
+if not r.doi == "" and (not os.path.exists(r.scan2_data_path) or not os.listdir(r.scan2_data_path)):
+    r.scan2_data_path = download_and_extract(r.doi, r.scan2_data_name_from_download, r.data_path_root)
 ```
 
 Python imports and setting up variables
 ```{python}
-import os 
 import shutil
 import scanpy as sc
 import pandas as pd
@@ -313,7 +392,7 @@ import pickle
 import copy
 import kb_python.utils as kb_utils
 
-np.random.seed(int(r.R_random_seed))
+np.random.seed(100)
 
 
 scan1_read_fraction_after_downsampling = r.scan1_read_fraction_after_downsampling
@@ -353,11 +432,14 @@ elif scan1_matrix_generation_method=="cellranger":
 adata1_unfiltered = adata1.copy()
 
 if r.scan1_cell_fraction_after_downsampling != "1_0":
+    current_state = np.random.get_state()
+    np.random.seed(r.scan1_cell_downsample_seed)
     total_cells1 = adata1.n_obs
     numeric_scan1_cell_fraction_after_downsampling = float(r.scan1_cell_fraction_after_downsampling.replace("_", "."))
     cells_to_sample1 = round(total_cells1 * numeric_scan1_cell_fraction_after_downsampling)
     sampled_cells_indices1 = np.random.choice(total_cells1, cells_to_sample1, replace=False)
     adata1 = adata1[sampled_cells_indices1]
+    np.random.set_state(current_state)
 ```
 
 Knee plot
@@ -371,11 +453,7 @@ if (scan1_matrix_generation_method == "kb") {
 }
 
 if (scan1_cell_fraction_after_downsampling != "1_0") {
-    total_cells <- ncol(res_mat1)
-    numeric_scan1_cell_fraction_after_downsampling <- gsub("_", ".", scan1_cell_fraction_after_downsampling) %>% as.numeric()
-    cells_to_sample <- round(total_cells * numeric_scan1_cell_fraction_after_downsampling)
-    sampled_cells <- sample(total_cells, cells_to_sample)
-    res_mat1 <- res_mat1[, sampled_cells]
+    res_mat1 <- res_mat1[, py$sampled_cells_indices1]
 }
 
 tot_counts1 <- Matrix::colSums(res_mat1)
@@ -387,7 +465,7 @@ knee_plot1
 
 Select threshold for knee plot
 ```{r}
-if (scan1_inflection_UMI_manual == "") {
+if (scan1_inflection_UMI_manual != "") {
     UMI_cutoff1 <- scan1_inflection_UMI_manual
 } else {
     UMI_cutoff1 <- metadata(bc_rank1)$inflection
@@ -416,11 +494,14 @@ elif scan2_matrix_generation_method=="cellranger":
 adata2_unfiltered = adata2.copy()
 
 if r.scan2_cell_fraction_after_downsampling != "1_0":
+    current_state = np.random.get_state()
+    np.random.seed(r.scan2_cell_downsample_seed)
     total_cells2 = adata2.n_obs
     numeric_scan2_cell_fraction_after_downsampling = float(r.scan2_cell_fraction_after_downsampling.replace("_", "."))
     cells_to_sample2 = round(total_cells2 * numeric_scan2_cell_fraction_after_downsampling)
     sampled_cells_indices2 = np.random.choice(total_cells2, cells_to_sample2, replace=False)
     adata2 = adata2[sampled_cells_indices2]
+    np.random.set_state(current_state)
 ```
 
 Knee plot
@@ -434,11 +515,7 @@ if (scan2_matrix_generation_method == "kb") {
 }
 
 if (scan2_cell_fraction_after_downsampling != "1_0") {
-    total_cells <- ncol(res_mat2)
-    numeric_scan2_cell_fraction_after_downsampling <- gsub("_", ".", scan2_cell_fraction_after_downsampling) %>% as.numeric()
-    cells_to_sample <- round(total_cells * numeric_scan2_cell_fraction_after_downsampling)
-    sampled_cells <- sample(total_cells, cells_to_sample)
-    res_mat2 <- res_mat2[, sampled_cells]
+    res_mat2 <- res_mat2[, py$sampled_cells_indices2]
 }
 
 tot_counts2 <- Matrix::colSums(res_mat2)
@@ -450,7 +527,7 @@ knee_plot2
 
 Select threshold for knee plot
 ```{r}
-if (scan2_inflection_UMI_manual == "") {
+if (scan2_inflection_UMI_manual != "") {
     UMI_cutoff2 <- scan2_inflection_UMI_manual
 } else {
     UMI_cutoff2 <- metadata(bc_rank2)$inflection
@@ -686,6 +763,11 @@ if data_input == "scan1":
         axis=1
     ) / np.sum(adata2.X, axis=1) * 100
     sc.pp.calculate_qc_metrics(adata2, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+    pass  # present due to odd behavior exiting conditional otherwise
+    break
+else:
+    pass
+    break
 
 
 if data_input == "scan2":
@@ -708,6 +790,11 @@ if data_input == "scan2":
         axis=1
     ) / np.sum(adata1.X, axis=1) * 100
     sc.pp.calculate_qc_metrics(adata1, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+    pass
+    break
+else:
+    pass
+    break
 ```
 
 If data_input is not default, then recompute cell and gene lists
@@ -833,14 +920,14 @@ sc.pp.scale(adata2, max_value=r.scanpy_scale_max)
 PCA
 ```{python}
 sc.tl.pca(adata1, svd_solver='arpack', zero_center = r.scanpy_pca_zero_center, random_state = int(r.pca_seed1))
-sc.pl.pca_variance_ratio(adata1, log=True, n_pcs=50)
+# sc.pl.pca_variance_ratio(adata1, log=True, n_pcs=50)
 
 if scan1_num_pcs == None:
     scan1_num_pcs = 50  # optimize as needed
     
     
 sc.tl.pca(adata2, svd_solver='arpack', zero_center = r.scanpy_pca_zero_center, random_state = int(r.pca_seed2))
-sc.pl.pca_variance_ratio(adata2, log=True, n_pcs=50)
+# sc.pl.pca_variance_ratio(adata2, log=True, n_pcs=50)
 
 if scan2_num_pcs == None:
     scan2_num_pcs = 50  # optimize as needed
@@ -865,8 +952,8 @@ combined_pc_variance
 
 PCA scatterplot
 ```{python}
-sc.pl.pca(adata1)
-sc.pl.pca(adata2)
+# sc.pl.pca(adata1)
+# sc.pl.pca(adata2)
 ```
 
 Create a collection of PCA embeddings
@@ -973,8 +1060,8 @@ if (data_input == "scan2" && identical(scan1_inds, scan2_inds)) {
 
 Neighbors
 ```{python}
-sc.pp.neighbors(adata1, n_neighbors=int(r.scan_n_neighbors), n_pcs=int(scan1_num_pcs))
-sc.pp.neighbors(adata2, n_neighbors=int(r.scan_n_neighbors), n_pcs=int(scan2_num_pcs))
+sc.pp.neighbors(adata1, n_neighbors=int(r.scan_n_neighbors), n_pcs=int(scan1_num_pcs), random_state=int(r.knn_seed1))
+sc.pp.neighbors(adata2, n_neighbors=int(r.scan_n_neighbors), n_pcs=int(scan2_num_pcs), random_state=int(r.knn_seed2))
     
 if r.scanpy_minor_version >= 5:
     snn_graph_scan1 = adata1.obsp['connectivities']
@@ -1035,6 +1122,7 @@ jaccards$logged_degree_ratio[jaccards$logged_degree_ratio == Inf] <- 10
 jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
 median_magnitude_logged_degree_ratio <- median(abs(jaccards$logged_degree_ratio))
+mean_magnitude_logged_degree_ratio <- mean(abs(jaccards$logged_degree_ratio))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
@@ -1042,6 +1130,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
 
 print(glue("Median jaccard of SNN: {median_jaccard}"))
 print(glue("Median magnitude of log degree ratio of SNN: {median_magnitude_logged_degree_ratio}"))
+print(glue("Mean magnitude of log degree ratio of SNN: {mean_magnitude_logged_degree_ratio}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
@@ -1058,15 +1147,15 @@ If data_input == "scan1" or "scan2": Apply KNN and SNN to be the same
 ```{python}
 if data_input == "scan1" and (r.scan1_inds == r.scan2_inds):
     adata2.obsp['connectivities'] = adata1.obsp['connectivities']
-    adata2.obsp['distances'] = adata1.obsp['distances']
+    # adata2.obsp['distances'] = adata1.obsp['distances']
     snn_graph_scan2 = adata2.obsp['connectivities']
-    knn_graph_scan2 = adata2.obsp['distances']
-    
+    # knn_graph_scan2 = adata2.obsp['distances']
+
 if data_input == "scan2" and (r.scan1_inds == r.scan2_inds):
     adata1.obsp['connectivities'] = adata2.obsp['connectivities']
-    adata1.obsp['distances'] = adata2.obsp['distances']
+    # adata1.obsp['distances'] = adata2.obsp['distances']
     snn_graph_scan1 = adata1.obsp['connectivities']
-    knn_graph_scan1 = adata1.obsp['distances']
+    # knn_graph_scan1 = adata1.obsp['distances']
 ```
 
 Clustering
@@ -1156,6 +1245,8 @@ cluster_heatmap
 
 Alluvial plot of clusters
 ```{r}
+source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
+
 df <- tibble(
     Scanpy1 = scan1_clusters,
     Scanpy2 = scan2_clusters
@@ -1311,13 +1402,13 @@ if (!isTRUE(all.equal(as.vector(py$adata1$obs_names$values), as.vector(py$adata2
     scan2_cluster_data_filtered <- scan2_cluster_data_original
 }
 
-scan1_umap_knn <- dbscan::kNN(scan1_umap_data, k = umap_knn_k)
-scan2_umap_knn <- dbscan::kNN(scan2_umap_data, k = umap_knn_k)
+scan1_umap_knn <- FNN::get.knn(scan1_umap_data, k = umap_knn_k)
+scan2_umap_knn <- FNN::get.knn(scan2_umap_data, k = umap_knn_k)
 ```
 
 Find jaccard indices of KNN graphs from UMAP space
 ```{r}
-jaccards_all_cells <- calculate_knn_jaccards(scan1_umap_knn$id, scan2_umap_knn$id)
+jaccards_all_cells <- calculate_knn_jaccards(scan1_umap_knn$nn.index, scan2_umap_knn$nn.index)
 
 median_jaccard_umap_knn <- median(jaccards_all_cells)
 
@@ -1347,10 +1438,9 @@ umap_jaccard_plot_scan2_facet
 
 Run leiden clustering on KNN graphs from UMAP space
 ```{r}
-set.seed(R_random_seed)
+withr::with_seed(umap_leiden_seed1, {scan1_umap_knn_clusters <- bluster::clusterRows(scan1_umap_data, NNGraphParam(shared = FALSE, k = umap_knn_k, BNPARAM = BiocNeighbors::KmknnParam(), cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2)))})
 
-scan1_umap_knn_clusters <- bluster::clusterRows(scan1_umap_data, NNGraphParam(shared = FALSE, k = umap_knn_k, cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2)))
-scan2_umap_knn_clusters <- bluster::clusterRows(scan2_umap_data, NNGraphParam(shared = FALSE, k = umap_knn_k, cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2)))
+withr::with_seed(umap_leiden_seed2, {scan2_umap_knn_clusters <- bluster::clusterRows(scan2_umap_data, NNGraphParam(shared = FALSE, k = umap_knn_k, BNPARAM = BiocNeighbors::KmknnParam(), cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2)))})
 
 scan1_umap_knn_clusters <- reorder_clusters_descending(scan1_umap_knn_clusters)
 scan2_umap_knn_clusters <- reorder_clusters_descending(scan2_umap_knn_clusters)
@@ -1415,12 +1505,18 @@ UMAP with UMAP Leiden clusters
 ```{r}
 colors_group2_umap <- find_group2_colors(clus_df_gather_umap, scan1_name, scan2_name)
 
-umap_plots <- plot_umap(group1_umap_info = scan1_umap_data, group1_clusters = scan1_umap_knn_clusters, group2_umap_info = scan2_umap_data, group2_clusters = scan2_clusters_renumbered_umap, colors_group2 = colors_group2_umap, group1 = scan1_name, group2 = scan2_name, save = c(file_paths$umap_umap_leiden_scan1, file_paths$umap_umap_leiden_scan2))
-scan1_umap <- umap_plots[[1]]
-scan2_umap <- umap_plots[[2]]
+scan1_umap_knn_for_umap <- list("idx" = scan1_umap_knn$nn.index, "dist" = scan1_umap_knn$nn.dist)
+scan2_umap_knn_for_umap <- list("idx" = scan2_umap_knn$nn.index, "dist" = scan2_umap_knn$nn.dist)
 
-scan1_umap
-scan2_umap
+withr::with_seed(umap_umap_seed1, {scan1_umap_umap_data <- uwot::umap(scan1_umap_data, n_neighbors = umap_knn_k, n_sgd_threads = 1, seed = as.integer(umap_umap_seed1), nn_method = scan1_umap_knn_for_umap, ret_nn = FALSE)})
+withr::with_seed(umap_umap_seed2, {scan2_umap_umap_data <- uwot::umap(scan2_umap_data, n_neighbors = umap_knn_k, n_sgd_threads = 1, seed = as.integer(umap_umap_seed2), nn_method = scan2_umap_knn_for_umap, ret_nn = FALSE)})
+
+umap_umap_plots <- plot_umap(group1_umap_info = scan1_umap_umap_data, group1_clusters = scan1_umap_knn_clusters, group2_umap_info = scan2_umap_umap_data, group2_clusters = scan2_clusters_renumbered_umap, colors_group2 = colors_group2_umap, group1 = scan1_name, group2 = scan2_name, save = c(file_paths$umap_umap_leiden_scan1, file_paths$umap_umap_leiden_scan2))
+scan1_umap_umap <- umap_umap_plots[[1]]
+scan2_umap_umap <- umap_umap_plots[[2]]
+
+scan1_umap_umap
+scan2_umap_umap
 ```
 
 Find markers
@@ -1462,13 +1558,15 @@ upset_marker_gene_only <- make_upset_scanpy(vectorized_scan1_filtered_markers, v
 
 Stop DE analysis if data input does not align (as without aligned cluster information, DE analysis is not meaningful)
 ```{r}
+# Save data early due to Scanpy's computational resources required to compute further DE plots
+if (save_data) {
+    saveRDS(result1, file = output_data_file_paths$markers_scan1)
+    saveRDS(result2, file = output_data_file_paths$markers_scan2)
+    py$adata1$write_h5ad(output_data_file_paths$adata1_object, compression = py$hdf5plugin$FILTERS$zstd)
+    py$adata2$write_h5ad(output_data_file_paths$adata2_object, compression = py$hdf5plugin$FILTERS$zstd)
+}
+
 if (data_input == "default" || !identical(scan1_inds, scan2_inds)) {
-    if (save_data) {
-        saveRDS(result1, file = output_data_file_paths$markers_scan1)
-        saveRDS(result2, file = output_data_file_paths$markers_scan2)
-        py$adata1$write_h5ad(output_data_file_paths$adata1_object, compression = py$hdf5plugin$FILTERS$zstd)
-        py$adata2$write_h5ad(output_data_file_paths$adata2_object, compression = py$hdf5plugin$FILTERS$zstd)
-    }
     stop("data_input == 'default', so not running further DE analysis, which requires clusters to be in agreement.")
 }
 ```
@@ -1517,16 +1615,16 @@ markers2[[glue("p_val_adj.{scan2_name}")]][markers2[[glue("p_val_adj.{scan2_name
 ```
 
 ```{r}
-logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
-pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
-
-logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
-
-
-logFC_scatterplot
-logFC_scatterplot_with_legend
-
-pvaladj_scatterplot
+# logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
+# pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
+# 
+# logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
+# 
+# 
+# logFC_scatterplot
+# logFC_scatterplot_with_legend
+# 
+# pvaladj_scatterplot
 ```
 
 Save markers df

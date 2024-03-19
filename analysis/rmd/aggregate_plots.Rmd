@@ -82,11 +82,7 @@ yaml_file <- "Fig2_Supp_Fig11_Supp_Fig12"  # Fig2_Supp_Fig11_Supp_Fig12
 
 Load contents of yaml file into global R environment
 ```{r}
-if (exists("using_colab") && get("using_colab")) {
-    yaml_dir <- "/content/scrnaseq_packages_and_versioning/analysis/yaml"
-} else {
-    yaml_dir <- glue::glue("{dirname(getwd())}/yaml")
-}
+yaml_dir <- glue::glue("{dirname(getwd())}/yaml")
 
 yaml_file_path <- glue::glue("{yaml_dir}/{yaml_file}.yaml")
 
@@ -95,10 +91,8 @@ config <- yaml::read_yaml(yaml_file_path)
 for (name in names(config)) {
     assign(name, config[[name]], envir = .GlobalEnv)
 }
-```
 
-```{r}
-
+print(glue::glue("frac_list = {frac_list}. downsampled_seeds_list = {downsampled_seeds_list}. Please make sure you have run each combination of these downsampled {type_downsampled} fractions and seeds before running this notebook."))
 ```
 
 ```{r}
@@ -110,42 +104,25 @@ library(glue)
 theme_set(theme_bw())
 ```
 
+```{r}
+if (download_data) {
+    download_box(downsampled_data_file_link, data_name_from_download, data_path_root)
+}
+```
+
 ```{python}
 import sys
 sys.path.append(f"{r.project_base_path}/scripts")
 from download_data import *
 
-if r.download_data:
+if r.download_data and not r.doi == "":
     download_and_extract(r.doi, r.data_name_from_download, r.data_path_root)
-```
-
-
-```{r}
-frac_list <- c(0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64) #***
-downsampled_seeds_list <- c(100)
-type_downsampled <- "read" # "read" or "cell"
-margin_correct <- 0.05
-```
-
-```{r}
-project_base_path <- dirname(getwd())
-data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
-seurat_version <- "4_3_0"
-scanpy_version <- "1_9_5"
-matrix_generation <- "kb0_28_0_raw_generated_sa"
-read_fraction_downsampled_for_cell_downsample_comparisons <- "1_0"
-cell_fraction_downsampled_for_read_downsample_comparisons <- "1_0"
-
-if (exists("using_colab") && get("using_colab")) {
-    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
-}
 ```
 
 ```{r}
 get_stats_filepath_from_download <- function(set, frac_str, package, type_downsampled, seed) {
-    print("xxx")
+    return(glue('{data_path_root}/{type_downsampled}/{package}/input_{input_type}/fraction_{frac_str}/seed_{seed}/{set$file_name}'))
 }
-
 
 get_stats_filepath <- function(set, frac_str, package, type_downsampled, seed) {
     if (package == "seu") {
@@ -157,9 +134,9 @@ get_stats_filepath <- function(set, frac_str, package, type_downsampled, seed) {
     }
 
     if (type_downsampled == "read") {
-        downsample_string <- glue("cell_fraction_{cell_fraction_downsampled_for_read_downsample_comparisons}/read_fraction_{package}1_1_0_vs_{package}2_{frac_str}_seed{seed}")
+        downsample_string <- glue("cell_fraction_1_0/read_fraction_{package}1_1_0_vs_{package}2_{frac_str}_seed{seed}")
     } else if (type_downsampled == "cell") {
-        downsample_string <- glue("cell_fraction_{package}1_1_0_vs_{package}2_{frac_str}/read_fraction_{read_fraction_downsampled_for_cell_downsample_comparisons}_seed{seed}")
+        downsample_string <- glue("cell_fraction_{package}1_1_0_vs_{package}2_{frac_str}/read_fraction_1_0_seed{seed}")
     }
 
     if (set$file_name == "de_stats.txt" && set$statistic_name != "Marker Genes Jaccard") {
@@ -172,20 +149,20 @@ get_stats_filepath <- function(set, frac_str, package, type_downsampled, seed) {
 }
 
 find_intersection <- function(df, y_value) {
-        interpolated <- approx(df$frac, df$value, xout = seq(min(df$frac), max(df$frac), length.out = 1000))
+    interpolated <- approx(df$frac, df$value, xout = seq(min(df$frac), max(df$frac), length.out = 1000))
 
-        intersect_indices <- which(abs(interpolated$y - y_value) < 0.01)
+    intersect_indices <- which(abs(interpolated$y - y_value) < 0.01)
 
-        if (length(intersect_indices) == 0) {
-            return(min(frac_list))
-        } else if ((set$ideal_value == 1 && interpolated$y[1] > interpolated$y[which.min(abs(interpolated$y - y_value))]) || (set$ideal_value == 0 && interpolated$y[1] < interpolated$y[which.min(abs(interpolated$y - y_value))])) {
-            return(min(frac_list))
-        }
-        else{
-            x_intersect <- interpolated$x[which.min(abs(interpolated$y - y_value))]
-            return(x_intersect)
-        }
+    if (length(intersect_indices) == 0) {
+        return(min(frac_list))
+    } else if ((set$ideal_value == 1 && interpolated$y[1] > interpolated$y[which.min(abs(interpolated$y - y_value))]) || (set$ideal_value == 0 && interpolated$y[1] < interpolated$y[which.min(abs(interpolated$y - y_value))])) {
+        return(min(frac_list))
     }
+    else{
+        x_intersect <- interpolated$x[which.min(abs(interpolated$y - y_value))]
+        return(x_intersect)
+    }
+}
 ```
 
 List of all metrics to extract
@@ -242,7 +219,7 @@ variable_sets <- list(
         baseline_value_seurat_vs_scanpy_default = 2.05889368905357,
         baseline_value_seurat_vs_scanpy_same_input = NA,  # 2.04306872189189,
         ideal_value = 0,
-        seurat_noise_value = 0,
+        seurat_noise_value = 0.0510741845942693,
         scanpy_noise_value = 0,
         output_plot_name = "knn.tiff"
     ),
@@ -253,8 +230,8 @@ variable_sets <- list(
         baseline_value_seurat_vs_scanpy_default = 0.706349552155871,
         baseline_value_seurat_vs_scanpy_same_input = NA,  # 0.87916666950325,
         ideal_value = 1,
-        seurat_noise_value = 0,
-        scanpy_noise_value = 0.8870013,  
+        seurat_noise_value = 0.990775786143719,
+        scanpy_noise_value = 0.895756006298351,  
         output_plot_name = "clustering.tiff"
     ),
     list(
@@ -264,8 +241,8 @@ variable_sets <- list(
         baseline_value_seurat_vs_scanpy_default = 0.0638297872340425,
         baseline_value_seurat_vs_scanpy_same_input = NA,  # 0.204819277108434,
         ideal_value = 1,
-        seurat_noise_value = 0.4084507042253520,
-        scanpy_noise_value = 0.449275362318841,
+        seurat_noise_value = 0.408450704225352,
+        scanpy_noise_value = 0.470588235294118,
         output_plot_name = "umap.tiff"
     ),
     list(
@@ -338,9 +315,9 @@ statistic_names_total <- unlist(lapply(variable_sets, function(x) x$statistic_na
 # )
 
 if (type_downsampled == "cell") {
-    output_path_base <- glue("{project_base_path}/output/{data_name}/aggregate_plots/across_downsampled_cells/{matrix_generation}/read_fraction_{read_fraction_downsampled_for_cell_downsample_comparisons}")
+    output_path_base <- glue("{project_base_path}/output/{data_name}/aggregate_plots/across_downsampled_cells")
 } else if (type_downsampled == "read") {
-    output_path_base <- glue("{project_base_path}/output/{data_name}/aggregate_plots/across_downsampled_reads/{matrix_generation}/cell_fraction_{cell_fraction_downsampled_for_read_downsample_comparisons}")
+    output_path_base <- glue("{project_base_path}/output/{data_name}/aggregate_plots/across_downsampled_reads")
 }
 
 if (margin_correct == 0) {

@@ -1,3 +1,35 @@
+download_box <- function(file_link, filename, data_path_root, file_ext = '.tar.gz') {
+    if (!grepl("shared", file_link)) {
+        if (file_ext == ".tar.gz") {
+            file_ext_box_link <- ".gz"
+        } else {
+            file_ext_box_link <- file_ext
+        }
+        file_id <- sub("https://caltech.box.com/s/(.*)", "\\1", file_link)
+        file_link <- paste0("https://caltech.box.com/shared/static/", file_id, file_ext_box_link)
+    }
+    
+    output_path <- paste(data_path_root, filename, sep = "/")
+    
+    if (!grepl(".{0,10}\\.[^\\.]+$", filename)) {
+        output_path_with_extension <- paste0(output_path, file_ext)
+    } else {
+        output_path_with_extension <- output_path
+    }
+    
+    if (!dir.exists(output_path)) {
+        dir.create(output_path, recursive = TRUE, showWarnings = FALSE)
+    }
+    
+    download.file(file_link, destfile = output_path_with_extension, mode = "wb")
+    
+    if (file_ext == '.tar.gz') {
+        untar(tarfile = output_path_with_extension, exdir = dirname(output_path))
+    }
+    
+    return (output_path)
+}
+
 read_count_output_modified <- function(dir, name, unspliced = FALSE, batch = FALSE, tcc = FALSE) {
     dir <- normalizePath(dir, mustWork = TRUE)
     if (unspliced) {
@@ -368,7 +400,7 @@ sort_clusters_by_agreement <- function(clus_df_gather, stable_column = "Seurat",
             best_cluster_agreement := .data[[reordered_column]]
         )
         
-        # Loop over each unique cluster number in Cellrangerv3
+        # Loop over each unique cluster number in Group 2
         for (cluster_number in sort(unique(subset_data[[reordered_column_original_clusters_name]]))) {
             # Subset the data for the current cluster number
             subset_data2 <- subset_data[subset_data[[reordered_column_original_clusters_name]] == cluster_number, ]
@@ -376,7 +408,7 @@ sort_clusters_by_agreement <- function(clus_df_gather, stable_column = "Seurat",
             # Find the row with the largest overlap (value)
             largest_overlap_row <- subset_data2[which.max(subset_data2$value), ]
             
-            # Check if the corresponding Cellrangerv7 number is available
+            # Check if the corresponding Group 1 number is available
             new_cluster_number <- as.numeric(as.character(largest_overlap_row[[stable_column]]))
             
             best_cluster_number <- new_cluster_number

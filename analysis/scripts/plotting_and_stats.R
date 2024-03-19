@@ -281,6 +281,8 @@ upset_plot_general <- function(data, group1_name, group2_name, comparison, befor
     
     if (comparison == "HVG") {
         set_size_scale_max_value <- 1.35
+    } else if (comparison == "Marker") {
+        set_size_scale_max_value <- 1.65
     } else {
         set_size_scale_max_value <- 1.4
     }

@@ -1,0 +1,25 @@
+---
+title: "test_cli"
+output: html_document
+params:
+  data_input: !r NULL
+  seu2_read_fraction_after_downsampling: !r NULL
+  seu2_read_downsample_seed: !r NULL
+---
+
+```{r}
+data_input <- params$data_input
+seu2_read_fraction_after_downsampling <- params$seu2_read_fraction_after_downsampling
+seu2_read_downsample_seed <- params$seu2_read_downsample_seed
+```
+
+```{r}
+Sys.sleep(5)
+lines_to_save <- c(data_input, seu2_read_fraction_after_downsampling, seu2_read_downsample_seed)
+
+file_path <- glue::glue("/workspace/analysis/output/rmd_html/txt/input_{data_input}_frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}.txt")
+
+writeLines(lines_to_save, file_path)
+```
+
+

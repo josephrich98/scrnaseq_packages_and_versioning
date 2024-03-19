@@ -2,73 +2,61 @@
 title: "Seurat_v_Seurat"
 output: html_document
 date: "2024-01-01"
+params:
+  data_input: !r NULL
+  seu2_cell_fraction_after_downsampling: !r NULL
+  seu2_cell_downsample_seed: !r NULL
+  seu2_read_fraction_after_downsampling: !r NULL
+  seu2_read_downsample_seed: !r NULL
 ---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(fig.show = "hide")
+```
+
+Select yaml file
+```{r}
+yaml_file <- "Supp_Fig9"  # Fig3_cellranger, Fig3_kallisto, Supp_Fig7, Supp_Fig7_DE, Supp_Fig9, Supp_Fig13, Supp_Fig14, Supp_Fig16_seu
+```
+
+Load contents of yaml file into global R environment
+```{r}
+yaml_dir <- glue::glue("{dirname(getwd())}/yaml")
+yaml_file_path <- glue::glue("{yaml_dir}/{yaml_file}.yaml")
+
+source(glue::glue("{dirname(getwd())}/scripts/load_yaml_contents.R"))
+load_yaml_contents(yaml_file_path)
+
+#!!!!!!
+# # uncomment as needed if running from command line
+# data_input <- params$data_input
+# seu2_cell_fraction_after_downsampling <- params$seu2_cell_fraction_after_downsampling
+# seu2_cell_downsample_seed <- params$seu2_cell_downsample_seed
+# seu2_read_fraction_after_downsampling <- params$seu2_read_fraction_after_downsampling
+# seu2_read_downsample_seed <- params$seu2_read_downsample_seed
+```
 
 Analysis settings
 ```{r}
-data_input <- "default" # str["default", "seu1", "seu2"]
-save_data <- TRUE
+if (seu1_data_path == "") {
+    seu1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}/frac{seu1_read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
+}
 
-seu1_name <- "Full"  # Must have no spaces
-seu2_name <- "Downsampled_reads"  # Must have no spaces
+if (seu2_data_path == "") {
+    seu2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu2_matrix_generation_method}{seu2_matrix_generation_method_version}/frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
+}
 
-# Input and output path specifications
-project_base_path <- dirname(getwd())  # also used for locating script files
-data_name <- "SC3_v3_NextGem_SI_PBMC_10K"  # str
-conda_env <- "analysis_env"
-R_random_seed <- 100 # including for cell downsampling  # also used for global R session seed and python seed
+if (data_path_root == "") {
+    data_path_root <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}")
+}
 
-seu1_matrix_generation_method <- "kb" # str["kb", "cellranger"]  # also used for loading data
-seu1_matrix_generation_method_version <- "0_28_0"  # str (with _ in place of .)
+if (seu1_data_name_from_download == "") {
+    seu1_data_name_from_download <- glue::glue("{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}_frac{seu1_read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
+}
 
-seu1_cell_fraction_after_downsampling <- "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
-seu1_read_fraction_after_downsampling <- "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
-seu1_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-
-
-seu2_matrix_generation_method <- "kb" # str["kb", "cellranger"]  # also used for loading data
-seu2_matrix_generation_method_version <- "0_28_0"  # str (with _ in place of .)
-
-seu2_cell_fraction_after_downsampling <- "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
-seu2_read_fraction_after_downsampling <- "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
-seu2_read_downsample_seed <- "0" # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-
-seu1_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}/frac{seu1_read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
-seu2_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu2_matrix_generation_method}{seu2_matrix_generation_method_version}/frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
-
-
-# Specifications for downloading data
-doi <- "AAAAA"  # FILL IN
-data_path_root <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}")
-seu1_data_name_from_download <- glue::glue("{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}_frac{seu1_read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
-seu2_data_name_from_download <- glue::glue("{seu2_matrix_generation_method}{seu2_matrix_generation_method_version}_frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
-
-
-# Custom parameters
-seu1_inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
-seu2_inflection_UMI_manual <- NULL # number >=0; or NULL to have automatic selection, especially necessary for lower fracs (e.g., 30 for frac=0.02, 20 for frac=0.01)
-
-seu1_min_cells <- 3
-seu1_min_features <- 200
-
-seu2_min_cells <- 3
-seu2_min_features <- 200
-
-max_pct_mct <- 20 # default 5
-seu1_num_pcs <- 50 # number 1-50; or NULL to select after elbow plot visualization
-seu2_num_pcs <- 50
-umap_knn_k <- 50
-umap_leiden_clustering_resolution <- 0.8
-
-pca_seed1 <- 42
-pca_seed2 <- 42
-clustering_seed1 <- 0
-clustering_seed2 <- 0
-umap_seed1 <- 42
-umap_seed2 <- 42
-
-dpi <- 300
-
+if (seu2_data_name_from_download == "") {
+    seu2_data_name_from_download <- glue::glue("{seu2_matrix_generation_method}{seu2_matrix_generation_method_version}_frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
+}
 
 if (seu1_matrix_generation_method == seu2_matrix_generation_method && seu1_matrix_generation_method_version == seu2_matrix_generation_method_version) {
     matrix_generation_method_full <- glue::glue("{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}")
@@ -80,8 +68,12 @@ cell_fraction_after_downsampling <- ifelse(seu1_cell_fraction_after_downsampling
     paste("seu1", seu1_cell_fraction_after_downsampling, "vs", "seu2", seu2_cell_fraction_after_downsampling, sep = "_")
 )
 
-if (cell_fraction_after_downsampling != "1_0") {
-    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
+if (seu1_cell_fraction_after_downsampling != "1_0") {
+    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{seu1_cell_downsample_seed}")
+}
+
+if (seu2_cell_fraction_after_downsampling != "1_0") {
+    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{seu2_cell_downsample_seed}")
 }
 
 read_fraction_after_downsampling <- ifelse(seu1_read_fraction_after_downsampling == seu2_read_fraction_after_downsampling, seu1_read_fraction_after_downsampling,
@@ -96,17 +88,101 @@ if (seu2_read_fraction_after_downsampling != "1_0") {
     read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")
 }
 
-if (exists("using_colab") && get("using_colab")) {
-    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
-    setwd(project_base_path)
+if (output_base_path == "") {
+    output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+}
+```
+
+Use the min_cells and min_features filtering values used in this study for different downsampled fractions
+```{r}
+read_min_cells_and_genes_mapping <- list(
+    "1_0" = c(3, 200),
+    "0_64" = c(3, 200),
+    "0_32" = c(3, 200),
+    "0_16" = c(2, 200),
+    "0_08" = c(1, 200),
+    "0_04" = c(1, 150),
+    "0_02" = c(1, 100),
+    "0_01" = c(1, 50)
+)
+
+if (seu1_read_fraction_after_downsampling != "1_0" && seu1_cell_fraction_after_downsampling == "1_0") {
+    if (seu1_min_cells == "" || seu1_min_features == "") {
+        if (seu1_read_fraction_after_downsampling %in% names(read_min_cells_and_genes_mapping)) {
+            seu1_min_cells <- read_min_cells_and_genes_mapping[[seu1_read_fraction_after_downsampling]][1]
+            seu1_min_features <- read_min_cells_and_genes_mapping[[seu1_read_fraction_after_downsampling]][2]
+        } else {
+            seu1_min_cells <- 3
+            seu1_min_features <- 200
+        }
+    }
 }
 
-output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
+
+if (seu2_read_fraction_after_downsampling != "1_0" && seu2_cell_fraction_after_downsampling == "1_0") {
+    if (seu2_min_cells == "" || seu2_min_features == "") {
+        if (seu2_read_fraction_after_downsampling %in% names(read_min_cells_and_genes_mapping)) {
+            seu2_min_cells <- read_min_cells_and_genes_mapping[[seu2_read_fraction_after_downsampling]][1]
+            seu2_min_features <- read_min_cells_and_genes_mapping[[seu2_read_fraction_after_downsampling]][2]
+        } else {
+            seu2_min_cells <- 3
+            seu2_min_features <- 200
+        }
+    }
+}
+
+
+cell_min_cells_mapping <- list(
+    "1_0" = 3,
+    "0_64" = 2,
+    "0_32" = 2,
+    "0_16" = 1,
+    "0_08" = 1,
+    "0_04" = 1,
+    "0_02" = 1,
+    "0_01" = 1
+)
+
+if (seu1_cell_fraction_after_downsampling != "1_0" && seu1_read_fraction_after_downsampling == "1_0") {
+    if (seu1_min_cells == "") {
+        if(seu1_cell_fraction_after_downsampling %in% names(cell_min_cells_mapping)) {
+            seu1_min_cells <- cell_min_cells_mapping[[seu1_cell_fraction_after_downsampling]]
+        } else {
+            seu1_min_cells <- 3
+        }
+    }
+}
+
+if (seu2_cell_fraction_after_downsampling != "1_0" && seu2_read_fraction_after_downsampling == "1_0") {
+    if (seu2_min_cells == "") {
+        if(seu2_cell_fraction_after_downsampling %in% names(cell_min_cells_mapping)) {
+            seu2_min_cells <- cell_min_cells_mapping[[seu2_cell_fraction_after_downsampling]]
+        } else {
+            seu2_min_cells <- 3
+        }
+    }
+}
+
+if (seu1_min_cells == "") {
+    seu1_min_cells <- 3
+}
+
+if (seu2_min_cells == "") {
+    seu2_min_cells <- 3
+}
+
+if (seu1_min_features == "") {
+    seu1_min_features <- 200
+}
+
+if (seu2_min_features == "") {
+    seu2_min_features <- 200
+}
 ```
 
 R Setting up variables
 ```{r}
-set.seed(R_random_seed)
+set.seed(100)
 seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
 
 if ((seu1_read_fraction_after_downsampling != seu2_read_fraction_after_downsampling) || (seu1_cell_fraction_after_downsampling != seu2_cell_fraction_after_downsampling)) {
@@ -206,11 +282,12 @@ file_paths <- list(
     FC_histogram_signed_file_path = FALSE # glue::glue("{output_base_path}/plots/FC_histogram_signed.tiff")
 )
 
+#***
 if (save_data) {
     for (path in output_data_file_paths) {
         dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
     }
-        
+
     for (path in file_paths) {
         if (is.character(path)) {
             # Extract the directory part of the path
@@ -222,7 +299,7 @@ if (save_data) {
             }
         }
     }
-    
+
     for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clustering_umap_file, file_paths$de_stats_file)) {
         if (is.character(file)) {
             sink(file = file, append = FALSE)
@@ -237,10 +314,10 @@ if (save_data) {
 ```
 
 R Imports
-```{r}
+```{r, message=FALSE}
 Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
 library(reticulate)
-use_condaenv(conda_env)
+use_condaenv(paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
 library(Seurat)
 library(Matrix)
 library(tidyverse)
@@ -277,16 +354,28 @@ seu_umap_metric <- "correlation"
 # correction method = bonferroni
 ```
 
+#$$$
 Download data if necessary
+```{r}
+if (seu1_file_link != "" && (!dir.exists(seu1_data_path) || length(list.files(seu1_data_path)) == 0)) {
+    seu1_data_path <- download_box(seu1_file_link, seu1_data_name_from_download, data_path_root)
+}
+
+if (seu2_file_link != "" && (!dir.exists(seu2_data_path) || length(list.files(seu2_data_path)) == 0)) {
+    seu2_data_path <- download_box(seu2_file_link, seu2_data_name_from_download, data_path_root)
+}
+```
+
 ```{python}
+import os
 import sys
 sys.path.append(f"{r.project_base_path}/scripts")
 from download_data import *
 
-if not os.path.exists(r.seu1_data_path) or not os.listdir(r.seu1_data_path):
-    r.seu1_data_path = download_and_extract(r.doi, r.seu1_data_name_from_download, r.data_path_root, r.seu1_data_path)
-if not os.path.exists(r.seu2_data_path) or not os.listdir(r.seu2_data_path):
-    r.seu2_data_path = download_and_extract(r.doi, r.seu2_data_name_from_download, r.data_path_root, r.seu2_data_path)
+if not r.doi == "" and (not os.path.exists(r.seu1_data_path) or not os.listdir(r.seu1_data_path)):
+    r.seu1_data_path = download_and_extract(r.doi, r.seu1_data_name_from_download, r.data_path_root)
+if not r.doi == "" and (not os.path.exists(r.seu2_data_path) or not os.listdir(r.seu2_data_path)):
+    r.seu2_data_path = download_and_extract(r.doi, r.seu2_data_name_from_download, r.data_path_root)
 ```
 
 Read the data into Seurat1 and create knee plot:
@@ -303,7 +392,7 @@ if (seu1_cell_fraction_after_downsampling != "1_0") {
     total_cells <- ncol(res_mat1)
     numeric_seu1_cell_fraction_after_downsampling <- gsub("_", ".", seu1_cell_fraction_after_downsampling) %>% as.numeric()
     cells_to_sample <- round(total_cells * numeric_seu1_cell_fraction_after_downsampling)
-    sampled_cells <- sample(total_cells, cells_to_sample)
+    withr::with_seed(seu1_cell_downsample_seed, {sampled_cells <- sample(total_cells, cells_to_sample)})
     res_mat1 <- res_mat1[, sampled_cells]
 }
 
@@ -319,7 +408,7 @@ knee_plot1
 
 Select threshold for knee plot
 ```{r}
-if (seu1_inflection_UMI_manual == "") {
+if (seu1_inflection_UMI_manual != "") {
     UMI_cutoff1 <- seu1_inflection_UMI_manual
 } else {
     UMI_cutoff1 <- metadata(bc_rank1)$inflection
@@ -349,7 +438,7 @@ if (seu2_cell_fraction_after_downsampling != "1_0") {
     total_cells <- ncol(res_mat2)
     numeric_seu2_cell_fraction_after_downsampling <- gsub("_", ".", seu2_cell_fraction_after_downsampling) %>% as.numeric()
     cells_to_sample <- round(total_cells * numeric_seu2_cell_fraction_after_downsampling)
-    sampled_cells <- sample(total_cells, cells_to_sample)
+    withr::with_seed(seu2_cell_downsample_seed, {sampled_cells <- sample(total_cells, cells_to_sample)})
     res_mat2 <- res_mat2[, sampled_cells]
 }
 
@@ -365,7 +454,7 @@ knee_plot2
 
 Select threshold for knee plot
 ```{r}
-if (seu2_inflection_UMI_manual == "") {
+if (seu2_inflection_UMI_manual != "") {
     UMI_cutoff2 <- seu2_inflection_UMI_manual
 } else {
     UMI_cutoff2 <- metadata(bc_rank2)$inflection
@@ -420,10 +509,10 @@ UMI scatterplot between the two groups  #*
 Find list of mitochondrial Ensembl gene names
 ```{r}
 # # ensembl <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")  # Service may be down on this mirror
-ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")
-mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)
+# ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")
+# mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)  #!! uncomment this and comment out below
 
-# mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
+mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
 ```
 
 QC Seurat1, Violin plots
@@ -495,7 +584,7 @@ If data_input == "seu1" or "seu2": Apply Cells and Genes to be the same for both
 ```{r}
 if (data_input == "seu1") {
     if (seu2_matrix_generation_method == "kb") {
-        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", unspliced = seu2_matrix_include_unspliced, tcc = FALSE)
+        res_mat2 <- read_count_output_modified(seu2_data_path, name = "cells_x_genes", tcc = FALSE)
     } else if (seu2_matrix_generation_method == "cellranger") {
         res_mat2 <- Read10X(seu2_data_path, gene.column = 1)
     }
@@ -526,7 +615,7 @@ if (data_input == "seu1") {
 
 if (data_input == "seu2") {
     if (seu1_matrix_generation_method == "kb") {
-        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", unspliced = seu1_matrix_include_unspliced, tcc = FALSE)
+        res_mat1 <- read_count_output_modified(seu1_data_path, name = "cells_x_genes", tcc = FALSE)
     } else if (seu1_matrix_generation_method == "cellranger") {
         res_mat1 <- Read10X(seu1_data_path, gene.column = 1)
     }
@@ -574,10 +663,10 @@ if (data_input != "default") {
 
 Normalization
 ```{r}
-FeatureScatter(seu1, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+# FeatureScatter(seu1, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 seu1 <- NormalizeData(seu1, verbose = FALSE)
 
-FeatureScatter(seu2, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+# FeatureScatter(seu2, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 seu2 <- NormalizeData(seu2, verbose = FALSE)
 ```
 
@@ -603,13 +692,13 @@ Find HVGs
 seu1 <- FindVariableFeatures(seu1, verbose = FALSE, selection.method = seurat_hvg_flavor, mean.cutoff = seu_mean_cutoff, dispersion.cutoff = seu_dispersion_cutoff, nfeatures = 2000)
 
 top10_1 <- head(VariableFeatures(seu1), 10)
-LabelPoints(VariableFeaturePlot(seu1), points = top10_1, repel = TRUE)
+# LabelPoints(VariableFeaturePlot(seu1), points = top10_1, repel = TRUE)
 
 
 seu2 <- FindVariableFeatures(seu2, verbose = FALSE, selection.method = seurat_hvg_flavor, mean.cutoff = seu_mean_cutoff, dispersion.cutoff = seu_dispersion_cutoff, nfeatures = 2000)
 
 top10_2 <- head(VariableFeatures(seu2), 10)
-LabelPoints(VariableFeaturePlot(seu2), points = top10_2, repel = TRUE)
+# LabelPoints(VariableFeaturePlot(seu2), points = top10_2, repel = TRUE)
 ```
 
 Euler plot of HVG overlap
@@ -646,7 +735,7 @@ PCA
 ```{r}
 seu1 <- RunPCA(seu1, npcs = 50, verbose = FALSE, seed.use = pca_seed1)
 seu1_elbow <- Seurat::ElbowPlot(seu1, 50)
-seu1_elbow
+# seu1_elbow
 
 if (is.null(seu1_num_pcs)) {
     seu1_num_pcs <- 50 # optimize as needed
@@ -654,7 +743,7 @@ if (is.null(seu1_num_pcs)) {
 
 seu2 <- RunPCA(seu2, npcs = 50, verbose = FALSE, seed.use = pca_seed2)
 seu2_elbow <- Seurat::ElbowPlot(seu2, 50)
-seu2_elbow
+# seu2_elbow
 
 if (is.null(seu2_num_pcs)) {
     seu2_num_pcs <- 50 # optimize as needed
@@ -683,8 +772,8 @@ combined_pc_variance
 
 PCA scatterplot
 ```{r}
-PCAPlot(seu1) + theme(legend.position = "none") + ggtitle(glue("PCA, seu {seu1_name}")) # cols = "#D55E00"
-PCAPlot(seu2) + theme(legend.position = "none") + ggtitle(glue("PCA, seu {seu2_name}")) # cols = "#56B4E9"
+# PCAPlot(seu1) + theme(legend.position = "none") + ggtitle(glue("PCA, seu {seu1_name}")) # cols = "#D55E00"
+# PCAPlot(seu2) + theme(legend.position = "none") + ggtitle(glue("PCA, seu {seu2_name}")) # cols = "#56B4E9"
 ```
 
 Create a collection of PCA embeddings
@@ -776,12 +865,103 @@ if (data_input == "seu2" && identical(seu1_inds, seu2_inds)) {
 }
 ```
 
-Neighbors
+```{r}
+# # Uncomment if wanting to set random seed for KNN
+# assignInNamespace("AnnoyBuildIndex", value = function(data, metric = "euclidean", n.trees = 50) {
+#     f <- ncol(x = data)
+#     a <- switch(EXPR = metric, euclidean = new(Class = RcppAnnoy::AnnoyEuclidean,
+#         f), cosine = new(Class = RcppAnnoy::AnnoyAngular, f),
+#         manhattan = new(Class = RcppAnnoy::AnnoyManhattan, f),
+#         hamming = new(Class = RcppAnnoy::AnnoyHamming, f), stop("Invalid metric"))
+#     a$setSeed(as.integer(knn_seed1))
+#     for (ii in seq(nrow(x = data))) {
+#         a$addItem(ii - 1, data[ii, ])
+#     }
+#     a$build(n.trees)
+#     return(a)
+# }, ns = "Seurat")
+# 
+# assignInNamespace("AnnoySearch", value = function (index, query, k, search.k = -1, include.distance = TRUE) {
+#     index$setSeed(as.integer(knn_seed1))
+# 
+#     n <- nrow(x = query)
+#     idx <- matrix(nrow = n, ncol = k)
+#     dist <- matrix(nrow = n, ncol = k)
+#     convert <- methods::is(index, "Rcpp_AnnoyAngular")
+#     if (!inherits(x = plan(), what = "multicore")) {
+#         oplan <- plan(strategy = "sequential")
+#         on.exit(plan(oplan), add = TRUE)
+#     }
+#     res <- future.apply::future_lapply(X = 1:n, FUN = function(x) {
+#         res <- index$getNNsByVectorList(query[x, ], k, search.k,
+#             include.distance)
+#         if (convert) {
+#             res$dist <- 0.5 * (res$dist * res$dist)
+#         }
+#         list(res$item + 1, res$distance)
+#     })
+#     for (i in 1:n) {
+#         idx[i, ] <- res[[i]][[1]]
+#         if (include.distance) {
+#             dist[i, ] <- res[[i]][[2]]
+#         }
+#     }
+#     return(list(nn.idx = idx, nn.dists = dist))
+# }, ns = "Seurat")
+```
+
 ```{r}
 seu1 <- FindNeighbors(seu1, reduction = "pca", dims = 1:seu1_num_pcs, k.param = seu_n_neighbors)
 snn_graph_seu1 <- seu1@graphs$RNA_snn
 knn_graph_seu1 <- seu1@graphs$RNA_nn
+```
 
+```{r}
+# # Uncomment if wanting to set random seed for KNN
+# assignInNamespace("AnnoyBuildIndex", value = function(data, metric = "euclidean", n.trees = 50) {
+#     f <- ncol(x = data)
+#     a <- switch(EXPR = metric, euclidean = new(Class = RcppAnnoy::AnnoyEuclidean,
+#         f), cosine = new(Class = RcppAnnoy::AnnoyAngular, f),
+#         manhattan = new(Class = RcppAnnoy::AnnoyManhattan, f),
+#         hamming = new(Class = RcppAnnoy::AnnoyHamming, f), stop("Invalid metric"))
+#     a$setSeed(as.integer(knn_seed2))
+#     for (ii in seq(nrow(x = data))) {
+#         a$addItem(ii - 1, data[ii, ])
+#     }
+#     a$build(n.trees)
+#     return(a)
+# }, ns = "Seurat")
+# 
+# assignInNamespace("AnnoySearch", value = function (index, query, k, search.k = -1, include.distance = TRUE) {
+#     index$setSeed(as.integer(knn_seed2))
+# 
+#     n <- nrow(x = query)
+#     idx <- matrix(nrow = n, ncol = k)
+#     dist <- matrix(nrow = n, ncol = k)
+#     convert <- methods::is(index, "Rcpp_AnnoyAngular")
+#     if (!inherits(x = plan(), what = "multicore")) {
+#         oplan <- plan(strategy = "sequential")
+#         on.exit(plan(oplan), add = TRUE)
+#     }
+#     res <- future.apply::future_lapply(X = 1:n, FUN = function(x) {
+#         res <- index$getNNsByVectorList(query[x, ], k, search.k,
+#             include.distance)
+#         if (convert) {
+#             res$dist <- 0.5 * (res$dist * res$dist)
+#         }
+#         list(res$item + 1, res$distance)
+#     })
+#     for (i in 1:n) {
+#         idx[i, ] <- res[[i]][[1]]
+#         if (include.distance) {
+#             dist[i, ] <- res[[i]][[2]]
+#         }
+#     }
+#     return(list(nn.idx = idx, nn.dists = dist))
+# }, ns = "Seurat")
+```
+
+```{r}
 seu2 <- FindNeighbors(seu2, reduction = "pca", dims = 1:seu2_num_pcs, k.param = seu_n_neighbors)
 snn_graph_seu2 <- seu2@graphs$RNA_snn
 knn_graph_seu2 <- seu2@graphs$RNA_nn
@@ -828,6 +1008,7 @@ jaccards$logged_degree_ratio[jaccards$logged_degree_ratio == Inf] <- 10
 jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
 median_magnitude_logged_degree_ratio <- median(abs(jaccards$logged_degree_ratio))
+mean_magnitude_logged_degree_ratio <- mean(abs(jaccards$logged_degree_ratio))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
@@ -835,6 +1016,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
 
 print(glue("Median jaccard of SNN: {median_jaccard}"))
 print(glue("Median magnitude of log degree ratio of SNN: {median_magnitude_logged_degree_ratio}"))
+print(glue("Mean magnitude of log degree ratio of SNN: {mean_magnitude_logged_degree_ratio}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
@@ -872,10 +1054,10 @@ if (seurat_clustering_algorithm == "louvain") {
     seurat_clustering_algorithm <- 4
 }
 
-seu1 <- FindClusters(seu1, verbose = FALSE, algorithm = seurat_clustering_algorithm, resolution = seu_resolution, random.seed = clustering_seed1)
+seu1 <- FindClusters(seu1, verbose = FALSE, algorithm = seurat_clustering_algorithm, resolution = seu_resolution, random.seed = 42)
 seu1_clusters <- Idents(seu1)
 
-seu2 <- FindClusters(seu2, verbose = FALSE, algorithm = seurat_clustering_algorithm, resolution = seu_resolution, random.seed = clustering_seed2)
+seu2 <- FindClusters(seu2, verbose = FALSE, algorithm = seurat_clustering_algorithm, resolution = seu_resolution, random.seed = 43)
 seu2_clusters <- Idents(seu2)
 ```
 
@@ -926,8 +1108,8 @@ Heatmap of clusters
 ```{r}
 jacc_seu1_seu2 <- linkClustersMatrix(seu1_clusters, seu2_clusters)
 
-cluster_heatmap <- plot_heatmap(jacc_seu1_seu2, ari_value, show_axis_titles = TRUE, show_trees = FALSE, save = file_paths$pheatmap)
-cluster_heatmap
+# cluster_heatmap <- plot_heatmap(jacc_seu1_seu2, ari_value, show_axis_titles = TRUE, show_trees = FALSE, save = file_paths$pheatmap)
+# cluster_heatmap
 ```
 
 Alluvial plot of clusters
@@ -1047,13 +1229,13 @@ if (!isTRUE(all.equal(colnames(seu1), colnames(seu2)))) {
     seu2_cluster_data_filtered <- seu2_cluster_data_original
 }
 
-seu1_umap_knn <- dbscan::kNN(seu1_umap_data, k = umap_knn_k)
-seu2_umap_knn <- dbscan::kNN(seu2_umap_data, k = umap_knn_k)
+seu1_umap_knn <- FNN::get.knn(seu1_umap_data, k = umap_knn_k)
+seu2_umap_knn <- FNN::get.knn(seu2_umap_data, k = umap_knn_k)
 ```
 
 Find jaccard indices of KNN graphs from UMAP space
 ```{r}
-jaccards_all_cells <- calculate_knn_jaccards(seu1_umap_knn$id, seu2_umap_knn$id)
+jaccards_all_cells <- calculate_knn_jaccards(seu1_umap_knn$nn.index, seu2_umap_knn$nn.index)
 
 median_jaccard_umap_knn <- median(jaccards_all_cells)
 
@@ -1073,20 +1255,19 @@ Plot jaccard indices
 jaccards_df <- data.frame(Cells = overlapping_inds, JaccardIndex = jaccards_all_cells, seu1_clusters = seu1_cluster_data_filtered, seu2_clusters = seu2_cluster_data_filtered)
 
 umap_jaccard_plot <- make_umap_jaccard_plot(jaccards_df, save = file_paths$umap_jaccard_knn_density)
-umap_jaccard_plot_seu1_facet <- make_umap_jaccard_plot(jaccards_df, facet = "seu1_clusters", save = file_paths$umap_jaccard_knn_density_seu1_facet)
-umap_jaccard_plot_seu2_facet <- make_umap_jaccard_plot(jaccards_df, facet = "seu2_clusters", save = file_paths$umap_jaccard_knn_density_seu2_facet)
+# umap_jaccard_plot_seu1_facet <- make_umap_jaccard_plot(jaccards_df, facet = "seu1_clusters", save = file_paths$umap_jaccard_knn_density_seu1_facet)
+# umap_jaccard_plot_seu2_facet <- make_umap_jaccard_plot(jaccards_df, facet = "seu2_clusters", save = file_paths$umap_jaccard_knn_density_seu2_facet)
 
 umap_jaccard_plot
-umap_jaccard_plot_seu1_facet
-umap_jaccard_plot_seu2_facet
+# umap_jaccard_plot_seu1_facet
+# umap_jaccard_plot_seu2_facet
 ```
 
 Run leiden clustering on KNN graphs from UMAP space
 ```{r}
-set.seed(R_random_seed)
+withr::with_seed(umap_leiden_seed1, {seu1_umap_knn_clusters <- bluster::clusterRows(seu1_umap_data, NNGraphParam(shared = FALSE, k = umap_knn_k, BNPARAM = BiocNeighbors::KmknnParam(), cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2, beta = 0.01)))})
 
-seu1_umap_knn_clusters <- bluster::clusterRows(seu1_umap_data, NNGraphParam(shared = FALSE, k = umap_knn_k, BNPARAM = BiocNeighbors::AnnoyParam(), cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2, beta = 0.01)))
-seu2_umap_knn_clusters <- bluster::clusterRows(seu2_umap_data, NNGraphParam(shared = FALSE, k = umap_knn_k, BNPARAM = BiocNeighbors::AnnoyParam(), cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2, beta = 0.01)))
+withr::with_seed(umap_leiden_seed2, {seu2_umap_knn_clusters <- bluster::clusterRows(seu2_umap_data, NNGraphParam(shared = FALSE, k = umap_knn_k, BNPARAM = BiocNeighbors::KmknnParam(), cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2, beta = 0.01)))})
 
 seu1_umap_knn_clusters <- reorder_clusters_descending(seu1_umap_knn_clusters)
 seu2_umap_knn_clusters <- reorder_clusters_descending(seu2_umap_knn_clusters)
@@ -1151,18 +1332,24 @@ UMAP with UMAP Leiden clusters
 ```{r}
 colors_group2_umap <- find_group2_colors(clus_df_gather_umap, seu1_name, seu2_name)
 
-umap_plots <- plot_umap(group1_umap_info = seu1_umap_data, group1_clusters = seu1_umap_knn_clusters, group2_umap_info = seu2_umap_data, group2_clusters = seu2_clusters_renumbered_umap, colors_group2 = colors_group2_umap, group1 = seu1_name, group2 = seu2_name, save = c(file_paths$umap_umap_leiden_seu1, file_paths$umap_umap_leiden_seu2))
-seu1_umap <- umap_plots[[1]]
-seu2_umap <- umap_plots[[2]]
+seu1_umap_knn_for_umap <- list("idx" = seu1_umap_knn$nn.index, "dist" = seu1_umap_knn$nn.dist)
+seu2_umap_knn_for_umap <- list("idx" = seu2_umap_knn$nn.index, "dist" = seu2_umap_knn$nn.dist)
 
-seu1_umap
-seu2_umap
+withr::with_seed(umap_umap_seed1, {seu1_umap_umap_data <- uwot::umap(seu1_umap_data, n_neighbors = umap_knn_k, n_sgd_threads = 1, seed = as.integer(umap_umap_seed1), nn_method = seu1_umap_knn_for_umap, ret_nn = FALSE)})
+withr::with_seed(umap_umap_seed2, {seu2_umap_umap_data <- uwot::umap(seu2_umap_data, n_neighbors = umap_knn_k, n_sgd_threads = 1, seed = as.integer(umap_umap_seed2), nn_method = seu2_umap_knn_for_umap, ret_nn = FALSE)})
+
+umap_umap_plots <- plot_umap(group1_umap_info = seu1_umap_umap_data, group1_clusters = seu1_umap_knn_clusters, group2_umap_info = seu2_umap_umap_data, group2_clusters = seu2_clusters_renumbered_umap, colors_group2 = colors_group2_umap, group1 = seu1_name, group2 = seu2_name, save = c(file_paths$umap_umap_leiden_seu1, file_paths$umap_umap_leiden_seu2))
+seu1_umap_umap <- umap_umap_plots[[1]]
+seu2_umap_umap <- umap_umap_plots[[2]]
+
+seu1_umap_umap
+seu2_umap_umap
 ```
 
 Find markers Seu1
 ```{r}
 if (!file.exists(output_data_file_paths$markers_seu1)) {
-    markers_seu1 <- FindAllMarkers(seu1, logfc.threshold = 0.1, min.pct = 0.01)
+    markers_seu1 <- FindAllMarkers(seu1)
 } else {
     markers_seu1 <- readRDS(output_data_file_paths$markers_seu1)
 }
@@ -1170,6 +1357,13 @@ if (!file.exists(output_data_file_paths$markers_seu1)) {
 
 Find markers Seu2
 ```{r}
+#???
+# saveRDS(seu2, file = output_data_file_paths$seu2_object)
+
+#???
+# markers_seu1 <- readRDS(output_data_file_paths$markers_seu1)
+# seu2 <- readRDS(output_data_file_paths$seu2_object)
+
 if (!file.exists(output_data_file_paths$markers_seu2)) {
     markers_seu2 <- FindAllMarkers(seu2)
 } else {
@@ -1255,10 +1449,10 @@ pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = seu1
 logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
 
 
-logFC_scatterplot
-logFC_scatterplot_with_legend
-
-pvaladj_scatterplot
+#!! logFC_scatterplot
+#!! logFC_scatterplot_with_legend
+#
+#!! pvaladj_scatterplot
 ```
 
 Save markers df

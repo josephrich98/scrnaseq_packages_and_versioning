@@ -68,6 +68,7 @@ bioconductor_version <- "3.18"
 if (!requireNamespace("BUSpaRse", quietly = TRUE)) BiocManager::install("BUSpaRse", version = bioconductor_version, update = FALSE)
 if (!requireNamespace("DropletUtils", quietly = TRUE)) BiocManager::install("DropletUtils", version = bioconductor_version, update = FALSE)
 if (!requireNamespace("biomaRt", quietly = TRUE)) BiocManager::install("biomaRt", version = bioconductor_version, update = FALSE)
+if (!requireNamespace("bluster", quietly = TRUE)) BiocManager::install("bluster", version = bioconductor_version, update = FALSE)
 ```
 
 Set up conda environment

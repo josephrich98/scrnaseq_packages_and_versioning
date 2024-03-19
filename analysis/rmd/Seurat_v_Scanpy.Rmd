@@ -7,23 +7,16 @@ date: "2024-01-01"
 Select yaml file
 ```{r}
 yaml_file <- "Fig1"  # Fig1, Supp_Fig2, Supp_Fig3, Supp_Fig4, Supp_Fig5
+save_data = FALSE
 ```
 
 Load contents of yaml file into global R environment
 ```{r}
-if (exists("using_colab") && get("using_colab")) {
-    yaml_dir <- "/content/scrnaseq_packages_and_versioning/analysis/yaml"
-} else {
-    yaml_dir <- glue::glue("{dirname(getwd())}/yaml")
-}
-
+yaml_dir <- glue::glue("{dirname(getwd())}/yaml")
 yaml_file_path <- glue::glue("{yaml_dir}/{yaml_file}.yaml")
 
-config <- yaml::read_yaml(yaml_file_path)
-
-for (name in names(config)) {
-    assign(name, config[[name]], envir = .GlobalEnv)
-}
+source(glue::glue("{dirname(getwd())}/scripts/load_yaml_contents.R"))
+load_yaml_contents(yaml_file_path)
 ```
 
 File path definitions
@@ -35,9 +28,6 @@ if (seu_data_path == "") {
 if (scan_data_path == "") {
     scan_data_path <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan_matrix_generation_method}{scan_matrix_generation_method_version}/frac{scan_read_fraction_after_downsampling}_seed{scan_read_downsample_seed}")
 }
-
-# Specifications for downloading data
-doi <- "AAAAAA"  # FILL IN
 
 if (data_path_root == "") {
     data_path_root <- glue::glue("{project_base_path}/count_matrix_collection/{data_name}")
@@ -61,8 +51,12 @@ cell_fraction_after_downsampling <- ifelse(seu_cell_fraction_after_downsampling 
     paste("seu", seu_cell_fraction_after_downsampling, "vs", "scan", scan_cell_fraction_after_downsampling, sep = "_")
 )
 
-if (cell_fraction_after_downsampling != "1_0") {
-    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{R_random_seed}")
+if (seu_cell_fraction_after_downsampling != "1_0") {
+    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{seu_cell_downsample_seed}")
+}
+
+if (scan_cell_fraction_after_downsampling != "1_0") {
+    cell_fraction_after_downsampling <- glue::glue("{cell_fraction_after_downsampling}_seed{scan_cell_downsample_seed}")
 }
 
 read_fraction_after_downsampling <- ifelse(seu_read_fraction_after_downsampling == scan_read_fraction_after_downsampling, seu_read_fraction_after_downsampling,
@@ -77,17 +71,13 @@ if (scan_read_fraction_after_downsampling != "1_0") {
     read_fraction_after_downsampling <- glue::glue("{read_fraction_after_downsampling}_seed{scan_read_downsample_seed}")
 }
 
-if (exists("using_colab") && get("using_colab")) {
-    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
-}
-
 if (output_base_path == "") {
     output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat_version}_vs_scanpyv{scanpy_version}/methods_{analysis_methods}_input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
 }
 ```
 
 ```{r}
-set.seed(R_random_seed)
+set.seed(100)
 
 group1_color <- "#D55E00"
 group2_color <- "#56B4E9"
@@ -252,6 +242,7 @@ if (analysis_methods == "default" || analysis_methods == "scanpy_like") {
     scanpy_cluster_iters <- -1
     scanpy_umap_min_dist <- 0.5
     scanpy_correction_method <- "benjamini-hochberg"
+    scanpy_tie_correct <- FALSE
 } else if (analysis_methods == "seurat_like") {
     scanpy_hvg_flavor <- "seurat_v3"
     n_top_genes <- 2000
@@ -263,6 +254,7 @@ if (analysis_methods == "default" || analysis_methods == "scanpy_like") {
     scanpy_cluster_iters <- 10
     scanpy_umap_min_dist <- 0.3
     scanpy_correction_method <- "bonferroni"
+    scanpy_tie_correct <- TRUE
 } else {
     paste(analysis_methods, "is not a valid input for analysis_methods. Please choose from 'default', 'seurat_like', or 'scanpy_like'.")
 }
@@ -304,20 +296,30 @@ py_config()
 ```
 
 Download data if necessary
+```{r}
+if (seu_file_link != "" && (!dir.exists(seu_data_path) || length(list.files(seu_data_path)) == 0)) {
+    seu_data_path <- download_box(seu_file_link, seu_data_name_from_download, data_path_root)
+}
+
+if (scan_file_link != "" && (!dir.exists(scan_data_path) || length(list.files(scan_data_path)) == 0)) {
+    scan_data_path <- download_box(scan_file_link, scan_data_name_from_download, data_path_root)
+}
+```
+
 ```{python}
+import os 
 import sys
 sys.path.append(f"{r.project_base_path}/scripts")
 from download_data import *
 
-if not os.path.exists(r.seu_data_path) or not os.listdir(r.seu_data_path):
-    r.seu_data_path = download_and_extract(r.doi, r.seu_data_name_from_download, r.data_path_root, r.seu_data_path)
-if not os.path.exists(r.scan_data_path) or not os.listdir(r.scan_data_path):
-    r.scan_data_path = download_and_extract(r.doi, r.scan_data_name_from_download, r.data_path_root, r.scan_data_path)
+if not r.doi == "" and (not os.path.exists(r.seu_data_path) or not os.listdir(r.seu_data_path)):
+    r.seu_data_path = download_and_extract(r.doi, r.seu_data_name_from_download, r.data_path_root)
+if not r.doi == "" and (not os.path.exists(r.scan_data_path) or not os.listdir(r.scan_data_path)):
+    r.scan_data_path = download_and_extract(r.doi, r.scan_data_name_from_download, r.data_path_root)
 ```
 
 Python imports and setting up variables
 ```{python}
-import os 
 import shutil
 import scanpy as sc
 import pandas as pd
@@ -329,7 +331,7 @@ import pickle
 import copy
 import kb_python.utils as kb_utils
 
-np.random.seed(int(r.R_random_seed))
+np.random.seed(100)
 
 seu_read_fraction_after_downsampling = r.seu_read_fraction_after_downsampling
 scan_read_fraction_after_downsampling = r.scan_read_fraction_after_downsampling
@@ -370,7 +372,7 @@ if (seu_cell_fraction_after_downsampling != "1_0") {
     total_cells <- ncol(res_mat)
     numeric_seu_cell_fraction_after_downsampling <- gsub("_", ".", seu_cell_fraction_after_downsampling) %>% as.numeric()
     cells_to_sample <- round(total_cells * numeric_seu_cell_fraction_after_downsampling)
-    sampled_cells <- sample(total_cells, cells_to_sample)
+    withr::with_seed(seu_cell_downsample_seed, {sampled_cells <- sample(total_cells, cells_to_sample)})
     res_mat <- res_mat[, sampled_cells]
 }
 
@@ -386,7 +388,7 @@ knee_plot
 
 Select threshold for knee plot
 ```{r}
-if (inflection_UMI_manual == "") {
+if (inflection_UMI_manual != "") {
     UMI_cutoff <- inflection_UMI_manual
 } else {
     inflection_UMI <- metadata(bc_rank)$inflection
@@ -413,11 +415,14 @@ elif scan_matrix_generation_method=="cellranger":
 adata_unfiltered = adata.copy()
 
 if r.scan_cell_fraction_after_downsampling != "1_0":
+    current_state = np.random.get_state()
+    np.random.seed(r.scan_cell_downsample_seed)
     total_cells = adata.n_obs
     numeric_scan_cell_fraction_after_downsampling = float(scan_cell_fraction_after_downsampling.replace("_", "."))
     cells_to_sample = round(total_cells * numeric_scan_cell_fraction_after_downsampling)
     sampled_cells_indices = np.random.choice(total_cells, cells_to_sample, replace=False)
     adata = adata[sampled_cells_indices]
+    np.random.set_state(current_state)
 
 # Apply filtering of knee plot
 sc.pp.filter_cells(adata, min_counts=r.UMI_cutoff)  # r.UMI_cutoff (same cutoff as R default) OR custom number
@@ -721,7 +726,7 @@ sc.pp.scale(adata, max_value=r.scanpy_scale_max)
 
 PCA
 ```{r}
-seu <- RunPCA(seu, npcs = 50, verbose = FALSE)
+seu <- RunPCA(seu, npcs = 50, verbose = FALSE, seed.use = pca_seed_seu)
 seu_elbow <- Seurat::ElbowPlot(seu, 50)
 seu_elbow
 
@@ -731,7 +736,7 @@ if (is.null(seu_num_pcs)) {
 ```
 
 ```{python}
-sc.tl.pca(adata, svd_solver='arpack', zero_center = r.scanpy_pca_zero_center)
+sc.tl.pca(adata, svd_solver='arpack', zero_center = r.scanpy_pca_zero_center, random_state = int(r.pca_seed_scan))
 sc.pl.pca_variance_ratio(adata, log=True, n_pcs=50)
 
 if scan_num_pcs == None:
@@ -875,13 +880,58 @@ if (data_input == "seurat" && identical(seu_inds, scan_inds)) {
 
 Neighbors
 ```{r}
+# # Uncomment if wanting to set random seed for KNN
+# assignInNamespace("AnnoyBuildIndex", value = function(data, metric = "euclidean", n.trees = 50) {
+#     f <- ncol(x = data)
+#     a <- switch(EXPR = metric, euclidean = new(Class = RcppAnnoy::AnnoyEuclidean, 
+#         f), cosine = new(Class = RcppAnnoy::AnnoyAngular, f), 
+#         manhattan = new(Class = RcppAnnoy::AnnoyManhattan, f), 
+#         hamming = new(Class = RcppAnnoy::AnnoyHamming, f), stop("Invalid metric"))
+#     a$setSeed(as.integer(knn_seed_seu))
+#     for (ii in seq(nrow(x = data))) {
+#         a$addItem(ii - 1, data[ii, ])
+#     }
+#     a$build(n.trees)
+#     return(a)
+# }, ns = "Seurat")
+# 
+# assignInNamespace("AnnoySearch", value = function (index, query, k, search.k = -1, include.distance = TRUE) {
+#     index$setSeed(as.integer(knn_seed_seu))
+#     
+#     n <- nrow(x = query)
+#     idx <- matrix(nrow = n, ncol = k)
+#     dist <- matrix(nrow = n, ncol = k)
+#     convert <- methods::is(index, "Rcpp_AnnoyAngular")
+#     if (!inherits(x = plan(), what = "multicore")) {
+#         oplan <- plan(strategy = "sequential")
+#         on.exit(plan(oplan), add = TRUE)
+#     }
+#     res <- future.apply::future_lapply(X = 1:n, FUN = function(x) {
+#         res <- index$getNNsByVectorList(query[x, ], k, search.k, 
+#             include.distance)
+#         if (convert) {
+#             res$dist <- 0.5 * (res$dist * res$dist)
+#         }
+#         list(res$item + 1, res$distance)
+#     })
+#     for (i in 1:n) {
+#         idx[i, ] <- res[[i]][[1]]
+#         if (include.distance) {
+#             dist[i, ] <- res[[i]][[2]]
+#         }
+#     }
+#     return(list(nn.idx = idx, nn.dists = dist))
+# }, ns = "Seurat")
+```
+
+```{r}
 seu <- FindNeighbors(seu, reduction = "pca", dims = 1:seu_num_pcs, k.param = seu_n_neighbors)
 snn_graph_seu <- seu@graphs$RNA_snn
 knn_graph_seu <- seu@graphs$RNA_nn
 ```
 
 ```{python}
-sc.pp.neighbors(adata, n_neighbors=int(r.scan_n_neighbors), n_pcs=int(scan_num_pcs))
+sc.pp.neighbors(adata, n_neighbors=int(r.scan_n_neighbors), n_pcs=int(scan_num_pcs), use_rep='X_pca', random_state=int(r.knn_seed_scan))
 snn_graph_scan = adata.obsp['connectivities']
 knn_graph_scan = adata.obsp['distances']
 ```
@@ -927,6 +977,7 @@ jaccards$logged_degree_ratio[jaccards$logged_degree_ratio == Inf] <- 10
 jaccards$jaccard_logged <- log(jaccards$Jaccard, base = 2)
 
 median_magnitude_logged_degree_ratio <- median(abs(jaccards$logged_degree_ratio))
+mean_magnitude_logged_degree_ratio <- mean(abs(jaccards$logged_degree_ratio))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink(file_paths$pca_knn_clustering_umap_file, append = TRUE, split = TRUE)
@@ -934,6 +985,7 @@ if (file_paths$pca_knn_clustering_umap_file != FALSE) {
 
 print(glue("Median jaccard of SNN: {median_jaccard}"))
 print(glue("Median magnitude of log degree ratio of SNN: {median_magnitude_logged_degree_ratio}"))
+print(glue("Mean magnitude of log degree ratio of SNN: {mean_magnitude_logged_degree_ratio}"))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
     sink()
@@ -949,42 +1001,26 @@ jaccard_degree_scatterplot
 If data_input == "seurat": Apply KNN and SNN graph from Seurat to Scanpy
 ```{python}
 if data_input == "seurat" and (r.seu_inds == r.scan_inds):
+    # SNN
     adata.obsp['connectivities'] = r.snn_graph_seu
     snn_graph_scan = adata.obsp['connectivities']
     
-    # adata.obsp['distances'] = r.knn_graph_seu   #*
-    # knn_graph_scan = adata.obsp['distances']   #*
+    # KNN
+    # adata.obsp['distances'] = r.knn_graph_seu
+    # knn_graph_scan = adata.obsp['distances']
 ```
-
-#!!!
-```{r}
-# saveRDS(seu, file = output_data_file_paths$seu_object)
-# py$adata$write_h5ad(output_data_file_paths$scan_adata, compression = py$hdf5plugin$FILTERS$zstd)
-```
-
-```{r}
-# seu <- readRDS(output_data_file_paths$seu_object)
-# adata_path <- output_data_file_paths$scan_adata
-```
-
-```{python}
-# adata = anndata.read_h5ad(r.adata_path)
-# snn_graph_scan = adata.obsp['connectivities']
-```
-
-
-
 
 If data_input == "scanpy": Apply SNN graph from Scanpy to Seurat
 ```{r}
 if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
+    # SNN
     snn_graph_scan_matrix <- as.matrix(py$snn_graph_scan, rownames.force = NA)
     rownames(snn_graph_scan_matrix) <- rownames(py$adata$obs)
     colnames(snn_graph_scan_matrix) <- rownames(py$adata$obs)
     seu@graphs$RNA_snn <- as.Graph(snn_graph_scan_matrix)
     snn_graph_seu <- seu@graphs$RNA_snn
 
-    #*
+    # KNN
     # knn_graph_scan_matrix <- as.matrix(py$adata$obsp["distances"], rownames.force = NA)
     # rownames(knn_graph_scan_matrix) <- rownames(py$adata$obs)
     # colnames(knn_graph_scan_matrix) <- rownames(py$adata$obs)
@@ -993,10 +1029,11 @@ if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
 }
 ```
 
-#!!! erase (just here for clustering)
+Follow these instructions if clustering is too memory-intensive when analysis_methods == "scanpy_like"
 ```{r}
 # saveRDS(seu, file = output_data_file_paths$seu_object)
-# py$adata$write_h5ad(output_data_file_paths$scan_adata, compression = py$hdf5plugin$FILTERS$zstd)
+### run seurat_scanpylike_clustering.R
+# seu <- readRDS(output_data_file_paths$seu_object)
 ```
 
 Clustering
@@ -1006,20 +1043,30 @@ if (seurat_clustering_algorithm == "louvain") {
 } else if (seurat_clustering_algorithm == "leiden") {
     seurat_clustering_algorithm <- 4
 }
-
-seu <- FindClusters(seu, verbose = FALSE, algorithm = seurat_clustering_algorithm, resolution = seu_resolution)  #!!! uncomment
-
-# seu <- readRDS(output_data_file_paths$seu_object)  #!!! erase
-
-seu_clusters <- Idents(seu)
 ```
 
 ```{python}
 if r.scanpy_clustering_algorithm == "leiden":
-    sc.tl.leiden(adata, resolution=r.scanpy_resolution, n_iterations=int(r.scanpy_cluster_iters))
+    sc.tl.leiden(adata, resolution=r.scanpy_resolution, n_iterations=int(r.scanpy_cluster_iters), random_state = int(r.clustering_seed_scan))
 elif r.scanpy_clustering_algorithm == "louvain":
-    sc.tl.louvain(adata, resolution=r.scanpy_resolution)
+    sc.tl.louvain(adata, resolution=r.scanpy_resolution, random_state = int(r.clustering_seed_scan))
 ```
+
+```{r}
+# # Since leiden has identical outcomes with both Seurat and Scanpy (can be verified by uncommenting the cell above), we can save the computational intensity of the operation by just applying Scanpy's results to Seurat
+if (analysis_methods == "scanpy_like") {
+    seu <- FindClusters(seu, verbose = FALSE, algorithm = 1, resolution = seu_resolution, random.seed = clustering_seed_seu)
+    scan_clusters <- py$adata$obs[[scanpy_clustering_algorithm]]
+    names(scan_clusters) <- scan_inds
+    Idents(seu) <- scan_clusters
+    seu$seurat_clusters <- Idents(seu)
+} else {
+    seu <- FindClusters(seu, verbose = FALSE, algorithm = seurat_clustering_algorithm, resolution = seu_resolution, random.seed = clustering_seed_seu)
+}
+
+seu_clusters <- Idents(seu)
+```
+
 
 PCA scatterplots with clusters
 ```{r}
@@ -1108,7 +1155,7 @@ clus_df_gather <- sort_clusters_by_agreement(clus_df_gather, stable_column = "Se
 
 alluvial_plot <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = FALSE, save = file_paths$alluvial)
 alluvial_plot_legend <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 0.5, save = file_paths$alluvial_legend)
-alluvial_plot_legend_high_alpha <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 1, save = file_paths$alluvial_legend_high_alpha)
+# alluvial_plot_legend_high_alpha <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 1, save = file_paths$alluvial_legend_high_alpha)
 
 alluvial_plot
 alluvial_plot_legend
@@ -1155,12 +1202,12 @@ if (data_input == "scanpy" && identical(seu_inds, scan_inds)) {
 
 UMAP
 ```{r}
-seu_umap_info <- RunUMAP(seu, dims = 1:seu_num_pcs, min.dist = seu_umap_min_dist, umap.method = seu_umap_method, metric = seu_umap_metric)
+seu_umap_info <- RunUMAP(seu, dims = 1:seu_num_pcs, min.dist = seu_umap_min_dist, umap.method = seu_umap_method, seed.use = umap_seed_seu, metric = seu_umap_metric)
 # DimPlot(seu_umap_info, reduction = "umap") + scale_color_manual(values = ditto_colors)
 ```
 
 ```{python}
-sc.tl.umap(adata, min_dist = r.scanpy_umap_min_dist)
+sc.tl.umap(adata, min_dist = r.scanpy_umap_min_dist, random_state = int(r.umap_seed_scan))
 # sc.pl.umap(adata, color=r.scanpy_clustering_algorithm, palette=r.ditto_colors, ax=ax, show=False, title="UMAP (Clustering)")
 ```
 
@@ -1216,13 +1263,13 @@ if (!all.equal(colnames(seu), as.vector(py$adata$obs_names$values))) {
     scan_cluster_data_filtered <- scan_cluster_data_original
 }
 
-seu_umap_knn <- dbscan::kNN(seu_umap_data, k = umap_knn_k)
-scan_umap_knn <- dbscan::kNN(scan_umap_data, k = umap_knn_k)
+seu_umap_knn <- FNN::get.knn(seu_umap_data, k = umap_knn_k)
+scan_umap_knn <- FNN::get.knn(scan_umap_data, k = umap_knn_k)
 ```
 
 Find jaccard indices of KNN graphs from UMAP space
 ```{r}
-jaccards_all_cells <- calculate_knn_jaccards(seu_umap_knn$id, scan_umap_knn$id)
+jaccards_all_cells <- calculate_knn_jaccards(seu_umap_knn$nn.index, scan_umap_knn$nn.index)
 
 median_jaccard_umap_knn <- median(jaccards_all_cells)
 
@@ -1252,10 +1299,9 @@ umap_jaccard_plot_scan_facet
 
 Run leiden clustering on KNN graphs from UMAP space
 ```{r}
-set.seed(R_random_seed)
+withr::with_seed(umap_leiden_seed_seu, {seu_umap_knn_clusters <- bluster::clusterRows(seu_umap_data, NNGraphParam(shared = FALSE, BNPARAM = BiocNeighbors::KmknnParam(), k = umap_knn_k, cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2)))})
 
-seu_umap_knn_clusters <- bluster::clusterRows(seu_umap_data, NNGraphParam(shared = FALSE, k = umap_knn_k, cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2)))
-scan_umap_knn_clusters <- bluster::clusterRows(scan_umap_data, NNGraphParam(shared = FALSE, k = umap_knn_k, cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2)))
+withr::with_seed(umap_leiden_seed_scan, {scan_umap_knn_clusters <- bluster::clusterRows(scan_umap_data, NNGraphParam(shared = FALSE, BNPARAM = BiocNeighbors::KmknnParam(), k = umap_knn_k, cluster.fun = "leiden", cluster.args = list(resolution_parameter = umap_leiden_clustering_resolution, objective_function = "modularity", n_iterations = 2)))})
 
 seu_umap_knn_clusters <- reorder_clusters_descending(seu_umap_knn_clusters)
 scan_umap_knn_clusters <- reorder_clusters_descending(scan_umap_knn_clusters)
@@ -1318,12 +1364,18 @@ UMAP with UMAP Leiden clusters
 ```{r}
 colors_group2_umap <- find_group2_colors(clus_df_gather_umap, "Seurat", "Scanpy")
 
-umap_plots <- plot_umap(group1_umap_info = seu_umap_data, group1_clusters = seu_umap_knn_clusters, group2_umap_info = scan_umap_data, group2_clusters = scanpy_clusters_renumbered_umap, colors_group2 = colors_group2_umap, group1 = "Seurat", group2 = "Scanpy", save = c(file_paths$umap_umap_leiden_seu, file_paths$umap_umap_leiden_scan))
-seu_umap <- umap_plots[[1]]
-scan_umap <- umap_plots[[2]]
+seu_umap_knn_for_umap <- list("idx" = seu_umap_knn$nn.index, "dist" = seu_umap_knn$nn.dist)
+scan_umap_knn_for_umap <- list("idx" = scan_umap_knn$nn.index, "dist" = scan_umap_knn$nn.dist)
 
-seu_umap
-scan_umap
+withr::with_seed(umap_umap_seed_seu, {seu_umap_umap_data <- uwot::umap(seu_umap_data, n_neighbors = umap_knn_k, n_sgd_threads = 1, seed = as.integer(umap_umap_seed_seu), nn_method = seu_umap_knn_for_umap, ret_nn = FALSE)})
+withr::with_seed(umap_umap_seed_scan, {scan_umap_umap_data <- uwot::umap(scan_umap_data, n_neighbors = umap_knn_k, n_sgd_threads = 1, seed = as.integer(umap_umap_seed_scan), nn_method = scan_umap_knn_for_umap, ret_nn = FALSE)})
+
+umap_umap_plots <- plot_umap(group1_umap_info = seu_umap_umap_data, group1_clusters = seu_umap_knn_clusters, group2_umap_info = scan_umap_umap_data, group2_clusters = scanpy_clusters_renumbered_umap, colors_group2 = colors_group2_umap, group1 = "Seurat", group2 = "Scanpy", save = c(file_paths$umap_umap_leiden_seu, file_paths$umap_umap_leiden_scan))
+seu_umap_umap <- umap_umap_plots[[1]]
+scan_umap_umap <- umap_umap_plots[[2]]
+
+seu_umap_umap
+scan_umap_umap
 ```
 
 Find markers Seurat
@@ -1333,8 +1385,8 @@ if (!file.exists(output_data_file_paths$markers)) {
         markers <- FindAllMarkers(seu)
     } else if (analysis_methods == "scanpy_like") {
         saveRDS(seu, file = output_data_file_paths$seu_object)
-        markers <- FindAllMarkers(seu, logfc.threshold = 0, min.pct = 0, return.thresh = 1.0001) # if this crashes R, then run de_alone.R
-        markers$p_val_adj <- p.adjust(degs$p_val, method = "BH")
+        markers <- FindAllMarkers(seu, logfc.threshold = 0, min.pct = 0, return.thresh = 1.0001, min.cells.group = 1) # if this crashes R, then run comment this cell and the line below out and run seurat_scanpylike_de.R
+        markers$p_val_adj <- p.adjust(markers$p_val, method = "BH")
     }
 } else {
     markers <- readRDS(output_data_file_paths$markers)
@@ -1343,7 +1395,7 @@ if (!file.exists(output_data_file_paths$markers)) {
 
 Find markers Scanpy
 ```{python}
-sc.tl.rank_genes_groups(adata, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = True)
+sc.tl.rank_genes_groups(adata, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = True, tie_correct = r.scanpy_tie_correct)
 ```
 
 ```{r}
@@ -1354,7 +1406,7 @@ Scanpy manual filtering if applying seurat-like filtering
 ```{r}
 if (analysis_methods == "seurat_like" && data_input == "seurat") {
     result_unfiltered <- result
-    
+
     result <- result %>%
         filter(!(pts < 0.01 & pts_rest < 0.01)) %>%
         filter(!(abs(log_fc) < 0.1)) %>%
@@ -1365,7 +1417,7 @@ if (analysis_methods == "seurat_like" && data_input == "seurat") {
 
 Compare marker genes
 ```{r}
-# # Uncomment if running with scanpy_like methods and loading in markers after running de_alone.R
+# # Uncomment if running with scanpy_like methods and loading in markers after running seurat_scanpylike_de.R
 # if (analysis_methods == "scanpy_like") {
 #     markers <- readRDS("/workspace/analysis/seu_markers_after_de_scanlike.rds")
 # }
@@ -1404,6 +1456,8 @@ if (data_input == "default" || !identical(seu_inds, scan_inds)) {
 Compare markers
 ```{r}
 # Select gene and cluster columns
+source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
+
 seu_markers_df <- markers %>% select(gene = gene, cluster = cluster)
 scan_markers_df <- result %>% select(gene = gene, cluster = cluster)
 

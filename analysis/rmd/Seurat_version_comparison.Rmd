@@ -4,36 +4,49 @@ output: html_document
 date: "2023-11-15"
 ---
 
+Select yaml file
 ```{r}
-project_base_path <- dirname(getwd())
-seurat1_version <- "5.0.2"
-seurat2_version <- "4.3.0"
-
-data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
-save_data <- TRUE
-
-# Don't have either name say "Seurat" or "Scanpy" or else helper functions will get confused
-seu1_name <- "Seuratv5"
-seu2_name <- "Seuratv4"
-
-seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
-
-if (exists("using_colab") && get("using_colab")) {
-    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
-    setwd(project_base_path)
-}
-
-output_base_path <- glue::glue("{project_base_path}/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv5_0_2_vs_seuratv4_3_0")
-
-dpi <- 300
-# seu1_data_path <- ""
-# seu2_data_path <- ""
-seu1_markers_data_path <- glue::glue("{project_base_path}/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv5_old_marker_arguments/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers_seuv5.rds")
-seu2_markers_data_path <- glue::glue("{project_base_path}/output/SC3_v3_NextGem_SI_PBMC_10K/seuratv4.3.0_vs_scanpyv1.9.5/methods_default/input_default/kb0_28_0_raw_generated_sa/cell_fraction_1_0/read_fraction_1_0/data_files/markers.rds")
+yaml_file <- "Fig3_seurat"  # Fig3_seurat
 ```
 
-R Imports #!
+Load contents of yaml file into global R environment
 ```{r}
+yaml_dir <- glue::glue("{dirname(getwd())}/yaml")
+yaml_file_path <- glue::glue("{yaml_dir}/{yaml_file}.yaml")
+
+source(glue::glue("{dirname(getwd())}/scripts/load_yaml_contents.R"))
+load_yaml_contents(yaml_file_path)
+```
+
+```{r}
+if (seu1_data_path == "") {
+    seu1_data_path <- glue::glue("{data_path_root}/seuratv5/seu.rds")
+}
+
+if (seu2_data_path == "") {
+    seu2_data_path <- glue::glue("{data_path_root}/seuratv4/seu.rds")
+}
+
+if (seu1_markers_data_path == "") {
+    seu1_markers_data_path <- glue::glue("{data_path_root}/seuratv5/markers.rds")
+}
+
+if (seu2_markers_data_path == "") {
+    seu2_markers_data_path <- glue::glue("{data_path_root}/seuratv4/markers.rds")
+}
+
+if (output_base_path == "") {
+    output_base_path <- glue::glue("{project_base_path}/output/{data_name}/seuratv{seurat1_version}_vs_seuratv{seurat2_version}")
+}
+```
+
+R Imports
+```{r}
+seurat_group_names <- list(Seurat1 = seu1_name, Seurat2 = seu2_name)
+
+group1_color <- "#009E73"
+group2_color <- "#CC79A7"
+
 conda_env <- "analysis_env"
 Sys.setenv(RETICULATE_PYTHON = paste("/home/rstudio/.conda/envs", conda_env, "bin/python3.9", sep = "/"))
 library(reticulate)
@@ -58,6 +71,36 @@ source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 ```
 
+Download data if necessary
+```{r}
+if (seuv5_version_control_file_link != "" && (!dir.exists(dirname(seu1_data_path)) || length(list.files(dirname(seu1_data_path))) == 0)) {
+    seu1_data_path_base <- download_box(seuv5_version_control_file_link, seuv5_data_name_from_download, data_path_root)
+    seu1_data_path <- glue("{seu1_data_path_base}/seu.rds")
+    seu1_markers_data_path <- glue("{seu1_data_path_base}/markers.rds")
+}
+
+if (seuv4_version_control_file_link != "" && (!dir.exists(dirname(seu2_data_path)) || length(list.files(dirname(seu2_data_path))) == 0)) {
+    seu2_data_path_base <- download_box(seuv4_version_control_file_link, seuv4_data_name_from_download, data_path_root)
+    seu2_data_path <- glue("{seu2_data_path_base}/seu.rds")
+    seu2_markers_data_path <- glue("{seu2_data_path_base}/markers.rds")
+}
+```
+
+```{python}
+import sys
+sys.path.append(f"{r.project_base_path}/scripts")
+from download_data import *
+
+if not r.doi == "" and (not os.path.exists(os.path.dirname(r.seu1_data_path)) or not os.listdir(os.path.dirname(r.seu1_data_path))):
+    r.seu1_data_path_base = download_and_extract(r.doi, r.seu1_data_name_from_download, r.data_path_root)
+    r.seu1_data_path = f"{r.seu1_data_path_base}/seu.rds"
+    r.seu1_markers_data_path = f"{r.seu1_data_path_base}/markers.rds"
+if not r.doi == "" and (not os.path.exists(os.path.dirname(r.seu2_data_path)) or not os.listdir(os.path.dirname(r.seu2_data_path))):
+    r.seu2_data_path_base = download_and_extract(r.doi, r.seu2_data_name_from_download, r.data_path_root)
+    r.seu2_data_path = f"{r.seu2_data_path_base}/seu.rds"
+    r.seu2_markers_data_path = f"{r.seu2_data_path_base}/markers.rds"
+```
+
 ```{r}
 seurat_hvg_flavor <- "vst"
 seu_mean_cutoff <- c(0.1, 8)
@@ -68,21 +111,19 @@ seu_n_neighbors <- 20
 seurat_clustering_algorithm <- "louvain"
 seu_resolution <- 0.8
 seu_umap_min_dist <- 0.5
-seurat_umap_seed <- 0
 seu_umap_method <- "uwot"
 seu_umap_metric <- "correlation"
 ```
 
-Load data  #!
+Load data
 ```{r}
-# seu1 <- readRDS(seu1_data_path)
+seu1 <- readRDS(seu1_data_path)
 markers_seu1 <- readRDS(seu1_markers_data_path)
 
-# seu2 <- readRDS(seu2_data_path)
+seu2 <- readRDS(seu2_data_path)
 markers_seu2 <- readRDS(seu2_markers_data_path)
 ```
 
-#!
 ```{r}
 output_data_file_paths <- list(
     markers_seu1 = glue::glue("{output_base_path}/data_files/markers_{seurat1_version}.rds"),
@@ -130,6 +171,10 @@ for (path in output_data_file_paths) {
 
 
 if (save_data) {
+    for (path in output_data_file_paths) {
+        dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    }
+    
     for (path in file_paths) {
         if (is.character(path)) {
             # Extract the directory part of the path
@@ -141,16 +186,16 @@ if (save_data) {
             }
         }
     }
+    
+    for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clustering_umap_file, file_paths$de_stats_file)) {
+        if (is.character(file)) {
+            sink(file = file, append = FALSE)
+            sink()
+        }
+    }
 } else {
     for (i in seq_along(file_paths)) {
         file_paths[[i]] <- FALSE
-    }
-}
-
-for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clustering_umap_file, file_paths$de_stats_file)) {
-    if (is.character(file)) {
-        sink(file = file, append = FALSE)
-        sink()
     }
 }
 ```
@@ -321,7 +366,9 @@ alluvial_plot_legend
 seu1_umap_info <- RunUMAP(seu1, dims = 1:50, min.dist = seu_umap_min_dist, umap.method = seu_umap_method, seed.use = 42, metric = seu_umap_metric)
 seu2_umap_info <- RunUMAP(seu2, dims = 1:50, min.dist = seu_umap_min_dist, umap.method = seu_umap_method, seed.use = 42, metric = seu_umap_metric)
 
-umap_plots <- plot_umap(group1_umap_info = seu1_umap_info$umap@cell.embeddings, group1_clusters = seu1$seurat_clusters, group2_umap_info = seu2_umap_info$umap@cell.embeddings, group2_clusters = seu2$seurat_clusters, group1 = seu1_name, group2 = seu2_name, save = c(file_paths$umap_seu1, file_paths$umap_seu2))
+colors_group2 <- find_group2_colors(clus_df_gather, seu1_name, seu2_name)
+
+umap_plots <- plot_umap(group1_umap_info = seu1_umap_info$umap@cell.embeddings, group1_clusters = seu1$seurat_clusters, group2_umap_info = seu2_umap_info$umap@cell.embeddings, group2_clusters = seu2$seurat_clusters, colors_group2 = colors_group2, group1 = seu1_name, group2 = seu2_name, save = c(file_paths$umap_seu1, file_paths$umap_seu2))
 seu1_umap <- umap_plots[[1]]
 seu2_umap <- umap_plots[[2]]
 
@@ -360,7 +407,7 @@ umap_jaccard_plot <- make_umap_jaccard_plot(jaccards_df, save = file_paths$umap_
 umap_jaccard_plot
 ```
 
-From this point on, make sure to use markers dataframes with aligned cluster info
+DE
 ```{r}
 seu1_filtered_markers <- markers_seu1 %>% filter(p_val_adj < 0.05)
 seu2_filtered_markers <- markers_seu2 %>% filter(p_val_adj < 0.05)
@@ -374,6 +421,11 @@ markers_euler_genes_only <- make_euler_seurat(vectorized_seu1_filtered_markers, 
 markers_euler_genes_only
 
 upset_marker_gene_only <- make_upset_seurat(vectorized_seu1_filtered_markers, vectorized_seu2_filtered_markers, comparison = "Marker Gene", group_names = seurat_group_names, save = file_paths$upset_markers_genes_only)
+
+# From this point on, make sure to use markers dataframes with aligned cluster info
+if (!(identical(seu1_clusters, seu2_clusters))) {
+    stop("The groups have unequal cell sets, so not running further DE analysis, which requires clusters to be in agreement.")
+}
 
 seu1_markers_df <- markers_seu1 %>% select(gene = gene, cluster = cluster)
 seu2_markers_df <- markers_seu2 %>% select(gene = gene, cluster = cluster)
@@ -403,20 +455,17 @@ source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 markers2[[glue("p_val_adj.{seu1_name}")]][markers2[[glue("p_val_adj.{seu1_name}")]] == 0] <- .Machine$double.xmin
 markers2[[glue("p_val_adj.{seu2_name}")]][markers2[[glue("p_val_adj.{seu2_name}")]] == 0] <- .Machine$double.xmin
 
-logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
+logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
 pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
 
-logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
+logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
 
+logFC_scatterplot
+logFC_scatterplot_with_legend
 
-# logFC_scatterplot
-# logFC_scatterplot_with_legend
-# 
-# pvaladj_scatterplot
+pvaladj_scatterplot
 ```
 
 ```{r}
 saveRDS(markers2, file = output_data_file_paths$markers2)
 ```
-
-

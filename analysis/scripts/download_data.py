@@ -39,22 +39,15 @@ def download_file(doi, filename, data_path_root):
                     f.write(chunk)
         return full_path
     
-def download_and_extract(doi, filename, data_path_root, final_path = ""):
+def download_and_extract(doi, filename, data_path_root, file_ext = '.tar.gz'):
     full_path = download_file(doi, filename, data_path_root)
-    if final_path != "":
-        filepath_final = final_path
-    else:
-        filepath_final = full_path
     if full_path:
-        os.makedirs(final_path, exist_ok = True)
-        if filename.endswith('.tar.gz'):
+        os.makedirs(full_path, exist_ok = True)
+        if file_ext == '.tar.gz':
             try:
                 with tarfile.open(full_path, 'r:gz') as tar:
-                    tar.extractall(path=final_path)
-                print(f"Extraction complete: {filename}. Contents are in {final_path}")
+                    tar.extractall(path=full_path)
+                print(f"Extraction complete: {filename}. Contents are in {full_path}")
             except Exception as e:
                 print(f"Error extracting the file: {e}")
-        else:
-            ### Insert code here to support other file formats
-            filepath_final = full_path
-    return filepath_final
+    return full_path

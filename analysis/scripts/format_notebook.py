@@ -18,16 +18,30 @@ if (using_colab) {
     system("git clone https://github.com/josephrich98/scrnaseq_packages_and_versioning.git", intern = FALSE)
 }"""
     
-new_cell_4_code = """if using_colab:
-    seurat_version_for_download <- gsub("_", ".", seurat_version)
-    scanpy_version_for_download <- gsub("_", ".", scanpy_version)
-    reticulate::py_run_string("subprocess.run(['pip', 'install', f'scanpy=={r.scanpy_version_for_download}, 'python-igraph==0.10.8', 'leidenalg==0.10.1', 'anndata==0.10.2', 'hdf5plugin==4.2.0', 'kb-python==0.27.3', 'umap-learn==0.5.2', 'louvain==0.8.1', 'git+https://github.com/has2k1/scikit-misc.git@269f61e'])")  
+new_cell_4_code = """seurat_version_for_download <- gsub("_", ".", seurat_version)
+scanpy_version_for_download <- gsub("_", ".", scanpy_version)
+
+if (using_colab) {
+    py_command <- sprintf("import subprocess; subprocess.run(['pip', 'install', 'scanpy==%s', 'python-igraph==0.10.8', 'leidenalg==0.10.1', 'anndata==0.10.2', 'hdf5plugin==4.2.0', 'kb-python==0.27.3', 'umap-learn==0.5.2', 'louvain==0.8.1', 'git+https://github.com/has2k1/scikit-misc.git@269f61e'])", scanpy_version_for_download)
+    
+    reticulate::py_run_string(py_command)
+}
 
 if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
 
 if (!requireNamespace("tidyverse", quietly = TRUE)) remotes::install_version("tidyverse", version = "2.0.0", upgrade = "never")
 if (!requireNamespace("rmarkdown", quietly = TRUE)) remotes::install_version("rmarkdown", version = "2.25", upgrade = "never")
 
+# if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
+if (!require(pak, quietly = TRUE)) {
+    install.packages("pak", repos = sprintf(
+        "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+        .Platform$pkgType,
+        R.Version()$os,
+        R.Version()$arch
+    ))
+}
+if (!requireNamespace("igraph", quietly = TRUE)) pak::pak("igraph/rigraph")
 if (!requireNamespace("Seurat", quietly = TRUE)) remotes::install_version("Seurat", version = seurat_version_for_download, upgrade = "never")
 if (!requireNamespace("Matrix", quietly = TRUE)) remotes::install_version("Matrix", version = "1.6.4", upgrade = "never")
 if (!requireNamespace("patchwork", quietly = TRUE)) remotes::install_version("patchwork", version = "1.1.3", upgrade = "never")
@@ -50,7 +64,8 @@ bioconductor_version <- "3.18"
 
 if (!requireNamespace("BUSpaRse", quietly = TRUE)) BiocManager::install("BUSpaRse", version = bioconductor_version, update = FALSE)
 if (!requireNamespace("DropletUtils", quietly = TRUE)) BiocManager::install("DropletUtils", version = bioconductor_version, update = FALSE)
-if (!requireNamespace("biomaRt", quietly = TRUE)) BiocManager::install("biomaRt", version = bioconductor_version, update = FALSE)"""
+if (!requireNamespace("biomaRt", quietly = TRUE)) BiocManager::install("biomaRt", version = bioconductor_version, update = FALSE)
+if (!requireNamespace("bluster", quietly = TRUE)) BiocManager::install("bluster", version = bioconductor_version, update = FALSE)"""
 
 
 def rmd_to_ipynb(source_dir, dest_dir):
@@ -93,7 +108,7 @@ def process_notebook(input_filename, output_filename):
         if i == 1:  # After the original second cell
             new_cell_2 = nbformat.v4.new_code_cell(source=new_cell_2_code)
             modified_cells.append(new_cell_2)
-        elif i == 2:  # After the original fourth cell
+        elif i == 3:  # After the original fourth cell
             new_cell_4 = nbformat.v4.new_code_cell(source=new_cell_4_code)
             modified_cells.append(new_cell_4)
 
@@ -118,5 +133,6 @@ if __name__ == "__main__":
     ipynb_dir = "/workspace/analysis/ipynb"
     rmd_to_ipynb(rmd_dir, ipynb_dir)
     process_all_notebooks(ipynb_dir)
+    print("Remember to make any manual adjustments")
 
 

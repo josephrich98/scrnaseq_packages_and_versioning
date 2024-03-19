@@ -4,31 +4,48 @@ output: html_document
 date: "2024-01-01"
 ---
 
+Select yaml file
 ```{r}
-project_base_path <- dirname(getwd())  # also used for locating script files
-scanpy1_version <- "1.9.5"
-scanpy2_version <- "1.4.6"
+yaml_file <- "Fig3_scanpy"  # Fig3_scanpy
+```
 
-data_name <- "SC3_v3_NextGem_SI_PBMC_10K"
-save_data <- TRUE
+Load contents of yaml file into global R environment
+```{r}
+yaml_dir <- glue::glue("{dirname(getwd())}/yaml")
+yaml_file_path <- glue::glue("{yaml_dir}/{yaml_file}.yaml")
 
-# Don't have either name say "Seurat" or "Scanpy" or else helper functions will get confused
-scan1_name <- "Scanpyv1.9"
-scan2_name <- "Scanpyv1.4"
+source(glue::glue("{dirname(getwd())}/scripts/load_yaml_contents.R"))
+load_yaml_contents(yaml_file_path)
+```
 
-scanpy_group_names <- list(Scanpy1 = scan1_name, Scanpy2 = scan2_name)
-
-scan1_data_path_base <- "/workspace/scanpy195/data_files"
-scan2_data_path_base <-  "/workspace/scanpy146/data_files"
-
-if (exists("using_colab") && get("using_colab")) {
-    project_base_path <- "/content/scrnaseq_packages_and_versioning/analysis"
-    setwd(project_base_path)
+```{r}
+if (scan1_all_genes_data_path == "") {
+    scan1_all_genes_data_path <- glue::glue("{data_path_root}/scanpyv1_9/adata_all_genes.h5ad")
 }
 
-output_base_path <- glue::glue("/workspace/scanpy19vsscanpy14")
+if (scan2_all_genes_data_path == "") {
+    scan2_all_genes_data_path <- glue::glue("{data_path_root}/scanpyv1_4/adata_all_genes.h5ad")
+}
 
-dpi <- 300
+if (scan1_data_path == "") {
+    scan1_data_path <- glue::glue("{data_path_root}/scanpyv1_9/adata.h5ad")
+}
+
+if (scan2_data_path == "") {
+    scan2_data_path <- glue::glue("{data_path_root}/scanpyv1_4/adata.h5ad")
+}
+
+if (scan1_markers_data_path == "") {
+    scan1_markers_data_path <- glue::glue("{data_path_root}/scanpyv1_9/markers.rds")
+}
+
+if (scan2_markers_data_path == "") {
+    scan2_markers_data_path <- glue::glue("{data_path_root}/scanpyv1_4/markers.rds")
+}
+
+if (output_base_path == "") {
+    output_base_path <- glue::glue("{project_base_path}/output/{data_name}/scanpyv{scanpy1_version}_vs_scanpyv{scanpy2_version}")
+}
 ```
 
 R Imports
@@ -57,9 +74,62 @@ source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 source(glue("{project_base_path}/scripts/plotting_and_stats.R"))
 ```
 
+Download data if necessary
+```{r}
+if (scanv1_9_version_control_file_link != "" && (!dir.exists(dirname(scan1_data_path)) || length(list.files(dirname(scan1_data_path))) == 0)) {
+    scan1_data_path_base <- download_box(scanv1_9_version_control_file_link, scanv1_9_data_name_from_download, data_path_root)
+    scan1_data_path <- glue("{scan1_data_path_base}/adata.h5ad")
+    scan1_all_genes_data_path <- glue("{scan1_data_path_base}/adata_all_genes.h5ad")
+    scan1_markers_data_path <- glue("{scan1_data_path_base}/markers.rds")
+}
+
+if (scanv1_4_version_control_file_link != "" && (!dir.exists(dirname(scan2_data_path)) || length(list.files(dirname(scan2_data_path))) == 0)) {
+    scan2_data_path_base <- download_box(scanv1_4_version_control_file_link, scanv1_4_data_name_from_download, data_path_root)
+    scan2_data_path <- glue("{scan2_data_path_base}/adata.h5ad")
+    scan2_all_genes_data_path <- glue("{scan2_data_path_base}/adata_all_genes.h5ad")
+    scan2_markers_data_path <- glue("{scan2_data_path_base}/markers.rds")
+}
+```
+
+```{python}
+import sys
+sys.path.append(f"{r.project_base_path}/scripts")
+from download_data import *
+
+if not r.doi == "" and not os.path.exists(os.path.dirname(r.scan1_data_path)) or not os.listdir(os.path.dirname(r.scan1_data_path)):  
+    r.scan1_data_path_base = download_and_extract(r.doi, r.scanv1_9_data_name_from_download, r.data_path_root)
+    r.scan1_data_path = f"{r.scan1_data_path_base}/adata.h5ad"
+    r.scan1_all_genes_data_path <- f"{r.scan1_data_path_base}/adata_all_genes.h5ad"
+    r.scan1_markers_data_path = f"{r.scan1_data_path_base}/markers.rds"
+    
+if not r.doi == "" and not os.path.exists(os.path.dirname(r.scan2_data_path)) or not os.listdir(os.path.dirname(r.scan2_data_path)):  
+    r.scan2_data_path_base = download_and_extract(r.doi, r.scanv1_4_data_name_from_download, r.data_path_root)
+    r.scan2_data_path = f"{r.scan2_data_path_base}/adata.h5ad"
+    r.scan2_all_genes_data_path <- f"{r.scan2_data_path_base}/adata_all_genes.h5ad"
+    r.scan2_markers_data_path = f"{r.scan2_data_path_base}/markers.rds"
+```
+
+```{r}
+scanpy_hvg_flavor <- "seurat"
+n_top_genes <- NULL
+scanpy_scale_max <- NULL
+scanpy_pca_zero_center <- TRUE
+scan_n_neighbors <- 15
+scanpy_clustering_algorithm <- "leiden"
+scanpy_resolution <- 1
+scanpy_cluster_iters <- -1
+scanpy_umap_min_dist <- 0.5
+scanpy_correction_method <- "benjamini-hochberg"
+```
+
 ```{r}
 scanpy1_minor_version <- as.integer(strsplit(scanpy1_version, split = "\\.")[[1]][2])
 scanpy2_minor_version <- as.integer(strsplit(scanpy2_version, split = "\\.")[[1]][2])
+
+scanpy_group_names <- list(Scanpy1 = scan1_name, Scanpy2 = scan2_name)
+
+group1_color <- "#009E73"
+group2_color <- "#CC79A7"
 
 # FALSE to have no save
 file_paths <- list(
@@ -164,19 +234,6 @@ if (save_data) {
 }
 ```
 
-```{r}
-scanpy_hvg_flavor <- "seurat"
-n_top_genes <- NULL
-scanpy_scale_max <- NULL
-scanpy_pca_zero_center <- TRUE
-scan_n_neighbors <- 15
-scanpy_clustering_algorithm <- "leiden"
-scanpy_resolution <- 1
-scanpy_cluster_iters <- -1
-scanpy_umap_min_dist <- 0.5
-scanpy_correction_method <- "benjamini-hochberg"
-```
-
 ```{python}
 import os 
 import shutil
@@ -189,8 +246,8 @@ import hdf5plugin
 ```
 
 ```{python}
-adata1_all_genes = sc.read_h5ad(f"{r.scan1_data_path_base}/adata1_object_all_genes.h5ad")
-adata2_all_genes = sc.read_h5ad(f"{r.scan2_data_path_base}/adata1_object_all_genes.h5ad")
+adata1_all_genes = sc.read_h5ad(r.scan1_all_genes_data_path)
+adata2_all_genes = sc.read_h5ad(r.scan2_all_genes_data_path)
 ```
 
 ```{r}
@@ -200,8 +257,8 @@ upset_gene <- make_upset_scanpy(py$adata1_all_genes, py$adata2_all_genes, compar
 
 
 ```{python}
-adata1 = sc.read_h5ad(f"{r.scan1_data_path_base}/adata1.h5ad")
-adata2 = sc.read_h5ad(f"{r.scan2_data_path_base}/adata1.h5ad")
+adata1 = sc.read_h5ad(r.scan1_data_path)
+adata2 = sc.read_h5ad(r.scan2_data_path)
 ```
 
 ```{r}
@@ -418,8 +475,27 @@ scan2_umap
 ```
 
 ```{r}
-result1 <- readRDS(glue("{scan1_data_path_base}/markers_Full.rds"))
-result2 <- readRDS(glue("{scan2_data_path_base}/markers_Full.rds"))
+result1 <- readRDS(scan1_markers_data_path)
+result2 <- readRDS(scan2_markers_data_path)
+
+rename_columns <- function(df) {
+    if ("log_fc" %in% names(df)) {
+        df <- df %>% dplyr::rename(avg_log2FC = log_fc)
+    }
+    
+    if ("p_value_adj" %in% names(df)) {
+        df <- df %>% dplyr::rename(p_val_adj = p_value_adj)
+    }
+    
+    if ("p_value" %in% names(df)) {
+        df <- df %>% dplyr::rename(p_val = p_value)
+    }
+    
+    return (df)
+}
+
+result1 <- rename_columns(result1)
+result2 <- rename_columns(result2)
 
 scan1_filtered_markers <- result1 %>% filter(p_val_adj < 0.05)
 scan2_filtered_markers <- result2 %>% filter(p_val_adj < 0.05)
@@ -436,9 +512,6 @@ upset_marker_gene_only <- make_upset_scanpy(vectorized_scan1_filtered_markers, v
 
 ```{r}
 result1_same_clusters <- result1
-
-# result1_same_clusters <- result1_same_clusters %>%
-#     dplyr::rename(avg_log2FC = log_fc, p_val_adj = p_value_adj, p_val = p_value)
 
 if (!all(scan1_clusters == scan2_clusters)) {
     py$adata2$obs[scanpy_clustering_algorithm] <- scan1_clusters
@@ -508,15 +581,15 @@ markers2[[glue("p_val_adj.{scan2_name}")]][markers2[[glue("p_val_adj.{scan2_name
 
 Potentially run in scanpy_de_plots file
 ```{r}
-# logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
-# pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
-# 
-# logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
-# 
-# 
-# logFC_scatterplot
-# logFC_scatterplot_with_legend
-# 
-# pvaladj_scatterplot
+logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
+pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
+
+logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
+
+
+logFC_scatterplot
+logFC_scatterplot_with_legend
+
+pvaladj_scatterplot
 ```
 
