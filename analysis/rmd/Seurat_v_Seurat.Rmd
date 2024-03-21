@@ -16,7 +16,7 @@ knitr::opts_chunk$set(fig.show = "hide")
 
 Select yaml file
 ```{r}
-yaml_file <- "Supp_Fig9"  # Fig3_cellranger, Fig3_kallisto, Supp_Fig7, Supp_Fig7_DE, Supp_Fig9, Supp_Fig13, Supp_Fig14, Supp_Fig16_seu
+yaml_file <- "Supp_Fig7"  # Fig3_cellranger, Fig3_kallisto, Supp_Fig7, Supp_Fig7_DE, Supp_Fig9, Supp_Fig13, Supp_Fig14, Supp_Fig16_seu
 ```
 
 Load contents of yaml file into global R environment
@@ -34,6 +34,7 @@ load_yaml_contents(yaml_file_path)
 # seu2_cell_downsample_seed <- params$seu2_cell_downsample_seed
 # seu2_read_fraction_after_downsampling <- params$seu2_read_fraction_after_downsampling
 # seu2_read_downsample_seed <- params$seu2_read_downsample_seed
+save_data = FALSE
 ```
 
 Analysis settings
@@ -354,7 +355,6 @@ seu_umap_metric <- "correlation"
 # correction method = bonferroni
 ```
 
-#$$$
 Download data if necessary
 ```{r}
 if (seu1_file_link != "" && (!dir.exists(seu1_data_path) || length(list.files(seu1_data_path)) == 0)) {

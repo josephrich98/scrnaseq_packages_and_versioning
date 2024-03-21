@@ -30,6 +30,7 @@ load_yaml_contents(yaml_file_path)
 # scan2_cell_downsample_seed <- params$scan2_cell_downsample_seed
 # scan2_read_fraction_after_downsampling <- params$scan2_read_fraction_after_downsampling
 # scan2_read_downsample_seed <- params$scan2_read_downsample_seed
+save_data = FALSE
 ```
 
 Analysis settings
@@ -636,13 +637,13 @@ if r.file_paths[f"scan1_violin_file_path_mt"]:
     shutil.move(f"{os.getcwd()}/{save_mt}", r.file_paths[f"scan1_violin_file_path_mt"])
 
 pct_cells_over_threshold_mct = np.mean(adata1.obs['pct_mt'] > r.max_pct_mct) * 100
-print(f"percentage of genes with %mct > threshold: {pct_cells_over_threshold_mct}")
+print(f"percentage of cells with %mct > threshold: {pct_cells_over_threshold_mct}")
 
 # Filter out cells where the percentage of mitochondrial reads is > 20%
 adata1 = adata1[adata1.obs['pct_mt'] < r.max_pct_mct, :]
 
 pct_cells_over_threshold_genes_by_counts = np.mean(adata1.obs[gene_obs_name] > r.scan1_max_n_genes_by_counts_scanpy) * 100
-print(f"percentage of genes with n_genes_by_count > threshold: {pct_cells_over_threshold_genes_by_counts}")
+print(f"percentage of cells with n_genes_by_count > threshold: {pct_cells_over_threshold_genes_by_counts}")
 adata1 = adata1[adata1.obs[gene_obs_name] < r.scan1_max_n_genes_by_counts_scanpy, :]
     
 # Filter adata to only include the common cells 
