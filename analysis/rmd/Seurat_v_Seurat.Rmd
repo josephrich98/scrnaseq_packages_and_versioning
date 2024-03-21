@@ -10,13 +10,9 @@ params:
   seu2_read_downsample_seed: !r NULL
 ---
 
-```{r, include=FALSE}
-knitr::opts_chunk$set(fig.show = "hide")
-```
-
 Select yaml file
 ```{r}
-yaml_file <- "Supp_Fig7"  # Fig3_cellranger, Fig3_kallisto, Supp_Fig7, Supp_Fig7_DE, Supp_Fig9, Supp_Fig13, Supp_Fig14, Supp_Fig16_seu
+yaml_file <- "Supp_Fig9"  # Fig3_cellranger, Fig3_kallisto, Supp_Fig7, Supp_Fig7_DE, Supp_Fig9, Supp_Fig13, Supp_Fig14, Supp_Fig16_seu
 ```
 
 Load contents of yaml file into global R environment
@@ -27,14 +23,12 @@ yaml_file_path <- glue::glue("{yaml_dir}/{yaml_file}.yaml")
 source(glue::glue("{dirname(getwd())}/scripts/load_yaml_contents.R"))
 load_yaml_contents(yaml_file_path)
 
-#!!!!!!
 # # uncomment as needed if running from command line
 # data_input <- params$data_input
 # seu2_cell_fraction_after_downsampling <- params$seu2_cell_fraction_after_downsampling
 # seu2_cell_downsample_seed <- params$seu2_cell_downsample_seed
 # seu2_read_fraction_after_downsampling <- params$seu2_read_fraction_after_downsampling
 # seu2_read_downsample_seed <- params$seu2_read_downsample_seed
-save_data = FALSE
 ```
 
 Analysis settings
@@ -283,7 +277,6 @@ file_paths <- list(
     FC_histogram_signed_file_path = FALSE # glue::glue("{output_base_path}/plots/FC_histogram_signed.tiff")
 )
 
-#***
 if (save_data) {
     for (path in output_data_file_paths) {
         dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
@@ -500,17 +493,16 @@ Euler plots of cell, gene overlap before QC
 # make_euler_seurat(seu1, seu2, comparison = "Cell", group_names = seurat_group_names, save_plot = file_paths$euler_after_qc_gene_file_path,  save_stats = file_paths$euler_stats_before_QC_file, before_QC = TRUE)
 ```
 
-UMI scatterplot between the two groups  #*
+UMI scatterplot between the two groups
 ```{r}
-# umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = seurat_group_names$Seurat1, res_mat2_name = seurat_group_names$Seurat2, point_density = FALSE, color_points = FALSE, save = file_paths$umi_scatterplot) # set point_density = TRUE for finer-grained point density
-# umi_scatterplot
+umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = seurat_group_names$Seurat1, res_mat2_name = seurat_group_names$Seurat2, point_density = FALSE, color_points = FALSE, save = file_paths$umi_scatterplot) # set point_density = TRUE for finer-grained point density
+umi_scatterplot
 ```
 
 Find list of mitochondrial Ensembl gene names
 ```{r}
-# # ensembl <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")  # Service may be down on this mirror
-# ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")
-# mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)  #!! uncomment this and comment out below
+# ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")  #* If service is down, try mirror = "useast"
+# mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)
 
 mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
 ```
@@ -796,8 +788,8 @@ if (!identical(seu1_inds, seu2_inds)) {
     pca_embeddings2 <- pca_embeddings2[match(rownames(pca_embeddings1), rownames(pca_embeddings2)), ]
 }
 
-pca12_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", group_labels = unlist(seurat_group_names), save = file_paths$pca_12_overlay_filepath)
-pca34_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", group_labels = unlist(seurat_group_names), pcs = 3:4, save = file_paths$pca_34_overlay_filepath)
+pca12_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", group_labels = unlist(seurat_group_names), legend_position = "TR", save = file_paths$pca_12_overlay_filepath)
+pca34_plot <- plot_pca_compare(pca_embeddings1, pca_embeddings2, group1_name = "Seurat1", group2_name = "Seurat2", group_labels = unlist(seurat_group_names), pcs = 3:4, legend_position = "TR", save = file_paths$pca_34_overlay_filepath)
 
 pca12_plot
 pca34_plot
@@ -1129,7 +1121,6 @@ clus_df_gather <- clus_df_gather %>% mutate(
 )
 
 clus_df_gather <- sort_clusters_by_agreement(clus_df_gather, stable_column = seu1_name, reordered_column = seu2_name)
-# clus_df_gather <- sort_clusters_by_agreement(clus_df_gather, stable_column = seu1_name, reordered_column = seu2_name)
 
 alluvial_plot <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = FALSE, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$alluvial)
 alluvial_plot_legend <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 0.5, group1_name = seu1_name, group2_name = seu2_name, save = file_paths$alluvial_legend)
@@ -1357,13 +1348,6 @@ if (!file.exists(output_data_file_paths$markers_seu1)) {
 
 Find markers Seu2
 ```{r}
-#???
-# saveRDS(seu2, file = output_data_file_paths$seu2_object)
-
-#???
-# markers_seu1 <- readRDS(output_data_file_paths$markers_seu1)
-# seu2 <- readRDS(output_data_file_paths$seu2_object)
-
 if (!file.exists(output_data_file_paths$markers_seu2)) {
     markers_seu2 <- FindAllMarkers(seu2)
 } else {
@@ -1449,10 +1433,10 @@ pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = seu1
 logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = seu1_name, group2_name = seu2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
 
 
-#!! logFC_scatterplot
-#!! logFC_scatterplot_with_legend
-#
-#!! pvaladj_scatterplot
+logFC_scatterplot
+logFC_scatterplot_with_legend
+
+pvaladj_scatterplot
 ```
 
 Save markers df

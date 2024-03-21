@@ -434,7 +434,6 @@ clus_df_gather <- clus_df_gather %>% mutate(
 )
 
 clus_df_gather <- sort_clusters_by_agreement(clus_df_gather, stable_column = scan1_name, reordered_column = scan2_name)
-# clus_df_gather <- sort_clusters_by_agreement(clus_df_gather, stable_column = scan1_name, reordered_column = scan2_name)
 
 alluvial_plot <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = FALSE, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$alluvial)
 alluvial_plot_legend <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 0.5, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$alluvial_legend)

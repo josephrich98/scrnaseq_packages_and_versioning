@@ -1,7 +1,7 @@
 # to just make conda environment
 conda env create -f environment.yml
 
-# change all hyperparameters in config.yaml
+# select appropriate config.yaml file and change parameters as desired
 
 # minimal setup (requires fastq files, reference transcriptome (cellranger) or index/t2g (kb) files in reference_files/, and cellranger/kb-python and seqtk installed, all in the structure described below):
 python3 main.py
@@ -14,8 +14,7 @@ python3 main.py -a
 
 # To run analysis:
 docker run -d -p 8787:8787 -e PASSWORD=yp -v /path/to/project:/workspace josephrich98/seurat_vs_scanpy:1.0
-# Then go to localhost:8787 in your browser and login with username rstudio and password yourpassword
-# Then open the JR_logFC.Rmd file and run all chunks
+# Then go to localhost:8787 in your browser and login with username rstudio and password yp
 
 
 ### note: for baseline (no downsampling), notation is seed=0, frac=1
@@ -52,16 +51,12 @@ docker run -d -p 8787:8787 -e PASSWORD=yp -v /path/to/project:/workspace josephr
     │       │   ├── file1.fastq.gz
     │       │   ├── file2.fastq.gz
     │       │   └── etc.
-    │       ├── unzipped_fastqs/
-    │       │   ├── file1.fastq
-    │       │   ├── file2.fastq
-    │       │   └── etc.
     │       └── downsampled_fastqs/
     │           ├── file1.fastq
     │           ├── file2.fastq
     │           └── etc.
     └── count_matrix_collection/
-        └── <data_name>/   # output directory
+        └── <data_name>/
             ├── read_counts/
             └── <matrix_source>/
                 ├── filtered_feature_bc_matrix_collection

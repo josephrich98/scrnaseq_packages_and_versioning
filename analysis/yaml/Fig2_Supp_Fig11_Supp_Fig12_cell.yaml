@@ -2,7 +2,7 @@
 # Files to analyze
 frac_list: [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64]
 downsampled_seeds_list: [100, 101, 102]
-type_downsampled: "read" # "read" or "cell"
+type_downsampled: "cell" # "read" or "cell"
 margin_correct: 0.05
 
 project_base_path: "/workspace/analysis"
@@ -16,7 +16,7 @@ conda_env: "analysis_env"
 # Specifications for downloading data
 download_data: TRUE
 doi: ""  # For downloading from CaltechDATA (not yet implemented)
-downsampled_data_file_link: ""  # For downloading from Box
+downsampled_data_file_link: "https://caltech.box.com/shared/static/u6fdxq9yi4kih9je72ka8si1mxx6aut7.gz"  # For downloading from Box
 data_path_root: ""  # "" for default - glue::glue("{project_base_path}/count_matrix_collection/{data_name}")
 data_name_from_download: "downsampled_stats"  # str
 

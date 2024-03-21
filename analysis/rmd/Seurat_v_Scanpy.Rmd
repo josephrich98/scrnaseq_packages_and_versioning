@@ -242,6 +242,7 @@ if (analysis_methods == "default" || analysis_methods == "scanpy_like") {
     scanpy_umap_min_dist <- 0.5
     scanpy_correction_method <- "benjamini-hochberg"
     scanpy_tie_correct <- FALSE
+    # marker_filtering = FALSE
 } else if (analysis_methods == "seurat_like") {
     scanpy_hvg_flavor <- "seurat_v3"
     n_top_genes <- 2000
@@ -254,6 +255,7 @@ if (analysis_methods == "default" || analysis_methods == "scanpy_like") {
     scanpy_umap_min_dist <- 0.3
     scanpy_correction_method <- "bonferroni"
     scanpy_tie_correct <- TRUE
+    # marker_filtering = c(!(pts < 0.01 & pts_rest < 0.01), !(abs(log_fc) < 0.1), (p_value < 0.01))
 } else {
     paste(analysis_methods, "is not a valid input for analysis_methods. Please choose from 'default', 'seurat_like', or 'scanpy_like'.")
 }
@@ -415,16 +417,16 @@ adata_unfiltered = adata.copy()
 
 if r.scan_cell_fraction_after_downsampling != "1_0":
     current_state = np.random.get_state()
-    np.random.seed(r.scan_cell_downsample_seed)
+    np.random.seed(int(r.scan_cell_downsample_seed))
     total_cells = adata.n_obs
-    numeric_scan_cell_fraction_after_downsampling = float(scan_cell_fraction_after_downsampling.replace("_", "."))
+    numeric_scan_cell_fraction_after_downsampling = float(r.scan_cell_fraction_after_downsampling.replace("_", "."))
     cells_to_sample = round(total_cells * numeric_scan_cell_fraction_after_downsampling)
     sampled_cells_indices = np.random.choice(total_cells, cells_to_sample, replace=False)
     adata = adata[sampled_cells_indices]
     np.random.set_state(current_state)
 
 # Apply filtering of knee plot
-sc.pp.filter_cells(adata, min_counts=r.UMI_cutoff)  # r.UMI_cutoff (same cutoff as R default) OR custom number
+sc.pp.filter_cells(adata, min_counts=r.UMI_cutoff)  # r.UMI_cutoff (same cutoff as R default) or custom number
 sc.pp.filter_genes(adata, min_counts=1)
 
 adata.var_names_make_unique()
@@ -438,15 +440,14 @@ res_mat_py <- t(py$adata_unfiltered$X)
 rownames(res_mat_py) <- py$adata_unfiltered$var_names$to_list()
 colnames(res_mat_py) <- py$adata_unfiltered$obs_names$to_list()
 
-# umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat, res_mat2 = res_mat_py, UMI_cutoff1 = UMI_cutoff, UMI_cutoff2 = UMI_cutoff, res_mat1_name = "Seurat", res_mat2_name = "Scanpy", point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)  #*
-# umi_scatterplot  #*
+umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat, res_mat2 = res_mat_py, UMI_cutoff1 = UMI_cutoff, UMI_cutoff2 = UMI_cutoff, res_mat1_name = "Seurat", res_mat2_name = "Scanpy", point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)
+umi_scatterplot
 ```
 
 Find list of mitochondrial Ensembl gene names
 ```{r}
-# # ensembl <- biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")  # Service may be down on this mirror
-# ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", mirror = "useast")  #*
-# mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)  #*
+# ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")  #* If service is down, try mirror = "useast"
+# mt_genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), filters = 'chromosome_name', values = 'MT', mart = ensembl)
 
 mt_genes <- data.frame(ensembl_gene_id = c("ENSG00000210049", "ENSG00000211459", "ENSG00000210077", "ENSG00000210082", "ENSG00000209082", "ENSG00000198888", "ENSG00000210100", "ENSG00000210107", "ENSG00000210112", "ENSG00000198763", "ENSG00000210117", "ENSG00000210127", "ENSG00000210135", "ENSG00000210140", "ENSG00000210144", "ENSG00000198804", "ENSG00000210151", "ENSG00000210154", "ENSG00000198712", "ENSG00000210156", "ENSG00000228253", "ENSG00000198899", "ENSG00000198938", "ENSG00000210164", "ENSG00000198840", "ENSG00000210174", "ENSG00000212907", "ENSG00000198886", "ENSG00000210176", "ENSG00000210184", "ENSG00000210191", "ENSG00000198786", "ENSG00000198695", "ENSG00000210194", "ENSG00000198727", "ENSG00000210195", "ENSG00000210196"))
 ```
@@ -616,7 +617,6 @@ seu <- NormalizeData(seu, verbose = FALSE)
 ```
 
 ```{python}
-#!!!
 if r.scanpy_hvg_flavor != "seurat_v3":
     sc.pp.normalize_total(adata, target_sum=1e4)
 ```
@@ -669,7 +669,6 @@ upset_hvg <- make_upset_seurat_vs_scanpy(seu, py$adata, comparison = "HVG", save
 ```
 
 ```{python}
-#!!!
 if r.scanpy_hvg_flavor == "seurat_v3":
     sc.pp.normalize_total(adata, target_sum=1e4)
 ```
@@ -678,9 +677,6 @@ if r.scanpy_hvg_flavor == "seurat_v3":
 if r.scanpy_hvg_flavor == "seurat_v3":
     sc.pp.log1p(adata)
 
-
-# sc.pp.normalize_total(adata, target_sum=1e4)   #!!!
-# sc.pp.log1p(adata)   #!!!
 adata.raw = adata
 ```
 
@@ -799,8 +795,8 @@ if (!identical(seu_inds, scan_inds)) {
     pca_embeddings_py <- pca_embeddings_py[match(rownames(pca_embeddings), rownames(pca_embeddings_py)), ]
 }
 
-pca12_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, save = file_paths$pca_12_overlay_filepath)
-pca34_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, pcs = 3:4, save = file_paths$pca_34_overlay_filepath)
+pca12_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, legend_position = "TR", save = file_paths$pca_12_overlay_filepath)
+pca34_plot <- plot_pca_compare(pca_embeddings, pca_embeddings_py, pcs = 3:4, legend_position = "TR", save = file_paths$pca_34_overlay_filepath)
 
 pca12_plot
 pca34_plot
@@ -1551,22 +1547,6 @@ markers2$FC_py <- 2^markers2$logFC_py
 Calculate mean magnitude of difference in log fold change between the 2 packages
 ```{r}
 markers2 <- calculate_de_stats(markers2, save = file_paths$de_stats_file)
-```
-
-Plot histograms
-```{r}
-seurat_vs_scanpy_logFC_histogram_magnitude <- plot_differences_histogram_seurat_vs_scanpy(markers2, "logFC_difference_magnitude", title = glue("Histogram of ΔlogFC (|Seu-Scan|)"), x_label = "ΔlogFC (|Seu-Scan|)", median_or_variance = "median", save = file_paths$logFC_histogram_magnitude_file_path)
-seurat_vs_scanpy_logFC_histogram_signed <- plot_differences_histogram_seurat_vs_scanpy(markers2, "logFC_difference_signed", title = glue("Histogram of ΔlogFC (Seu-Scan)"), x_label = "ΔlogFC (Seu-Scan)", median_or_variance = "variance", save = file_paths$logFC_histogram_signed_file_path)
-
-seurat_vs_scanpy_pvaladj_histogram_magnitude <- plot_differences_histogram_seurat_vs_scanpy(markers2, "pvaladj_difference_magnitude", title = glue("Histogram of Δp_val_adj (|Seu-Scan|)"), x_label = "Δp_val_adj (|Seu-Scan|)", median_or_variance = "variance", save = file_paths$wilcoxon_histogram_magnitude_file_path)
-seurat_vs_scanpy_pvaladj_histogram_signed <- plot_differences_histogram_seurat_vs_scanpy(markers2, "pvaladj_difference_signed", title = glue("Histogram of Δp_val_adj (Seu-Scan)"), x_label = "Δp_val_adj (Seu-Scan)", median_or_variance = "variance", save = file_paths$wilcoxon_histogram_signed_file_path)
-
-
-seurat_vs_scanpy_logFC_histogram_magnitude
-seurat_vs_scanpy_logFC_histogram_signed
-
-seurat_vs_scanpy_pvaladj_histogram_magnitude
-seurat_vs_scanpy_pvaladj_histogram_signed
 ```
 
 Heatmap

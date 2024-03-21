@@ -1,5 +1,5 @@
 # Function argument and input settings
-data_input: "default" # str["default", "seu1", "seu2"]
+data_input: "default"
 save_data: TRUE
 
 seu1_name: "Full"  # Must have no spaces
