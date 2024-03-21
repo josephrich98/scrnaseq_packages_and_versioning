@@ -12,7 +12,7 @@ params:
 
 Select yaml file
 ```{r}
-yaml_file <- "Supp_Fig8"  # Supp_Fig8, Supp_Fig8_DE, Supp_Fig10, Supp_Fig16_scan
+yaml_file <- "Supp_Fig10"  # Supp_Fig8, Supp_Fig8_DE, Supp_Fig10, Supp_Fig16_scan
 ```
 
 Load contents of yaml file into global R environment
@@ -453,7 +453,7 @@ if (scan1_matrix_generation_method == "kb") {
 }
 
 if (scan1_cell_fraction_after_downsampling != "1_0") {
-    res_mat1 <- res_mat1[, py$sampled_cells_indices1]
+    res_mat1 <- res_mat1[, as.integer(py$sampled_cells_indices1)]
 }
 
 tot_counts1 <- Matrix::colSums(res_mat1)
@@ -515,7 +515,7 @@ if (scan2_matrix_generation_method == "kb") {
 }
 
 if (scan2_cell_fraction_after_downsampling != "1_0") {
-    res_mat2 <- res_mat2[, py$sampled_cells_indices2]
+    res_mat2 <- res_mat2[, as.integer(py$sampled_cells_indices2)]
 }
 
 tot_counts2 <- Matrix::colSums(res_mat2)
@@ -1518,15 +1518,54 @@ scan2_umap_umap <- umap_umap_plots[[2]]
 scan1_umap_umap
 scan2_umap_umap
 ```
+```{r}
+num_clusters_scanpy1 <- length(levels(py$adata1$obs[[scanpy_clustering_algorithm]]))
+num_clusters_scanpy2 <- length(levels(py$adata2$obs[[scanpy_clustering_algorithm]]))
+```
 
 Find markers
 ```{python}
+return_pts = True
+
 if r.scanpy_minor_version < 5:
     adata1.uns['log1p'] = {'base': np.e}
     adata2.uns['log1p'] = {'base': np.e}
 
-sc.tl.rank_genes_groups(adata1, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = True)
-sc.tl.rank_genes_groups(adata2, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = True)
+sc.tl.rank_genes_groups(adata1, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = return_pts)
+sc.tl.rank_genes_groups(adata2, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = return_pts)
+
+def create_rec_array(pts_df, number_of_clusters, adata):
+    cluster_order = sorted([str(i) for i in range(number_of_clusters)], key=lambda x: str(x))
+    
+    list_of_lists = []
+    
+    for a in range(len(adata.uns['rank_genes_groups']['names'])):
+        new_list = []
+        for cluster_number in range(number_of_clusters):
+            gene = adata.uns['rank_genes_groups']['names'][a][cluster_number]
+            pct = pts_df.loc[gene][cluster_order[cluster_number]]
+            new_list.append(pct)
+        list_of_lists.append(new_list)
+    
+    dtype = [('field_{}'.format(i), float) for i in range(number_of_clusters)]
+    
+    pts_rec_array = np.empty(len(list_of_lists), dtype=dtype)
+    
+    for i, values in enumerate(list_of_lists):
+        # Create a tuple from the list of values
+        value_tuple = tuple(values)
+        # Assign this tuple to the i-th element of the structured array
+        pts_rec_array[i] = value_tuple
+    
+    return pts_rec_array
+
+#!!! uncomment
+# if return_pts:
+#     adata1.uns['rank_genes_groups']['pts_rec_array'] = create_rec_array(adata1.uns['rank_genes_groups']['pts'], r.num_clusters_scanpy1, adata1)
+#     adata1.uns['rank_genes_groups']['pts_rest_rec_array'] = create_rec_array(adata1.uns['rank_genes_groups']['pts_rest'], r.num_clusters_scanpy1, adata1)
+#     
+#     adata2.uns['rank_genes_groups']['pts_rec_array'] = create_rec_array(adata2.uns['rank_genes_groups']['pts'], r.num_clusters_scanpy2, adata2)
+#     adata2.uns['rank_genes_groups']['pts_rest_rec_array'] = create_rec_array(adata2.uns['rank_genes_groups']['pts_rest'], r.num_clusters_scanpy2, adata2)
 ```
 
 Modify column naming
@@ -1615,12 +1654,13 @@ markers2[[glue("p_val_adj.{scan2_name}")]][markers2[[glue("p_val_adj.{scan2_name
 ```
 
 ```{r}
+#!!! uncomment once I finish generating all downsampeld data
 # logFC_scatterplot <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path, outliers_excluded = FALSE)
 # pvaladj_scatterplot <- plot_scatterplot_de_wilcoxon(markers2, group1_name = scan1_name, group2_name = scan2_name, save = file_paths$wilcoxon_scatterplot_file_path, outliers_excluded = FALSE)
 # 
 # logFC_scatterplot_with_legend <- plot_scatterplot_de_logfc(markers2, group1_name = scan1_name, group2_name = scan2_name, ccc = markers2$CCC[1], save = file_paths$logFC_scatterplot_file_path_with_legend, outliers_excluded = FALSE, show_legend = TRUE)
-# 
-# 
+
+
 # logFC_scatterplot
 # logFC_scatterplot_with_legend
 # 

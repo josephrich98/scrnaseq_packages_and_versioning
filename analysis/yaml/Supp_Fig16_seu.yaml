@@ -17,7 +17,7 @@ seu1_matrix_generation_method_version: "0_28_0"  # str (with _ in place of .)
 seu1_cell_fraction_after_downsampling: "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
 seu1_read_fraction_after_downsampling: "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
 seu1_read_downsample_seed: 0 # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-seu1_cell_downsample_seed: 0 # Sets the global R session seed during cell downsampling (does not affect the rest of the including for cell downsampling)
+seu1_cell_downsample_seed: 0 # Sets the global R session seed during cell downsampling (does not affect the rest of the global R session)
 
 
 seu2_matrix_generation_method: "kb" # str["kb", "cellranger"]  # also used for loading data
@@ -26,7 +26,7 @@ seu2_matrix_generation_method_version: "0_28_0"  # str (with _ in place of .)
 seu2_cell_fraction_after_downsampling: "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
 seu2_read_fraction_after_downsampling: "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
 seu2_read_downsample_seed: 0 # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-seu2_cell_downsample_seed: 0 # Sets the global R session seed during cell downsampling (does not affect the rest of the including for cell downsampling)
+seu2_cell_downsample_seed: 0 # Sets the global R session seed during cell downsampling (does not affect the rest of the global R session)
 
 seu1_data_path: "" # "" for default - glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu1_matrix_generation_method}{seu1_matrix_generation_method_version}/frac{seu1_read_fraction_after_downsampling}_seed{seu1_read_downsample_seed}")
 seu2_data_path: "" # "" for default - glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{seu2_matrix_generation_method}{seu2_matrix_generation_method_version}/frac{seu2_read_fraction_after_downsampling}_seed{seu2_read_downsample_seed}")

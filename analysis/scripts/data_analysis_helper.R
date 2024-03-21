@@ -302,15 +302,18 @@ get_py_de_results <- function(adata_name) {
         pvals = "p_value",
         pvals_adj = "p_value_adj",
         logfoldchanges = "log_fc",
-        pts = "pts",
-        pts_rest = "pts_rest"
+        pts_rec_array = "pts",
+        pts_rest_rec_array = "pts_rest"
     )
     
-    if (scanpy_minor_version < 5) {
-        name_lookup$pts <- NULL
-        name_lookup$pts_rest <- NULL
+    if (py_eval(glue("'pts_rec_array' not in {adata_name}.uns['rank_genes_groups']"))) {
+        name_lookup$pts_rec_array <- NULL
     }
-
+    
+    if (py_eval(glue("'pts_rest_rec_array' not in {adata_name}.uns['rank_genes_groups']"))) {
+        name_lookup$pts_rest_rec_array <- NULL
+    }
+    
     out <- list()
     for (ele in names(name_lookup)) {
         # We have to do this on the 'python side' to prevent array type 20 errors.
@@ -379,7 +382,7 @@ increment_if_zeros <- function(clus_df_gather, column) {
 
 
 sort_clusters_by_agreement <- function(clus_df_gather, stable_column = "Seurat", reordered_column = "Scanpy") {
-    for(n in 1:2) {
+    for (n in 1:2) {
         reordered_column_original_clusters_name <- paste0(reordered_column, "_original_clusters")
         
         clus_df_gather <- increment_if_zeros(clus_df_gather, stable_column)
@@ -430,7 +433,7 @@ sort_clusters_by_agreement <- function(clus_df_gather, stable_column = "Seurat",
             subset_data[[reordered_column]][subset_data[[reordered_column_original_clusters_name]] == cluster_number] <- new_cluster_number
             
             for (i in (new_cluster_number + 1):(max(as.numeric(as.character(clus_df_gather$y))))) {
-                if (!any(subset_data[[reordered_column]] == new_cluster_number)) {
+                if (!any(subset_data[[reordered_column]] == i)) {
                     subset_data[[reordered_column]] <- ifelse(subset_data[[reordered_column]] > i, subset_data[[reordered_column]] - 1, subset_data[[reordered_column]])
                     subset_data$y <- ifelse(subset_data$y > i, subset_data$y - 1, subset_data$y)
                     break
@@ -457,6 +460,6 @@ sort_clusters_by_agreement <- function(clus_df_gather, stable_column = "Seurat",
         sorted_levels <- as.character(sorted_levels)
         clus_df_gather$y <- factor(clus_df_gather$y, levels = sorted_levels)
     }
-    
+        
     return(clus_df_gather)
 }

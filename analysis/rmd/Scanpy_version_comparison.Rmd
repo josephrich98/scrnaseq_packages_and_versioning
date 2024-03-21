@@ -537,7 +537,6 @@ if (!all(scan1_clusters == scan2_clusters)) {
     
     py$adata2_same_clusters <- py$sc$read_h5ad(adata2_output_object_path)
     
-    scanpy_minor_version <- 4
     result2_same_clusters <- get_py_de_results("adata2_same_clusters")
     
     result2_same_clusters <- result2_same_clusters %>%

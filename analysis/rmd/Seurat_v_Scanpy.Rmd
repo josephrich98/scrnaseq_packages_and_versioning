@@ -7,7 +7,6 @@ date: "2024-01-01"
 Select yaml file
 ```{r}
 yaml_file <- "Fig1"  # Fig1, Supp_Fig2, Supp_Fig3, Supp_Fig4, Supp_Fig5
-save_data = FALSE
 ```
 
 Load contents of yaml file into global R environment
@@ -178,7 +177,7 @@ if (save_data) {
     for (path in output_data_file_paths) {
         dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
     }
-    
+
     for (path in file_paths) {
         if (is.character(path)) {
             # Extract the directory part of the path
@@ -190,7 +189,7 @@ if (save_data) {
             }
         }
     }
-    
+
     for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clustering_umap_file, file_paths$de_stats_file)) {
         if (is.character(file)) {
             sink(file = file, append = FALSE)
@@ -510,7 +509,7 @@ print(f"percentage of genes with %mct > threshold: {pct_cells_over_threshold_mct
 # Filter out cells where the percentage of mitochondrial reads is > 20%
 adata = adata[adata.obs['pct_mt'] < r.max_pct_mct, :]
 
-if r.analysis_methods == "default":
+if r.analysis_methods == "default" or r.analysis_methods == "scanpy_like":
     pct_cells_over_threshold_genes_by_counts = np.mean(adata.obs['n_genes_by_counts'] > r.max_n_genes_by_counts_scanpy) * 100
     print(f"percentage of genes with n_genes_by_count > threshold: {pct_cells_over_threshold_genes_by_counts}")
     adata = adata[adata.obs.n_genes_by_counts < r.max_n_genes_by_counts_scanpy, :]
@@ -1309,6 +1308,8 @@ scan_umap_knn_clusters <- reorder_clusters_descending(scan_umap_knn_clusters)
 
 Compute ARI and plot alluvial plot of leiden clustering results on KNN graphs from UMAP space
 ```{r}
+source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
+
 ari_value_umap <- mclust::adjustedRandIndex(as.vector(seu_umap_knn_clusters), as.vector(scan_umap_knn_clusters))
 
 if (file_paths$pca_knn_clustering_umap_file != FALSE) {
@@ -1386,7 +1387,14 @@ if (!file.exists(output_data_file_paths$markers)) {
     } else if (analysis_methods == "scanpy_like") {
         saveRDS(seu, file = output_data_file_paths$seu_object)
         markers <- FindAllMarkers(seu, logfc.threshold = 0, min.pct = 0, return.thresh = 1.0001, min.cells.group = 1) # if this crashes R, then run comment this cell and the line below out and run seurat_scanpylike_de.R
-        markers$p_val_adj <- p.adjust(markers$p_val, method = "BH")
+        markers$p_val_adj_bonferroni <- markers$p_val_adj
+        for (cluster_number in levels(Idents(seu))) {
+            cluster_markers <- subset(markers, cluster == cluster_number)
+            
+            adjusted_pvals <- p.adjust(cluster_markers$p_val, method = "BH", n = nrow(seu))
+            
+            markers <- markers %>% mutate(p_val_adj = ifelse(cluster == cluster_number, adjusted_pvals, p_val_adj))
+        }
     }
 } else {
     markers <- readRDS(output_data_file_paths$markers)
@@ -1395,22 +1403,65 @@ if (!file.exists(output_data_file_paths$markers)) {
 
 Find markers Scanpy
 ```{python}
-sc.tl.rank_genes_groups(adata, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = True, tie_correct = r.scanpy_tie_correct)
+return_pts = True
+sc.tl.rank_genes_groups(adata, r.scanpy_clustering_algorithm, use_raw=True, method='wilcoxon', corr_method=r.scanpy_correction_method, pts = return_pts, tie_correct = r.scanpy_tie_correct)
 ```
 
 ```{r}
+num_clusters_scanpy <- length(levels(py$adata$obs[[scanpy_clustering_algorithm]]))
+```
+
+```{python}
+def create_rec_array(pts_df, number_of_clusters, adata):
+    cluster_order = sorted([str(i) for i in range(number_of_clusters)], key=lambda x: str(x))
+    
+    list_of_lists = []
+    
+    for a in range(len(adata.uns['rank_genes_groups']['names'])):
+        new_list = []
+        for cluster_number in range(number_of_clusters):
+            gene = adata.uns['rank_genes_groups']['names'][a][cluster_number]
+            pct = pts_df.loc[gene][cluster_order[cluster_number]]
+            new_list.append(pct)
+        list_of_lists.append(new_list)
+    
+    dtype = [('field_{}'.format(i), float) for i in range(number_of_clusters)]
+    
+    pts_rec_array = np.empty(len(list_of_lists), dtype=dtype)
+    
+    for i, values in enumerate(list_of_lists):
+        # Create a tuple from the list of values
+        value_tuple = tuple(values)
+        # Assign this tuple to the i-th element of the structured array
+        pts_rec_array[i] = value_tuple
+    
+    return pts_rec_array
+
+if return_pts:
+    adata.uns['rank_genes_groups']['pts_rec_array'] = create_rec_array(adata.uns['rank_genes_groups']['pts'], r.num_clusters_scanpy, adata)
+    adata.uns['rank_genes_groups']['pts_rest_rec_array'] = create_rec_array(adata.uns['rank_genes_groups']['pts_rest'], r.num_clusters_scanpy, adata)
+```
+
+
+```{r}
 result <- get_py_de_results("adata")
+
+if (py$return_pts) {
+    result$pts <- round(result$pts, 3)
+    result$pts_rest <- round(result$pts_rest, 3)
+}
 ```
 
 Scanpy manual filtering if applying seurat-like filtering
 ```{r}
-if (analysis_methods == "seurat_like" && data_input == "seurat") {
+if (analysis_methods == "seurat_like") {
     result_unfiltered <- result
 
     result <- result %>%
         filter(!(pts < 0.01 & pts_rest < 0.01)) %>%
         filter(!(abs(log_fc) < 0.1)) %>%
-        filter(p_value < 0.01)
+        filter(p_value < 0.01) %>%
+        identity()
     cat("Final number of rows in filtered:", nrow(result), "\n")
 }
 ```
@@ -1472,7 +1523,7 @@ upset_markers_all <- make_upset_seurat_vs_scanpy(vectorized_seu_markers, vectori
 
 Combine all DE data in one dataframe markers2
 ```{r}
-if (analysis_methods == "seurat_like" && data_input == "seurat") {
+if (analysis_methods == "seurat_like") {
     result <- result_unfiltered
 }
 
@@ -1483,7 +1534,7 @@ markers2 <- markers2 |>
     dplyr::rename(
         p_val_r = p_val, logFC_r = avg_log2FC, p_val_adj_r = p_val_adj,
         p_val_py = p_value, p_val_adj_py = p_value_adj,
-        logFC_py = log_fc
+        logFC_py = log_fc, pct1_r = pct.1, pct1_py = pts, pct2_r = pct.2, pct2_py = pts_rest
     )
 
 markers2 <- markers2 |>

@@ -10,7 +10,7 @@ project_base_path: "/workspace/analysis"  # also used for locating script files;
 data_name: "SC3_v3_NextGem_SI_PBMC_10K"  # str
 scanpy_version: "1_9_5"  # str (with _ in place of .)
 conda_env: "analysis_env"
-R_random_seed: 100 # including for cell downsampling  # also used for global R session seed and python seed
+R_random_seed: 100 # global R session  # also used for global R session seed and python seed
 
 scan1_matrix_generation_method: "kb" # str["kb", "cellranger"]  # also used for loading data
 scan1_matrix_generation_method_version: "0_28_0"  # str (with _ in place of .)
@@ -18,7 +18,7 @@ scan1_matrix_generation_method_version: "0_28_0"  # str (with _ in place of .)
 scan1_cell_fraction_after_downsampling: "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
 scan1_read_fraction_after_downsampling: "1_0" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
 scan1_read_downsample_seed: 0 # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-scan1_cell_downsample_seed: 0 # Sets the global R session seed during cell downsampling (does not affect the rest of the including for cell downsampling)
+scan1_cell_downsample_seed: 0 # Sets the global R session seed during cell downsampling (does not affect the rest of the global R session)
 
 
 scan2_matrix_generation_method: "kb" # str["kb", "cellranger"]  # also used for loading data
@@ -27,7 +27,7 @@ scan2_matrix_generation_method_version: "0_28_0"  # str (with _ in place of .)
 scan2_cell_fraction_after_downsampling: "1_0" # fraction of cells after downsampling - any number from (0,1.0] (with _ in place of .)   # also used for performing cell downsampling
 scan2_read_fraction_after_downsampling: "0_04" # fraction of reads after downsampling - any number from (0,1.0] (with _ in place of .)
 scan2_read_downsample_seed: 100 # random seqtk seed for downsampling reads - 0 for no downsampling, integer >1 for downsampled seed
-scan2_cell_downsample_seed: 0 # Sets the global R session seed during cell downsampling (does not affect the rest of the including for cell downsampling)
+scan2_cell_downsample_seed: 0 # Sets the global R session seed during cell downsampling (does not affect the rest of the global R session)
 
 scan1_data_path: "" # "" for default - glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan1_matrix_generation_method}{scan1_matrix_generation_method_version}/frac{scan1_read_fraction_after_downsampling}_seed{scan1_read_downsample_seed}")
 scan2_data_path: "" # "" for default - glue::glue("{project_base_path}/count_matrix_collection/{data_name}/{scan2_matrix_generation_method}{scan2_matrix_generation_method_version}/frac{scan2_read_fraction_after_downsampling}_seed{scan2_read_downsample_seed}")
