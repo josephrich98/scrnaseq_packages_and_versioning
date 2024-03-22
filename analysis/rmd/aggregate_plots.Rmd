@@ -6,7 +6,7 @@ date: "2024-01-01"
 
 Select yaml file
 ```{r}
-yaml_file <- "Fig2_Supp_Fig11_Supp_Fig12_cell"  # Fig2_Supp_Fig11_Supp_Fig12_cell, Fig2_Supp_Fig11_Supp_Fig12_read
+yaml_file <- "Fig2_Supp_Fig12_cell"  # Fig2_Supp_Fig11_read, Fig2_Supp_Fig12_cell
 ```
 
 Load contents of yaml file into global R environment
@@ -42,6 +42,8 @@ use_condaenv(conda_env)
 library(tidyverse)
 library(glue)
 theme_set(theme_bw())
+
+source(glue("{project_base_path}/scripts/data_analysis_helper.R"))
 ```
 
 ```{r}

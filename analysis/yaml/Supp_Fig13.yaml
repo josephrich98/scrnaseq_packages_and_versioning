@@ -59,8 +59,9 @@ umap_leiden_clustering_resolution: 0.8
 
 pca_seed1: 42
 pca_seed2: 42
-knn_seed1: 0  # does not work without modifying Seurat source code
-knn_seed2: 0  # does not work without modifying Seurat source code
+use_knn_custom_seed: FALSE
+knn_seed1: 0
+knn_seed2: 0
 clustering_seed1: 0
 clustering_seed2: 0
 umap_seed1: 42

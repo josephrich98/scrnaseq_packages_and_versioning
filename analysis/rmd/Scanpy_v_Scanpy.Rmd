@@ -12,7 +12,7 @@ params:
 
 Select yaml file
 ```{r}
-yaml_file <- "Supp_Fig10"  # Supp_Fig8, Supp_Fig8_DE, Supp_Fig10, Supp_Fig16_scan
+yaml_file <- "Supp_Scanpy_version1_4"  # Supp_Fig8, Supp_Fig8_DE, Supp_Fig10, Supp_Fig16_scan, Supp_Scanpy_version1_4
 ```
 
 Load contents of yaml file into global R environment
@@ -588,7 +588,7 @@ Euler plots of cell, gene overlap before QC
 
 UMI scatterplot between the two groups
 ```{r}
-umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = scanpy_group_names$Scanpy1, res_mat2_name = scanpy_group_names$Scanpy2, point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)
+umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat1, res_mat2 = res_mat2, UMI_cutoff1 = UMI_cutoff1, UMI_cutoff2 = UMI_cutoff2, res_mat1_name = scanpy_group_names$Scanpy1, res_mat2_name = scanpy_group_names$Scanpy2, point_density = FALSE, color_points = FALSE, save = file_paths$umi_scatterplot)
 umi_scatterplot
 ```
 
@@ -1331,8 +1331,8 @@ if (scanpy_minor_version < 5) {
     
     conda_path <- paste("/home/rstudio/.conda/envs", conda_environment_with_older_umap_learn, "bin/python3.9", sep = "/")
 
-    cmd_adata1 <- sprintf("%s %s '%s' '%s'", conda_path, python_script_path, adata1_cluster_input_object_path, adata1_umap_object_output_path)
-    cmd_adata2 <- sprintf("%s %s '%s' '%s'", conda_path, python_script_path, adata2_cluster_input_object_path, adata2_umap_object_output_path)
+    cmd_adata1 <- sprintf("%s %s '%s' '%s' '%s'", conda_path, python_script_path, adata1_cluster_input_object_path, adata1_umap_object_output_path, umap_seed1)
+    cmd_adata2 <- sprintf("%s %s '%s' '%s' '%s'", conda_path, python_script_path, adata2_cluster_input_object_path, adata2_umap_object_output_path, umap_seed2)
     
     system(cmd_adata1)
     system(cmd_adata2)
@@ -1565,16 +1565,19 @@ def create_rec_array(pts_df, number_of_clusters, adata):
         value_tuple = tuple(values)
         # Assign this tuple to the i-th element of the structured array
         pts_rec_array[i] = value_tuple
+        
+    # pts_rec_array = pts_rec_array.view(np.recarray)
     
     return pts_rec_array
 
 
-if return_pts:
-    adata1.uns['rank_genes_groups']['pts_rec_array'] = create_rec_array(adata1.uns['rank_genes_groups']['pts'], r.num_clusters_scanpy1, adata1)
-    adata1.uns['rank_genes_groups']['pts_rest_rec_array'] = create_rec_array(adata1.uns['rank_genes_groups']['pts_rest'], r.num_clusters_scanpy1, adata1)
-
-    adata2.uns['rank_genes_groups']['pts_rec_array'] = create_rec_array(adata2.uns['rank_genes_groups']['pts'], r.num_clusters_scanpy2, adata2)
-    adata2.uns['rank_genes_groups']['pts_rest_rec_array'] = create_rec_array(adata2.uns['rank_genes_groups']['pts_rest'], r.num_clusters_scanpy2, adata2)
+# # With downsampled reads, the following error occurs: Error: Conversion from numpy array type 20 is not supported. This does not occur with the full-sized dataset.
+# if return_pts:
+#     adata1.uns['rank_genes_groups']['pts_rec_array'] = create_rec_array(adata1.uns['rank_genes_groups']['pts'], r.num_clusters_scanpy1, adata1)
+#     adata1.uns['rank_genes_groups']['pts_rest_rec_array'] = create_rec_array(adata1.uns['rank_genes_groups']['pts_rest'], r.num_clusters_scanpy1, adata1)
+# 
+#     adata2.uns['rank_genes_groups']['pts_rec_array'] = create_rec_array(adata2.uns['rank_genes_groups']['pts'], r.num_clusters_scanpy2, adata2)
+#     adata2.uns['rank_genes_groups']['pts_rest_rec_array'] = create_rec_array(adata2.uns['rank_genes_groups']['pts_rest'], r.num_clusters_scanpy2, adata2)
 ```
 
 Modify column naming

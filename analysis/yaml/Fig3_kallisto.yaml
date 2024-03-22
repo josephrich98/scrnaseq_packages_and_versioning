@@ -9,7 +9,6 @@ seu2_name: "Kallisto46"  # Must have no spaces
 project_base_path: "/workspace/analysis"  # also used for locating script files; "/workspace/analysis" for docker image with repository mounted in /workspace; "/content/scrnaseq_packages_and_versioning/analysis" for Google Colab
 data_name: "SC3_v3_NextGem_SI_PBMC_10K"  # str
 seurat_version: "5_0_2"  # str (with _ in place of .)
-scanpy_version: "1_9_5"  # str (with _ in place of .)
 conda_env: "analysis_env"
 
 seu1_matrix_generation_method: "kb" # str["kb", "cellranger"]  # also used for loading data
@@ -61,8 +60,9 @@ umap_leiden_clustering_resolution: 0.8
 
 pca_seed1: 42
 pca_seed2: 42
-knn_seed1: 0  # does not work without modifying Seurat source code
-knn_seed2: 0  # does not work without modifying Seurat source code
+use_knn_custom_seed: FALSE
+knn_seed1: 0
+knn_seed2: 0
 clustering_seed1: 0
 clustering_seed2: 0
 umap_seed1: 42

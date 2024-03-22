@@ -173,34 +173,34 @@ file_paths <- list(
     FC_histogram_signed_file_path = FALSE # glue::glue("{output_base_path}/plots/FC_histogram_signed.tiff")
 )
 
-if (save_data) {
-    for (path in output_data_file_paths) {
-        dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-    }
-
-    for (path in file_paths) {
-        if (is.character(path)) {
-            # Extract the directory part of the path
-            specific_output_path <- dirname(path)
-
-            # Create the directory if it does not exist
-            if (!dir.exists(specific_output_path)) {
-                dir.create(specific_output_path, recursive = TRUE, showWarnings = FALSE)
-            }
-        }
-    }
-
-    for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clustering_umap_file, file_paths$de_stats_file)) {
-        if (is.character(file)) {
-            sink(file = file, append = FALSE)
-            sink()
-        }
-    }
-} else {
-    for (i in seq_along(file_paths)) {
-        file_paths[[i]] <- FALSE
-    }
-}
+# if (save_data) {
+#     for (path in output_data_file_paths) {
+#         dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+#     }
+# 
+#     for (path in file_paths) {
+#         if (is.character(path)) {
+#             # Extract the directory part of the path
+#             specific_output_path <- dirname(path)
+# 
+#             # Create the directory if it does not exist
+#             if (!dir.exists(specific_output_path)) {
+#                 dir.create(specific_output_path, recursive = TRUE, showWarnings = FALSE)
+#             }
+#         }
+#     }
+# 
+#     for (file in c(file_paths$euler_stats_after_QC_file, file_paths$pca_knn_clustering_umap_file, file_paths$de_stats_file)) {
+#         if (is.character(file)) {
+#             sink(file = file, append = FALSE)
+#             sink()
+#         }
+#     }
+# } else {
+#     for (i in seq_along(file_paths)) {
+#         file_paths[[i]] <- FALSE
+#     }
+# }
 ```
 
 R Imports
@@ -440,7 +440,7 @@ res_mat_py <- t(py$adata_unfiltered$X)
 rownames(res_mat_py) <- py$adata_unfiltered$var_names$to_list()
 colnames(res_mat_py) <- py$adata_unfiltered$obs_names$to_list()
 
-umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat, res_mat2 = res_mat_py, UMI_cutoff1 = UMI_cutoff, UMI_cutoff2 = UMI_cutoff, res_mat1_name = "Seurat", res_mat2_name = "Scanpy", point_density = TRUE, color_points = FALSE, save = file_paths$umi_scatterplot)
+umi_scatterplot <- make_umi_scatterplot(res_mat1 = res_mat, res_mat2 = res_mat_py, UMI_cutoff1 = UMI_cutoff, UMI_cutoff2 = UMI_cutoff, res_mat1_name = "Seurat", res_mat2_name = "Scanpy", point_density = FALSE, color_points = FALSE, save = file_paths$umi_scatterplot)
 umi_scatterplot
 ```
 
@@ -875,48 +875,49 @@ if (data_input == "seurat" && identical(seu_inds, scan_inds)) {
 
 Neighbors
 ```{r}
-# # Uncomment if wanting to set random seed for KNN
-# assignInNamespace("AnnoyBuildIndex", value = function(data, metric = "euclidean", n.trees = 50) {
-#     f <- ncol(x = data)
-#     a <- switch(EXPR = metric, euclidean = new(Class = RcppAnnoy::AnnoyEuclidean, 
-#         f), cosine = new(Class = RcppAnnoy::AnnoyAngular, f), 
-#         manhattan = new(Class = RcppAnnoy::AnnoyManhattan, f), 
-#         hamming = new(Class = RcppAnnoy::AnnoyHamming, f), stop("Invalid metric"))
-#     a$setSeed(as.integer(knn_seed_seu))
-#     for (ii in seq(nrow(x = data))) {
-#         a$addItem(ii - 1, data[ii, ])
-#     }
-#     a$build(n.trees)
-#     return(a)
-# }, ns = "Seurat")
-# 
-# assignInNamespace("AnnoySearch", value = function (index, query, k, search.k = -1, include.distance = TRUE) {
-#     index$setSeed(as.integer(knn_seed_seu))
-#     
-#     n <- nrow(x = query)
-#     idx <- matrix(nrow = n, ncol = k)
-#     dist <- matrix(nrow = n, ncol = k)
-#     convert <- methods::is(index, "Rcpp_AnnoyAngular")
-#     if (!inherits(x = plan(), what = "multicore")) {
-#         oplan <- plan(strategy = "sequential")
-#         on.exit(plan(oplan), add = TRUE)
-#     }
-#     res <- future.apply::future_lapply(X = 1:n, FUN = function(x) {
-#         res <- index$getNNsByVectorList(query[x, ], k, search.k, 
-#             include.distance)
-#         if (convert) {
-#             res$dist <- 0.5 * (res$dist * res$dist)
-#         }
-#         list(res$item + 1, res$distance)
-#     })
-#     for (i in 1:n) {
-#         idx[i, ] <- res[[i]][[1]]
-#         if (include.distance) {
-#             dist[i, ] <- res[[i]][[2]]
-#         }
-#     }
-#     return(list(nn.idx = idx, nn.dists = dist))
-# }, ns = "Seurat")
+if (use_seu_knn_custom_seed) {
+    assignInNamespace("AnnoyBuildIndex", value = function(data, metric = "euclidean", n.trees = 50) {
+        f <- ncol(x = data)
+        a <- switch(EXPR = metric, euclidean = new(Class = RcppAnnoy::AnnoyEuclidean,
+            f), cosine = new(Class = RcppAnnoy::AnnoyAngular, f),
+            manhattan = new(Class = RcppAnnoy::AnnoyManhattan, f),
+            hamming = new(Class = RcppAnnoy::AnnoyHamming, f), stop("Invalid metric"))
+        a$setSeed(as.integer(knn_seed_seu))
+        for (ii in seq(nrow(x = data))) {
+            a$addItem(ii - 1, data[ii, ])
+        }
+        a$build(n.trees)
+        return(a)
+    }, ns = "Seurat")
+    
+    assignInNamespace("AnnoySearch", value = function (index, query, k, search.k = -1, include.distance = TRUE) {
+        index$setSeed(as.integer(knn_seed_seu))
+    
+        n <- nrow(x = query)
+        idx <- matrix(nrow = n, ncol = k)
+        dist <- matrix(nrow = n, ncol = k)
+        convert <- methods::is(index, "Rcpp_AnnoyAngular")
+        if (!inherits(x = plan(), what = "multicore")) {
+            oplan <- plan(strategy = "sequential")
+            on.exit(plan(oplan), add = TRUE)
+        }
+        res <- future.apply::future_lapply(X = 1:n, FUN = function(x) {
+            res <- index$getNNsByVectorList(query[x, ], k, search.k,
+                include.distance)
+            if (convert) {
+                res$dist <- 0.5 * (res$dist * res$dist)
+            }
+            list(res$item + 1, res$distance)
+        })
+        for (i in 1:n) {
+            idx[i, ] <- res[[i]][[1]]
+            if (include.distance) {
+                dist[i, ] <- res[[i]][[2]]
+            }
+        }
+        return(list(nn.idx = idx, nn.dists = dist))
+    }, ns = "Seurat")
+}
 ```
 
 ```{r}
@@ -1149,7 +1150,7 @@ clus_df_gather <- clus_df_gather %>% mutate(
 clus_df_gather <- sort_clusters_by_agreement(clus_df_gather, stable_column = "Seurat", reordered_column = "Scanpy")
 
 alluvial_plot <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = FALSE, save = file_paths$alluvial)
-alluvial_plot_legend <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 0.5, save = file_paths$alluvial_legend)
+alluvial_plot_legend <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 0.5, match_colors = TRUE, save = file_paths$alluvial_legend)
 # alluvial_plot_legend_high_alpha <- plot_alluvial(clus_df_gather, color_boxes = TRUE, color_bands = TRUE, alluvial_alpha = 1, save = file_paths$alluvial_legend_high_alpha)
 
 alluvial_plot
@@ -1430,6 +1431,8 @@ def create_rec_array(pts_df, number_of_clusters, adata):
         value_tuple = tuple(values)
         # Assign this tuple to the i-th element of the structured array
         pts_rec_array[i] = value_tuple
+        
+    # pts_rec_array = pts_rec_array.view(np.recarray)
     
     return pts_rec_array
 
@@ -1519,10 +1522,6 @@ upset_markers_all <- make_upset_seurat_vs_scanpy(vectorized_seu_markers, vectori
 
 Combine all DE data in one dataframe markers2
 ```{r}
-if (analysis_methods == "seurat_like") {
-    result <- result_unfiltered
-}
-
 markers2 <- markers |>
     inner_join(result, by = c("cluster", "gene"))
 

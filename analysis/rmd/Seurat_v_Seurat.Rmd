@@ -12,7 +12,7 @@ params:
 
 Select yaml file
 ```{r}
-yaml_file <- "Supp_Fig9"  # Fig3_cellranger, Fig3_kallisto, Supp_Fig7, Supp_Fig7_DE, Supp_Fig9, Supp_Fig13, Supp_Fig14, Supp_Fig16_seu
+yaml_file <- "Supp_Fig7"  # Fig3_cellranger, Fig3_kallisto, Supp_Fig7, Supp_Fig7_DE, Supp_Fig9, Supp_Fig13, Supp_Fig14, Supp_Fig16_seu, Supp_Seurat_version4
 ```
 
 Load contents of yaml file into global R environment
@@ -858,48 +858,49 @@ if (data_input == "seu2" && identical(seu1_inds, seu2_inds)) {
 ```
 
 ```{r}
-# # Uncomment if wanting to set random seed for KNN
-# assignInNamespace("AnnoyBuildIndex", value = function(data, metric = "euclidean", n.trees = 50) {
-#     f <- ncol(x = data)
-#     a <- switch(EXPR = metric, euclidean = new(Class = RcppAnnoy::AnnoyEuclidean,
-#         f), cosine = new(Class = RcppAnnoy::AnnoyAngular, f),
-#         manhattan = new(Class = RcppAnnoy::AnnoyManhattan, f),
-#         hamming = new(Class = RcppAnnoy::AnnoyHamming, f), stop("Invalid metric"))
-#     a$setSeed(as.integer(knn_seed1))
-#     for (ii in seq(nrow(x = data))) {
-#         a$addItem(ii - 1, data[ii, ])
-#     }
-#     a$build(n.trees)
-#     return(a)
-# }, ns = "Seurat")
-# 
-# assignInNamespace("AnnoySearch", value = function (index, query, k, search.k = -1, include.distance = TRUE) {
-#     index$setSeed(as.integer(knn_seed1))
-# 
-#     n <- nrow(x = query)
-#     idx <- matrix(nrow = n, ncol = k)
-#     dist <- matrix(nrow = n, ncol = k)
-#     convert <- methods::is(index, "Rcpp_AnnoyAngular")
-#     if (!inherits(x = plan(), what = "multicore")) {
-#         oplan <- plan(strategy = "sequential")
-#         on.exit(plan(oplan), add = TRUE)
-#     }
-#     res <- future.apply::future_lapply(X = 1:n, FUN = function(x) {
-#         res <- index$getNNsByVectorList(query[x, ], k, search.k,
-#             include.distance)
-#         if (convert) {
-#             res$dist <- 0.5 * (res$dist * res$dist)
-#         }
-#         list(res$item + 1, res$distance)
-#     })
-#     for (i in 1:n) {
-#         idx[i, ] <- res[[i]][[1]]
-#         if (include.distance) {
-#             dist[i, ] <- res[[i]][[2]]
-#         }
-#     }
-#     return(list(nn.idx = idx, nn.dists = dist))
-# }, ns = "Seurat")
+if (use_knn_custom_seed) {
+    assignInNamespace("AnnoyBuildIndex", value = function(data, metric = "euclidean", n.trees = 50) {
+        f <- ncol(x = data)
+        a <- switch(EXPR = metric, euclidean = new(Class = RcppAnnoy::AnnoyEuclidean,
+            f), cosine = new(Class = RcppAnnoy::AnnoyAngular, f),
+            manhattan = new(Class = RcppAnnoy::AnnoyManhattan, f),
+            hamming = new(Class = RcppAnnoy::AnnoyHamming, f), stop("Invalid metric"))
+        a$setSeed(as.integer(knn_seed1))
+        for (ii in seq(nrow(x = data))) {
+            a$addItem(ii - 1, data[ii, ])
+        }
+        a$build(n.trees)
+        return(a)
+    }, ns = "Seurat")
+    
+    assignInNamespace("AnnoySearch", value = function (index, query, k, search.k = -1, include.distance = TRUE) {
+        index$setSeed(as.integer(knn_seed1))
+    
+        n <- nrow(x = query)
+        idx <- matrix(nrow = n, ncol = k)
+        dist <- matrix(nrow = n, ncol = k)
+        convert <- methods::is(index, "Rcpp_AnnoyAngular")
+        if (!inherits(x = plan(), what = "multicore")) {
+            oplan <- plan(strategy = "sequential")
+            on.exit(plan(oplan), add = TRUE)
+        }
+        res <- future.apply::future_lapply(X = 1:n, FUN = function(x) {
+            res <- index$getNNsByVectorList(query[x, ], k, search.k,
+                include.distance)
+            if (convert) {
+                res$dist <- 0.5 * (res$dist * res$dist)
+            }
+            list(res$item + 1, res$distance)
+        })
+        for (i in 1:n) {
+            idx[i, ] <- res[[i]][[1]]
+            if (include.distance) {
+                dist[i, ] <- res[[i]][[2]]
+            }
+        }
+        return(list(nn.idx = idx, nn.dists = dist))
+    }, ns = "Seurat")
+}
 ```
 
 ```{r}
@@ -909,48 +910,49 @@ knn_graph_seu1 <- seu1@graphs$RNA_nn
 ```
 
 ```{r}
-# # Uncomment if wanting to set random seed for KNN
-# assignInNamespace("AnnoyBuildIndex", value = function(data, metric = "euclidean", n.trees = 50) {
-#     f <- ncol(x = data)
-#     a <- switch(EXPR = metric, euclidean = new(Class = RcppAnnoy::AnnoyEuclidean,
-#         f), cosine = new(Class = RcppAnnoy::AnnoyAngular, f),
-#         manhattan = new(Class = RcppAnnoy::AnnoyManhattan, f),
-#         hamming = new(Class = RcppAnnoy::AnnoyHamming, f), stop("Invalid metric"))
-#     a$setSeed(as.integer(knn_seed2))
-#     for (ii in seq(nrow(x = data))) {
-#         a$addItem(ii - 1, data[ii, ])
-#     }
-#     a$build(n.trees)
-#     return(a)
-# }, ns = "Seurat")
-# 
-# assignInNamespace("AnnoySearch", value = function (index, query, k, search.k = -1, include.distance = TRUE) {
-#     index$setSeed(as.integer(knn_seed2))
-# 
-#     n <- nrow(x = query)
-#     idx <- matrix(nrow = n, ncol = k)
-#     dist <- matrix(nrow = n, ncol = k)
-#     convert <- methods::is(index, "Rcpp_AnnoyAngular")
-#     if (!inherits(x = plan(), what = "multicore")) {
-#         oplan <- plan(strategy = "sequential")
-#         on.exit(plan(oplan), add = TRUE)
-#     }
-#     res <- future.apply::future_lapply(X = 1:n, FUN = function(x) {
-#         res <- index$getNNsByVectorList(query[x, ], k, search.k,
-#             include.distance)
-#         if (convert) {
-#             res$dist <- 0.5 * (res$dist * res$dist)
-#         }
-#         list(res$item + 1, res$distance)
-#     })
-#     for (i in 1:n) {
-#         idx[i, ] <- res[[i]][[1]]
-#         if (include.distance) {
-#             dist[i, ] <- res[[i]][[2]]
-#         }
-#     }
-#     return(list(nn.idx = idx, nn.dists = dist))
-# }, ns = "Seurat")
+if (use_knn_custom_seed) {
+    assignInNamespace("AnnoyBuildIndex", value = function(data, metric = "euclidean", n.trees = 50) {
+        f <- ncol(x = data)
+        a <- switch(EXPR = metric, euclidean = new(Class = RcppAnnoy::AnnoyEuclidean,
+            f), cosine = new(Class = RcppAnnoy::AnnoyAngular, f),
+            manhattan = new(Class = RcppAnnoy::AnnoyManhattan, f),
+            hamming = new(Class = RcppAnnoy::AnnoyHamming, f), stop("Invalid metric"))
+        a$setSeed(as.integer(knn_seed2))
+        for (ii in seq(nrow(x = data))) {
+            a$addItem(ii - 1, data[ii, ])
+        }
+        a$build(n.trees)
+        return(a)
+    }, ns = "Seurat")
+    
+    assignInNamespace("AnnoySearch", value = function (index, query, k, search.k = -1, include.distance = TRUE) {
+        index$setSeed(as.integer(knn_seed2))
+    
+        n <- nrow(x = query)
+        idx <- matrix(nrow = n, ncol = k)
+        dist <- matrix(nrow = n, ncol = k)
+        convert <- methods::is(index, "Rcpp_AnnoyAngular")
+        if (!inherits(x = plan(), what = "multicore")) {
+            oplan <- plan(strategy = "sequential")
+            on.exit(plan(oplan), add = TRUE)
+        }
+        res <- future.apply::future_lapply(X = 1:n, FUN = function(x) {
+            res <- index$getNNsByVectorList(query[x, ], k, search.k,
+                include.distance)
+            if (convert) {
+                res$dist <- 0.5 * (res$dist * res$dist)
+            }
+            list(res$item + 1, res$distance)
+        })
+        for (i in 1:n) {
+            idx[i, ] <- res[[i]][[1]]
+            if (include.distance) {
+                dist[i, ] <- res[[i]][[2]]
+            }
+        }
+        return(list(nn.idx = idx, nn.dists = dist))
+    }, ns = "Seurat")
+}
 ```
 
 ```{r}

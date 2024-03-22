@@ -72,7 +72,7 @@ umap_leiden_seed2: 42
 umap_umap_seed1: 42
 umap_umap_seed2: 42
 
-dpi: 44
+dpi: 300
 
 # Output path
 output_base_path: "" # "" for default - glue::glue("{project_base_path}/output/{data_name}/scanpyv{scanpy_version}/input_{data_input}/{matrix_generation_method_full}/cell_fraction_{cell_fraction_after_downsampling}/read_fraction_{read_fraction_after_downsampling}")
